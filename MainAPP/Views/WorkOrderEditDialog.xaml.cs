@@ -68,7 +68,7 @@ public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged, INoti
             // 编辑模式：预填字段（拷贝值，避免修改调用方传入的对象）
             // template.Id == 0 时为"新增并预填设备"模式（如从设备管理页新增工单），标题显示"新增工单"
             // 标题走本地化资源（原硬编码中文会覆盖 XAML 的 K552，非中文环境仍显示中文）
-            Title = template.Id == 0 ? Strings.Wo_AddTitle : Strings.K552;
+            Title = template.Id == 0 ? Strings.Wo_AddTitle : Strings.Lbl_EditWorkOrder;
             _orderNo = template.OrderNo;
             _productCode = template.ProductCode;
             _productName = template.ProductName;
@@ -148,17 +148,17 @@ public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged, INoti
     {
         string? error = propertyName switch
         {
-            nameof(OrderNo) => string.IsNullOrWhiteSpace(OrderNo) ? Strings.K599 : null,
-            nameof(ProductCode) => string.IsNullOrWhiteSpace(ProductCode) ? Strings.K600 : null,
-            nameof(ProductName) => string.IsNullOrWhiteSpace(ProductName) ? Strings.K601 : null,
+            nameof(OrderNo) => string.IsNullOrWhiteSpace(OrderNo) ? Strings.Lbl_PleaseEnterWorkOrderNumber : null,
+            nameof(ProductCode) => string.IsNullOrWhiteSpace(ProductCode) ? Strings.Lbl_PleaseEnterProductCode : null,
+            nameof(ProductName) => string.IsNullOrWhiteSpace(ProductName) ? Strings.Lbl_PleaseEnterProductName : null,
             // 设备必选：避免产生 DeviceId="" 的孤儿工单
-            nameof(SelectedDeviceId) => string.IsNullOrWhiteSpace(SelectedDeviceId) ? Strings.K602 : null,
+            nameof(SelectedDeviceId) => string.IsNullOrWhiteSpace(SelectedDeviceId) ? Strings.Lbl_PleaseSelectBoundDevice : null,
             // 计划产量必须为正整数（0 会导致进度条永远 0%）
             nameof(TargetQuantityText) =>
-                int.TryParse(TargetQuantityText?.Trim(), out var qty) && qty > 0 ? null : Strings.K603,
+                int.TryParse(TargetQuantityText?.Trim(), out var qty) && qty > 0 ? null : Strings.Lbl_PlannedQuantityMustPositiveInteger,
             // 起止时间是交叉校验：任一变化都重算 PlannedEnd 的错误
             nameof(PlannedStart) or nameof(PlannedEnd) =>
-                PlannedEnd <= PlannedStart ? Strings.K604 : null,
+                PlannedEnd <= PlannedStart ? Strings.Lbl_PlannedEndTimeMustLaterStart : null,
             _ => null,
         };
 

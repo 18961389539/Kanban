@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:controls="clr-namespace:MainAPP.Controls"
-    xmlns:resources="clr-namespace:MainAPP.Resources"
+    xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization"
     d:DesignHeight="600"
     d:DesignWidth="1100"
     mc:Ignorable="d">
@@ -66,7 +66,7 @@
                         Margin="0,4,0,0"
                         FontSize="{DynamicResource FontSizeHint}"
                         Foreground="{StaticResource SecondaryTextBrush}"
-                        Text="{x:Static resources:Strings.K613}" />
+                        Text="{x:Static resources:Strings.Lbl_RecordsWhoDidWhat}" />
                     <TextBlock
                         Margin="0,4,0,0"
                         FontSize="{DynamicResource FontSizeHint}"
@@ -93,7 +93,7 @@
                 Background="{StaticResource PrimarySoftBrush}"
                 CornerRadius="14">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock FontSize="{DynamicResource FontSizeHint}" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" Text="{x:Static resources:Strings.K639}" />
+                    <TextBlock FontSize="{DynamicResource FontSizeHint}" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" Text="{x:Static resources:Strings.Lbl_TotalRecords}" />
                     <TextBlock Margin="8,0,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryBrush}" Text="{Binding Total}" />
                 </StackPanel>
             </Border>
@@ -108,9 +108,9 @@
                 <ColumnDefinition Width="12" />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K641}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" Text="{Binding SucceededCount}" /></StackPanel></Border>
-            <Border Grid.Column="2" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K642}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource DangerBrush}" Text="{Binding FailedCount}" /></StackPanel></Border>
-            <Border Grid.Column="4" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K643}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Text="{Binding SuccessRateDisplay}" /></StackPanel></Border>
+            <Border Grid.Column="0" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Success2}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" Text="{Binding SucceededCount}" /></StackPanel></Border>
+            <Border Grid.Column="2" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Failed2}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource DangerBrush}" Text="{Binding FailedCount}" /></StackPanel></Border>
+            <Border Grid.Column="4" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_SuccessRate}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Text="{Binding SuccessRateDisplay}" /></StackPanel></Border>
         </Grid>
 
         <!--  过滤区  -->
@@ -126,13 +126,13 @@
                     <Button
                         Padding="16,6"
                         Command="{Binding QueryCommand}"
-                        Content="{x:Static resources:Strings.K625}"
+                        Content="{x:Static resources:Strings.Lbl_Query2}"
                         Style="{StaticResource ButtonDefault}" />
                     <Button
                         Margin="8,0,0,0"
                         Padding="16,6"
                         Command="{Binding ResetCommand}"
-                        Content="{x:Static resources:Strings.K626}"
+                        Content="{x:Static resources:Strings.Lbl_Reset3}"
                         Style="{StaticResource ButtonDefault}" />
                 </StackPanel>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
@@ -142,11 +142,11 @@
                     VerticalAlignment="Center"
                     FontSize="{DynamicResource FontSizeHint}"
                     Foreground="{StaticResource SecondaryTextBrush}"
-                    Text="{x:Static resources:Strings.K614}" />
+                    Text="{x:Static resources:Strings.Lbl_Time2}" />
                 <RadioButton
                     GroupName="AuditPreset"
                     Click="OnPresetChipClick"
-                    Content="{x:Static resources:Strings.K644}"
+                    Content="{x:Static resources:Strings.Lbl_Today2}"
                     Style="{StaticResource AuditPresetChip}"
                     Tag="1">
                     <RadioButton.IsChecked>
@@ -160,7 +160,7 @@
                 <RadioButton
                     GroupName="AuditPreset"
                     Click="OnPresetChipClick"
-                    Content="{x:Static resources:Strings.K645}"
+                    Content="{x:Static resources:Strings.Lbl_Last7Days2}"
                     Style="{StaticResource AuditPresetChip}"
                     Tag="2">
                     <RadioButton.IsChecked>
@@ -174,7 +174,7 @@
                 <RadioButton
                     GroupName="AuditPreset"
                     Click="OnPresetChipClick"
-                    Content="{x:Static resources:Strings.K646}"
+                    Content="{x:Static resources:Strings.Lbl_Last30Days2}"
                     Style="{StaticResource AuditPresetChip}"
                     Tag="3">
                     <RadioButton.IsChecked>
@@ -188,7 +188,7 @@
                 <RadioButton
                     GroupName="AuditPreset"
                     Click="OnPresetChipClick"
-                    Content="{x:Static resources:Strings.K647}"
+                    Content="{x:Static resources:Strings.Lbl_Month2}"
                     Style="{StaticResource AuditPresetChip}"
                     Tag="4">
                     <RadioButton.IsChecked>
@@ -218,7 +218,7 @@
                     VerticalAlignment="Center"
                     FontSize="{DynamicResource FontSizeHint}"
                     Foreground="{StaticResource SecondaryTextBrush}"
-                    Text="{x:Static resources:Strings.K615}" />
+                    Text="{x:Static resources:Strings.Lbl_OperatorText}" />
                 <hc:TextBox
                     Width="120"
                     VerticalContentAlignment="Center"
@@ -229,7 +229,7 @@
                     VerticalAlignment="Center"
                     FontSize="{DynamicResource FontSizeHint}"
                     Foreground="{StaticResource SecondaryTextBrush}"
-                    Text="{x:Static resources:Strings.K616}" />
+                    Text="{x:Static resources:Strings.Lbl_Action}" />
                 <hc:TextBox
                     Width="130"
                     VerticalContentAlignment="Center"
@@ -240,16 +240,16 @@
                     VerticalAlignment="Center"
                     FontSize="{DynamicResource FontSizeHint}"
                     Foreground="{StaticResource SecondaryTextBrush}"
-                    Text="{x:Static resources:Strings.K619}" />
+                    Text="{x:Static resources:Strings.Lbl_Result}" />
                 <!--  显式套 ComboBoxExtend 系样式；裸 ComboBox 会回落到 HandyControl 默认浅色样式，
                       与本页深色底形成「浅底近白字」的低对比度。  -->
                 <ComboBox
                     Width="90"
                     Style="{StaticResource ComboBoxExtend.Small}"
                     SelectedIndex="{Binding ResultFilterIndex}">
-                    <ComboBoxItem Content="{x:Static resources:Strings.K004}" />
-                    <ComboBoxItem Content="{x:Static resources:Strings.K620}" />
-                    <ComboBoxItem Content="{x:Static resources:Strings.K621}" />
+                    <ComboBoxItem Content="{x:Static resources:Strings.Lbl_All}" />
+                    <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Success}" />
+                    <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Failed}" />
                 </ComboBox>
                     </StackPanel>
                 </ScrollViewer>
@@ -299,41 +299,41 @@
                             <DataGridTextColumn
                                 Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"
                                 FontSize="{DynamicResource FontSizeHint}"
-                                Header="{x:Static resources:Strings.K614}"
+                                Header="{x:Static resources:Strings.Lbl_Time2}"
                                 Width="150" />
                             <DataGridTextColumn
                                 Binding="{Binding Operator}"
                                 FontSize="{DynamicResource FontSizeHint}"
-                                Header="{x:Static resources:Strings.K615}"
+                                Header="{x:Static resources:Strings.Lbl_OperatorText}"
                                 Width="100" />
                             <DataGridTextColumn
                                 Binding="{Binding Action}"
                                 FontSize="{DynamicResource FontSizeHint}"
-                                Header="{x:Static resources:Strings.K616}"
+                                Header="{x:Static resources:Strings.Lbl_Action}"
                                 Width="140" />
                             <DataGridTextColumn
                                 Binding="{Binding TargetType}"
                                 FontSize="{DynamicResource FontSizeHint}"
-                                Header="{x:Static resources:Strings.K617}"
+                                Header="{x:Static resources:Strings.Lbl_TargetType}"
                                 Width="90" />
                             <DataGridTextColumn
                                 Binding="{Binding TargetId}"
                                 FontSize="{DynamicResource FontSizeHint}"
-                                Header="{x:Static resources:Strings.K618}"
+                                Header="{x:Static resources:Strings.Lbl_Target}"
                                 Width="130" />
                             <DataGridTemplateColumn
-                                Header="{x:Static resources:Strings.K619}"
+                                Header="{x:Static resources:Strings.Lbl_Result}"
                                 Width="70">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock FontSize="{DynamicResource FontSizeHint}">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="{x:Static resources:Strings.K620}" />
+                                                    <Setter Property="Text" Value="{x:Static resources:Strings.Lbl_Success}" />
                                                     <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Succeeded}" Value="False">
-                                                            <Setter Property="Text" Value="{x:Static resources:Strings.K621}" />
+                                                            <Setter Property="Text" Value="{x:Static resources:Strings.Lbl_Failed}" />
                                                             <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
@@ -346,7 +346,7 @@
                             <DataGridTextColumn
                                 Binding="{Binding Detail}"
                                 FontSize="{DynamicResource FontSizeHint}"
-                                Header="{x:Static resources:Strings.K622}"
+                                Header="{x:Static resources:Strings.Lbl_Detail}"
                                 Width="*" />
                         </DataGrid.Columns>
                     </DataGrid>
@@ -356,8 +356,8 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         IconKind="ShieldAccount"
-                        Message="{x:Static resources:Strings.K623}"
-                        Hint="{x:Static resources:Strings.K613}">
+                        Message="{x:Static resources:Strings.Lbl_NoAuditRecords}"
+                        Hint="{x:Static resources:Strings.Lbl_RecordsWhoDidWhat}">
                         <controls:EmptyState.Style>
                             <Style TargetType="controls:EmptyState">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -390,14 +390,14 @@
                         FontSize="{DynamicResource FontSizeHint}"
                         FontWeight="Bold"
                         Foreground="{StaticResource PrimaryTextBrush}"
-                        Text="{x:Static resources:Strings.K648}" />
+                        Text="{x:Static resources:Strings.Lbl_AuditDetails}" />
 
                     <ScrollViewer Grid.Row="1" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <TextBlock
                                 FontSize="{DynamicResource FontSizeHint}"
                                 Foreground="{StaticResource SecondaryTextBrush}"
-                                Text="{x:Static resources:Strings.K649}">
+                                Text="{x:Static resources:Strings.Lbl_SelectRecordLeftViewDetails}">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -425,44 +425,44 @@
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Grid.Column="0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K614}" />
+                                    <TextBlock Grid.Row="0" Grid.Column="0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Time2}" />
                                     <TextBlock Grid.Row="0" Grid.Column="1" FontSize="{DynamicResource FontSizeHint}" Text="{Binding SelectedEntry.Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" />
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K615}" />
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_OperatorText}" />
                                     <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Text="{Binding SelectedEntry.Operator}" />
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K616}" />
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Action}" />
                                     <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Text="{Binding SelectedEntry.Action}" />
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K617}" />
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_TargetType}" />
                                     <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Text="{Binding SelectedEntry.TargetType}" />
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K618}" />
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Target}" />
                                     <TextBlock Grid.Row="4" Grid.Column="1" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Text="{Binding SelectedEntry.TargetId}" />
-                                    <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K619}" />
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Result}" />
                                     <TextBlock Grid.Row="5" Grid.Column="1" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="Text" Value="{x:Static resources:Strings.K620}" />
+                                                <Setter Property="Text" Value="{x:Static resources:Strings.Lbl_Success}" />
                                                 <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding SelectedEntry.Succeeded}" Value="False">
-                                                        <Setter Property="Text" Value="{x:Static resources:Strings.K621}" />
+                                                        <Setter Property="Text" Value="{x:Static resources:Strings.Lbl_Failed}" />
                                                         <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
-                                    <TextBlock Grid.Row="6" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K622}" />
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Detail}" />
                                     <TextBlock Grid.Row="6" Grid.Column="1" Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Text="{Binding SelectedEntry.Detail}" TextWrapping="Wrap" />
                                 </Grid>
 
                                 <Border Margin="0,14,0,0" Padding="10" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4">
                                     <StackPanel>
-                                        <TextBlock FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K637}" />
+                                        <TextBlock FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Before}" />
                                         <TextBlock Margin="0,6,0,0" FontFamily="Consolas" FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedEntry.BeforeJson, Converter={StaticResource JsonPrettyPrintConverter}, TargetNullValue=—}" TextWrapping="Wrap" />
                                     </StackPanel>
                                 </Border>
                                 <Border Margin="0,8,0,0" Padding="10" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4">
                                     <StackPanel>
-                                        <TextBlock FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K638}" />
+                                        <TextBlock FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_After}" />
                                         <TextBlock Margin="0,6,0,0" FontFamily="Consolas" FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedEntry.AfterJson, Converter={StaticResource JsonPrettyPrintConverter}, TargetNullValue=—}" TextWrapping="Wrap" />
                                     </StackPanel>
                                 </Border>
@@ -470,7 +470,7 @@
                                     Margin="0,10,0,0"
                                     FontSize="{DynamicResource FontSizeCaption}"
                                     Foreground="{StaticResource ThirdlyTextBrush}"
-                                    Text="{x:Static resources:Strings.K650}"
+                                    Text="{x:Static resources:Strings.Lbl_NoValuesOperation}"
                                     Visibility="{Binding SelectedEntry.BeforeJson, Converter={StaticResource NullToVisibilityConverter}}" />
                             </StackPanel>
                         </StackPanel>
@@ -485,13 +485,13 @@
                 <Button
                     Padding="12,4"
                     Command="{Binding ExportCsvCommand}"
-                    Content="{x:Static resources:Strings.K629}"
+                    Content="{x:Static resources:Strings.Lbl_ExportCSVArchive}"
                     Style="{StaticResource ButtonDefault}" />
                 <Button
                     Margin="8,0,0,0"
                     Padding="12,4"
                     Command="{Binding ExportJsonCommand}"
-                    Content="{x:Static resources:Strings.K630}"
+                    Content="{x:Static resources:Strings.Lbl_ExportJSONArchive}"
                     Style="{StaticResource ButtonDefault}" />
             </StackPanel>
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
@@ -504,13 +504,13 @@
                 <Button
                     Padding="12,4"
                     Command="{Binding PreviousPageCommand}"
-                    Content="{x:Static resources:Strings.K627}"
+                    Content="{x:Static resources:Strings.Lbl_Previous}"
                     Style="{StaticResource ButtonDefault}" />
                 <Button
                     Margin="8,0,0,0"
                     Padding="12,4"
                     Command="{Binding NextPageCommand}"
-                    Content="{x:Static resources:Strings.K628}"
+                    Content="{x:Static resources:Strings.Lbl_Next}"
                     Style="{StaticResource ButtonDefault}" />
             </StackPanel>
         </Grid>

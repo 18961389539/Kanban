@@ -70,13 +70,13 @@ public static class WorkOrderSchedule
     /// <summary>对应 Localization.csv 的 M031–M095 键。</summary>
     public static string StatusKey(WorkOrderScheduleKind kind) => kind switch
     {
-        WorkOrderScheduleKind.CompletedMet => "M092",
-        WorkOrderScheduleKind.CompletedShort => "M093",
-        WorkOrderScheduleKind.Aborted => "M031",
-        WorkOrderScheduleKind.MetPendingComplete => "M032",
-        WorkOrderScheduleKind.OverdueIncomplete => "M033",
-        WorkOrderScheduleKind.Behind => "M094",
-        _ => "M095",
+        WorkOrderScheduleKind.CompletedMet => "Msg_TargetMet",
+        WorkOrderScheduleKind.CompletedShort => "Msg_BelowTarget",
+        WorkOrderScheduleKind.Aborted => "Msg_Aborted",
+        WorkOrderScheduleKind.MetPendingComplete => "Msg_MetPending",
+        WorkOrderScheduleKind.OverdueIncomplete => "Msg_OverdueIncomplete",
+        WorkOrderScheduleKind.Behind => "Msg_BehindSchedule",
+        _ => "Msg_Track",
     };
 
     public static string CssClass(WorkOrderScheduleKind kind) => kind switch

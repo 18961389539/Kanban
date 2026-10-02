@@ -31,7 +31,7 @@
     {
         <div class="msg-banner @(_resetNoticeIsError ? "msg-error" : "msg-ok")">
             <span>@_resetNotice</span>
-            <button class="msg-close" title="@L.T("K143")" @onclick="() => _resetNotice = null">✕</button>
+            <button class="msg-close" title="@L.T("Lbl_Close")" @onclick="() => _resetNotice = null">✕</button>
         </div>
     }
 
@@ -90,7 +90,7 @@
             @if (!Dashboard.DisplayCarouselEnabled)
             {
             <div class="kpi-card action">
-                <button class="btn btn-danger" disabled="@(!CanResetAll)" title="@L.T("K930")" @onclick="OpenResetConfirm">
+                <button class="btn btn-danger" disabled="@(!CanResetAll)" title="@L.T("Lbl_WritesOEEResetCommandEveryDevice")" @onclick="OpenResetConfirm">
                     @L.T("Pl_ResetAll")
                 </button>
                 <span class="kpi-sub">@L.T("Pl_ResetAllHint")</span>
@@ -164,15 +164,15 @@
                             <div class="line-prod">
                                 <div class="mini-stat-row">
                                     <div class="mini-stat" title="@L.Tip("Ln_Tip_SessionOk", d.TotalOkProduction)">
-                                        <span class="mini-stat-label">@L.T("K588")</span>
+                                        <span class="mini-stat-label">@L.T("Lbl_OK2")</span>
                                         <span class="mini-stat-value kpi-ok">@d.TotalOkProduction.ToString("N0")</span>
                                     </div>
                                     <div class="mini-stat" title="@L.Tip("Ln_Tip_SessionNg", d.TotalNgProduction)">
-                                        <span class="mini-stat-label">@L.T("K589")</span>
+                                        <span class="mini-stat-label">@L.T("Lbl_NG")</span>
                                         <span class="mini-stat-value kpi-ng">@d.TotalNgProduction.ToString("N0")</span>
                                     </div>
                                     <div class="mini-stat" title="@L.Tip("Home_Tip_TotalOutput", d.TotalOkProduction, d.TotalNgProduction, SnapshotMetrics.TotalOutput(d.TotalOkProduction, d.TotalNgProduction))">
-                                        <span class="mini-stat-label">@L.T("K590")</span>
+                                        <span class="mini-stat-label">@L.T("Lbl_Total")</span>
                                         <span class="mini-stat-value">@SnapshotMetrics.TotalOutput(d.TotalOkProduction, d.TotalNgProduction).ToString("N0")</span>
                                     </div>
                                 </div>
@@ -182,7 +182,7 @@
                                         <span class="kpi-value @(IsCycleSlow(d) ? "kpi-ng" : "")">@CycleText(d)</span>
                                     </div>
                                     <div title="@L.Tip("Home_Tip_RunTime", FmtDuration(d.RunTime), SnapshotMetrics.TimeRatio(d.RunTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))">
-                                        <span class="kpi-label">@L.T("K593")</span>
+                                        <span class="kpi-label">@L.T("Lbl_Run")</span>
                                         <span class="kpi-value run">@FmtDuration(d.RunTime)</span>
                                     </div>
                                     <div title="@L.Tip("Home_Tip_AlarmTime", FmtDuration(d.AlarmTime), SnapshotMetrics.TimeRatio(d.AlarmTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))">
@@ -201,7 +201,7 @@
                             </div>
                             <div class="line-oee">
                                 <div class="oee-metric" title="@OeeTip(d)">
-                                    <span class="oee-metric-label">@L.T("K587")</span>
+                                    <span class="oee-metric-label">@L.T("Lbl_OEE")</span>
                                     <span class="oee-metric-value oee-hero @UiPalette.OeeToneClass(d.Oee)">@Pct(d.Oee)</span>
                                 </div>
                                 <div class="oee-metric" title="@AvailabilityTip(d)">

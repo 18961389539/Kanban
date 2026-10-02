@@ -60,16 +60,16 @@ public static class DeviceConfigValidator
         foreach (var device in deviceList)
         {
             List<string> missing = [];
-            if (string.IsNullOrWhiteSpace(device.OkCountAddress)) missing.Add(Strings.M228);
-            if (string.IsNullOrWhiteSpace(device.NgCountAddress)) missing.Add(Strings.M229);
-            if (string.IsNullOrWhiteSpace(device.StatusCountAddress)) missing.Add(Strings.M230);
-            if (string.IsNullOrWhiteSpace(device.ProductionResetAddress)) missing.Add(Strings.M231);
+            if (string.IsNullOrWhiteSpace(device.OkCountAddress)) missing.Add(Strings.Msg_OKCountAddress);
+            if (string.IsNullOrWhiteSpace(device.NgCountAddress)) missing.Add(Strings.Msg_NGCountAddress);
+            if (string.IsNullOrWhiteSpace(device.StatusCountAddress)) missing.Add(Strings.Msg_StatusAddress);
+            if (string.IsNullOrWhiteSpace(device.ProductionResetAddress)) missing.Add(Strings.Msg_OEEResetAddress);
             if (missing.Count > 0)
                 errors.Add(new DeviceConfigError
                 {
                     Device = device,
                     TargetTabIndex = 0,
-                    Message = string.Format(Strings.F203, device.Name, string.Join("、", missing)),
+                    Message = string.Format(Strings.Prompt_DeviceConfigured, device.Name, string.Join("、", missing)),
                 });
 
             AddAddressTypeErrors(errors, device, addressCodec);
@@ -150,7 +150,7 @@ public static class DeviceConfigValidator
                 {
                     Device = device,
                     TargetTabIndex = 0,
-                    Message = string.Format(Strings.F204, device.Name, device.TargetCycle),
+                    Message = string.Format(Strings.Prompt_DeviceTargetOutputMust0Current, device.Name, device.TargetCycle),
                 });
         }
 
@@ -163,7 +163,7 @@ public static class DeviceConfigValidator
             {
                 Device = g.First(),
                 TargetTabIndex = 0,
-                Message = string.Format(Strings.F209, g.Key, g.Count()),
+                Message = string.Format(Strings.Prompt_DuplicateDeviceNameUnitsDeviceNames, g.Key, g.Count()),
             });
         }
 
@@ -179,7 +179,7 @@ public static class DeviceConfigValidator
                 {
                     Device = device,
                     TargetTabIndex = 1,
-                    Message = string.Format(Strings.F202, device.Name, dupAlarmName.Key),
+                    Message = string.Format(Strings.Prompt_DeviceDuplicateAlarmName, device.Name, dupAlarmName.Key),
                 });
 
             // 报警 PLC 地址唯一性：Alarm.Id 基于确定性生成（{DeviceId}_{PlcAddress}），
@@ -195,7 +195,7 @@ public static class DeviceConfigValidator
                 {
                     Device = device,
                     TargetTabIndex = 1,
-                    Message = string.Format(Strings.F207, device.Name, dupAlarmAddr.Key),
+                    Message = string.Format(Strings.Prompt_DeviceDuplicateAlarmPLCAddressAlarm, device.Name, dupAlarmAddr.Key),
                 });
 
             var dupDefect = device.Defects
@@ -207,7 +207,7 @@ public static class DeviceConfigValidator
                 {
                     Device = device,
                     TargetTabIndex = 2,
-                    Message = string.Format(Strings.F205, device.Name, dupDefect.Key),
+                    Message = string.Format(Strings.Prompt_DeviceDuplicateDefectName, device.Name, dupDefect.Key),
                 });
 
             // 计数报警阈值上限允许为 0：语义为「仅记录不触发」。
@@ -272,7 +272,7 @@ public static class DeviceConfigValidator
                     {
                         Device = device,
                         TargetTabIndex = (int)DeviceManagerTab.Parameters,
-                        Message = string.Format(Strings.F504, device.Name, group.Key),
+                        Message = string.Format(Strings.Prompt_PrimaryAddressDeviceReusedMultipleFields, device.Name, group.Key),
                     });
                     continue;
                 }
@@ -450,7 +450,7 @@ public static class DeviceConfigValidator
                 {
                     Device = device,
                     TargetTabIndex = 0,
-                    Message = string.Format(Strings.F504, device.Name, g.Key),
+                    Message = string.Format(Strings.Prompt_PrimaryAddressDeviceReusedMultipleFields, device.Name, g.Key),
                 });
             }
         }
@@ -463,7 +463,7 @@ public static class DeviceConfigValidator
         {
             Device = conflict.Devices[1],
             TargetTabIndex = conflict.GetTargetTabIndex(conflict.Devices[1]),
-            Message = string.Format(Strings.F080, conflict.Address, conflict.Devices.Count) +
+            Message = string.Format(Strings.Prompt_AddressConflictSharedDevices, conflict.Address, conflict.Devices.Count) +
                       string.Join("、", conflict.Devices.Select(x => x.Name)),
         };
 
@@ -561,17 +561,17 @@ public static class DeviceConfigValidator
     /// </summary>
     private static void AddAddressTypeErrors(List<DeviceConfigError> errors, Device device, IPlcAddressCodec codec)
     {
-        AddAddressError(errors, device, codec, device.OkCountAddress, PlcAddressType.DWord, 0, Strings.M232);
-        AddAddressError(errors, device, codec, device.NgCountAddress, PlcAddressType.DWord, 0, Strings.M233);
-        AddAddressError(errors, device, codec, device.StatusCountAddress, PlcAddressType.DWord, 0, Strings.M230);
-        AddAddressError(errors, device, codec, device.ProductionResetAddress, PlcAddressType.DWord, 0, Strings.M234);
-        AddAddressError(errors, device, codec, device.RecipeAddress, PlcAddressType.DWord, 0, Strings.M235);
+        AddAddressError(errors, device, codec, device.OkCountAddress, PlcAddressType.DWord, 0, Strings.Msg_OKCountAddress2);
+        AddAddressError(errors, device, codec, device.NgCountAddress, PlcAddressType.DWord, 0, Strings.Msg_NGCountAddress2);
+        AddAddressError(errors, device, codec, device.StatusCountAddress, PlcAddressType.DWord, 0, Strings.Msg_StatusAddress);
+        AddAddressError(errors, device, codec, device.ProductionResetAddress, PlcAddressType.DWord, 0, Strings.Msg_OEEResetAddress2);
+        AddAddressError(errors, device, codec, device.RecipeAddress, PlcAddressType.DWord, 0, Strings.Msg_RecipeAddress);
         foreach (var alarm in device.Alarms)
-            AddAddressError(errors, device, codec, alarm.PlcAddress, PlcAddressType.MBit, 1, string.Format(Strings.F128, alarm.Name));
+            AddAddressError(errors, device, codec, alarm.PlcAddress, PlcAddressType.MBit, 1, string.Format(Strings.Prompt_AlarmAddress, alarm.Name));
         foreach (var defect in device.Defects)
-            AddAddressError(errors, device, codec, defect.PlcAddress, PlcAddressType.DWord, 2, string.Format(Strings.F189, defect.Name));
+            AddAddressError(errors, device, codec, defect.PlcAddress, PlcAddressType.DWord, 2, string.Format(Strings.Prompt_DefectAddress, defect.Name));
         foreach (var counterAlarm in device.CounterAlarms)
-            AddAddressError(errors, device, codec, counterAlarm.PlcAddress, PlcAddressType.DWord, 3, string.Format(Strings.F199, counterAlarm.Name));
+            AddAddressError(errors, device, codec, counterAlarm.PlcAddress, PlcAddressType.DWord, 3, string.Format(Strings.Prompt_CountAlarmAddress, counterAlarm.Name));
         AddDWordOverlapErrors(errors, device, codec);
     }
 
@@ -589,15 +589,15 @@ public static class DeviceConfigValidator
             if (!string.IsNullOrWhiteSpace(address)) entries.Add((address!, label));
         }
 
-        Add(device.OkCountAddress, Strings.M232);
-        Add(device.NgCountAddress, Strings.M233);
-        Add(device.StatusCountAddress, Strings.M230);
-        Add(device.ProductionResetAddress, Strings.M234);
-        Add(device.RecipeAddress, Strings.M235);
+        Add(device.OkCountAddress, Strings.Msg_OKCountAddress2);
+        Add(device.NgCountAddress, Strings.Msg_NGCountAddress2);
+        Add(device.StatusCountAddress, Strings.Msg_StatusAddress);
+        Add(device.ProductionResetAddress, Strings.Msg_OEEResetAddress2);
+        Add(device.RecipeAddress, Strings.Msg_RecipeAddress);
         foreach (var defect in device.Defects)
-            Add(defect.PlcAddress, string.Format(Strings.F189, defect.Name));
+            Add(defect.PlcAddress, string.Format(Strings.Prompt_DefectAddress, defect.Name));
         foreach (var counterAlarm in device.CounterAlarms)
-            Add(counterAlarm.PlcAddress, string.Format(Strings.F199, counterAlarm.Name));
+            Add(counterAlarm.PlcAddress, string.Format(Strings.Prompt_CountAlarmAddress, counterAlarm.Name));
 
         var spans = new List<(string Group, int Start, int End, string Address, string Label)>();
         foreach (var (address, label) in entries)
@@ -663,7 +663,7 @@ public static class DeviceConfigValidator
             {
                 Device = device,
                 TargetTabIndex = tabIndex,
-                Message = string.Format(Strings.F201, device.Name, label, parsed.ErrorMessage),
+                Message = string.Format(Strings.Prompt_DeviceInvalid, device.Name, label, parsed.ErrorMessage),
             });
         }
     }

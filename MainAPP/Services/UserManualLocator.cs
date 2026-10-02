@@ -1,3 +1,4 @@
+using Kanban.Localization;
 using System.IO;
 using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Services;

@@ -6,7 +6,7 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
-    xmlns:resources="clr-namespace:MainAPP.Resources"
+    xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization"
     Title="{x:Static resources:Strings.Wo_ContinueTitle}"
     Width="480"
     SizeToContent="Height"

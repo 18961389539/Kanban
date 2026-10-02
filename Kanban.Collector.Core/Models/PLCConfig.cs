@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -24,11 +24,41 @@ public enum PlcDataFormat
 /// <summary>Siemens S7 专属连接与批读选项。</summary>
 public partial class SiemensPlcOptions : ObservableObject
 {
-    [ObservableProperty] private string _model = "S1200";
-    [ObservableProperty] private byte _rack;
-    [ObservableProperty] private byte _slot = 1;
-    [ObservableProperty] private PlcDataFormat _dataFormat = PlcDataFormat.ABCD;
-    [ObservableProperty] private int _batchInt32Limit = 55;
+    private string _model = "S1200";
+
+    public string Model
+    {
+        get => _model;
+    set => SetProperty(ref _model, value);
+    }
+    private byte _rack;
+
+    public byte Rack
+    {
+        get => _rack;
+    set => SetProperty(ref _rack, value);
+    }
+    private byte _slot = 1;
+
+    public byte Slot
+    {
+        get => _slot;
+    set => SetProperty(ref _slot, value);
+    }
+    private PlcDataFormat _dataFormat = PlcDataFormat.ABCD;
+
+    public PlcDataFormat DataFormat
+    {
+        get => _dataFormat;
+    set => SetProperty(ref _dataFormat, value);
+    }
+    private int _batchInt32Limit = 55;
+
+    public int BatchInt32Limit
+    {
+        get => _batchInt32Limit;
+    set => SetProperty(ref _batchInt32Limit, value);
+    }
 
     public SiemensPlcOptions CreateSnapshot() => new()
     {
@@ -43,12 +73,48 @@ public partial class SiemensPlcOptions : ObservableObject
 /// <summary>Modbus TCP 专属站号、寻址与数据格式选项。</summary>
 public partial class ModbusTcpPlcOptions : ObservableObject
 {
-    [ObservableProperty] private byte _unitId = 1;
-    [ObservableProperty] private bool _addressStartWithZero = true;
-    [ObservableProperty] private int _registerFunction = 3;
-    [ObservableProperty] private int _bitFunction = 1;
-    [ObservableProperty] private PlcDataFormat _dataFormat = PlcDataFormat.ABCD;
-    [ObservableProperty] private int _batchInt32Limit = 62;
+    private byte _unitId = 1;
+
+    public byte UnitId
+    {
+        get => _unitId;
+    set => SetProperty(ref _unitId, value);
+    }
+    private bool _addressStartWithZero = true;
+
+    public bool AddressStartWithZero
+    {
+        get => _addressStartWithZero;
+    set => SetProperty(ref _addressStartWithZero, value);
+    }
+    private int _registerFunction = 3;
+
+    public int RegisterFunction
+    {
+        get => _registerFunction;
+    set => SetProperty(ref _registerFunction, value);
+    }
+    private int _bitFunction = 1;
+
+    public int BitFunction
+    {
+        get => _bitFunction;
+    set => SetProperty(ref _bitFunction, value);
+    }
+    private PlcDataFormat _dataFormat = PlcDataFormat.ABCD;
+
+    public PlcDataFormat DataFormat
+    {
+        get => _dataFormat;
+    set => SetProperty(ref _dataFormat, value);
+    }
+    private int _batchInt32Limit = 62;
+
+    public int BatchInt32Limit
+    {
+        get => _batchInt32Limit;
+    set => SetProperty(ref _batchInt32Limit, value);
+    }
 
     public ModbusTcpPlcOptions CreateSnapshot() => new()
     {
@@ -64,7 +130,13 @@ public partial class ModbusTcpPlcOptions : ObservableObject
 /// <summary>Omron FINS 专属选项。</summary>
 public partial class OmronFinsPlcOptions : ObservableObject
 {
-    [ObservableProperty] private int _readSplits = 500;
+    private int _readSplits = 500;
+
+    public int ReadSplits
+    {
+        get => _readSplits;
+    set => SetProperty(ref _readSplits, value);
+    }
 
     public OmronFinsPlcOptions CreateSnapshot() => new() { ReadSplits = ReadSplits };
 }
@@ -82,15 +154,71 @@ public partial class PlcConfig : ObservableObject
 
     private int _lastAutomaticPort = GetDefaultPort(PlcBrand.Mitsubishi);
 
-    [ObservableProperty] private string _protocolKey = DefaultProtocolKey;
-    [ObservableProperty] private PlcBrand _brand = PlcBrand.Mitsubishi;
-    [ObservableProperty] private string _ipAddress = "127.0.0.1";
-    [ObservableProperty] private int _port = GetDefaultPort(PlcBrand.Mitsubishi);
-    [ObservableProperty] private int _timeoutMs = 5000;
+    private string _protocolKey = DefaultProtocolKey;
 
-    [ObservableProperty] private SiemensPlcOptions _siemens = new();
-    [ObservableProperty] private ModbusTcpPlcOptions _modbusTcp = new();
-    [ObservableProperty] private OmronFinsPlcOptions _omron = new();
+    public string ProtocolKey
+    {
+        get => _protocolKey;
+    set
+    {
+        if (SetProperty(ref _protocolKey, value))
+            OnProtocolKeyChanged(value);
+    }
+    }
+    private PlcBrand _brand = PlcBrand.Mitsubishi;
+
+    public PlcBrand Brand
+    {
+        get => _brand;
+    set
+    {
+        if (SetProperty(ref _brand, value))
+            OnBrandChanged(value);
+    }
+    }
+    private string _ipAddress = "127.0.0.1";
+
+    public string IpAddress
+    {
+        get => _ipAddress;
+    set => SetProperty(ref _ipAddress, value);
+    }
+    private int _port = GetDefaultPort(PlcBrand.Mitsubishi);
+
+    public int Port
+    {
+        get => _port;
+    set => SetProperty(ref _port, value);
+    }
+    private int _timeoutMs = 5000;
+
+    public int TimeoutMs
+    {
+        get => _timeoutMs;
+    set => SetProperty(ref _timeoutMs, value);
+    }
+
+    private SiemensPlcOptions _siemens = new();
+
+    public SiemensPlcOptions Siemens
+    {
+        get => _siemens;
+    set => SetProperty(ref _siemens, value);
+    }
+    private ModbusTcpPlcOptions _modbusTcp = new();
+
+    public ModbusTcpPlcOptions ModbusTcp
+    {
+        get => _modbusTcp;
+    set => SetProperty(ref _modbusTcp, value);
+    }
+    private OmronFinsPlcOptions _omron = new();
+
+    public OmronFinsPlcOptions Omron
+    {
+        get => _omron;
+    set => SetProperty(ref _omron, value);
+    }
 
     // 兼容代理：运行时代码可渐进迁移到嵌套 Options；新 settings.json 不再写重复的扁平字段。
     [JsonIgnore]
@@ -150,14 +278,14 @@ public partial class PlcConfig : ObservableObject
     public string GetConfigurationSignature()
         => JsonSerializer.Serialize(this);
 
-    partial void OnBrandChanged(PlcBrand value)
+    private void OnBrandChanged(PlcBrand value)
     {
         if (Port == _lastAutomaticPort)
             Port = GetDefaultPort(value);
         _lastAutomaticPort = GetDefaultPort(value);
     }
 
-    partial void OnProtocolKeyChanged(string value)
+    private void OnProtocolKeyChanged(string value)
     {
         var normalized = string.IsNullOrWhiteSpace(value)
             ? DefaultProtocolKey

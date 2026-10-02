@@ -14,7 +14,7 @@
     d:DataContext="{d:DesignInstance Type=vm:OverviewViewModel}"
     d:DesignHeight="900"
     d:DesignWidth="1400"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
     </UserControl.InputBindings>
@@ -95,7 +95,7 @@
                     Style="{StaticResource PageTitleIcon}" Kind="ChartTimelineVariant" />
                 <TextBlock
                     Style="{StaticResource PageTitleText}"
-                    Margin="10,0,0,0" Text="{x:Static resources:Strings.K342}" />
+                    Margin="10,0,0,0" Text="{x:Static resources:Strings.Lbl_ProductionReview}" />
                 <controls:PageHelpButton Margin="8,0,0,0" PageKey="overview" />
                 <controls:KpiScopeChip Kind="Range" Margin="10,0,0,0" />
                 <TextBlock
@@ -110,13 +110,13 @@
                     Width="180"
                     Margin="16,0,0,0"
                     VerticalAlignment="Center"
-                    AutomationProperties.Name="{x:Static resources:Strings.K343}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ReviewDeviceSelection}"
                     DisplayMemberPath="Name"
                     ItemsSource="{Binding DeviceFilterItems}"
                     SelectedValue="{Binding SelectedDeviceId, Mode=TwoWay}"
                     SelectedValuePath="Id"
                     Style="{StaticResource ComboBoxExtend}"
-                    ToolTip="{x:Static resources:Strings.K344}" />
+                    ToolTip="{x:Static resources:Strings.Lbl_SelectDeviceReview}" />
                 <!-- 当前班次标签：班次名+时间段（主标签）+ 带日期的完整区间（辅助行） -->
                 <Border
                     Margin="16,0,0,0" Padding="10,4"
@@ -141,7 +141,7 @@
                 <RadioButton
                     GroupName="OverviewRange"
                     Click="OnTimeRangeChipClick"
-                    Content="{x:Static resources:Strings.M108}"
+                    Content="{x:Static resources:Strings.Msg_Today}"
                     Style="{StaticResource TimePresetChip}"
                     Tag="Today">
                     <RadioButton.IsChecked>
@@ -155,7 +155,7 @@
                 <RadioButton
                     GroupName="OverviewRange"
                     Click="OnTimeRangeChipClick"
-                    Content="{x:Static resources:Strings.K025}"
+                    Content="{x:Static resources:Strings.Lbl_Last24h}"
                     Style="{StaticResource TimePresetChip}"
                     Tag="Hours24">
                     <RadioButton.IsChecked>
@@ -169,7 +169,7 @@
                 <RadioButton
                     GroupName="OverviewRange"
                     Click="OnTimeRangeChipClick"
-                    Content="{x:Static resources:Strings.K258}"
+                    Content="{x:Static resources:Strings.Lbl_Last7Days}"
                     Style="{StaticResource TimePresetChip}"
                     Tag="Days7">
                     <RadioButton.IsChecked>
@@ -185,7 +185,7 @@
                     Width="110"
                     Margin="10,0,0,0"
                     VerticalAlignment="Center"
-                    AutomationProperties.Name="{x:Static resources:Strings.K345}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_TimeRangeSelection}"
                     DisplayMemberPath="Label"
                     ItemsSource="{Binding TimeRangeOptions}"
                     SelectedValue="{Binding SelectedTimeRange}"
@@ -196,10 +196,10 @@
                     Margin="8,0,0,0"
                     Padding="14,6"
                     VerticalAlignment="Center"
-                    AutomationProperties.Name="{x:Static resources:Strings.K346}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_RefreshReviewData}"
                     Command="{Binding RefreshCommand}"
                     Style="{StaticResource ButtonDefault}"
-                    ToolTip="{x:Static resources:Strings.K347}">
+                    ToolTip="{x:Static resources:Strings.Lbl_ManualRefreshF5}">
                     <Grid Width="76">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <StackPanel.Style>
@@ -213,7 +213,7 @@
                                 </Style>
                             </StackPanel.Style>
                             <materialIcons:MaterialIcon Width="14" Height="14" Kind="Refresh" />
-                            <TextBlock Margin="6,0,0,0" Text="{x:Static resources:Strings.K015}" />
+                            <TextBlock Margin="6,0,0,0" Text="{x:Static resources:Strings.Lbl_Refresh}" />
                         </StackPanel>
                         <hc:LoadingCircle
                             Width="16"
@@ -226,20 +226,20 @@
                 </Button>
                 <Button
                     Margin="8,0,0,0" VerticalAlignment="Center"
-                    AutomationProperties.Name="{x:Static resources:Strings.K348}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ExportReviewReport}"
                     Command="{Binding ExportReportCommand}"
-                    Content="{x:Static resources:Strings.K349}"
+                    Content="{x:Static resources:Strings.Lbl_ExportReport}"
                     Style="{StaticResource IconButtonDefault}"
                     Tag="{x:Static mi:MaterialIconKind.FileExportOutline}"
-                    ToolTip="{x:Static resources:Strings.K350}" />
+                    ToolTip="{x:Static resources:Strings.Lbl_ExportReviewReportCurrentTimeRange}" />
                 <Button
                     Margin="8,0,0,0" VerticalAlignment="Center"
-                    AutomationProperties.Name="{x:Static resources:Strings.K351}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ExportReviewPDF}"
                     Command="{Binding ExportReportPdfCommand}"
-                    Content="{x:Static resources:Strings.K352}"
+                    Content="{x:Static resources:Strings.Lbl_ExportPDF}"
                     Style="{StaticResource IconButtonDefault}"
                     Tag="{x:Static mi:MaterialIconKind.FileExportOutline}"
-                    ToolTip="{x:Static resources:Strings.K353}" />
+                    ToolTip="{x:Static resources:Strings.Lbl_ExportReviewPDFCurrentTimeRange}" />
                 <!-- 上次更新时间：StringFormat 需用 {0:format} 占位符，否则 "HH:mm:ss" 被当作字面量 -->
                 <TextBlock
                     Margin="12,0,0,0" VerticalAlignment="Center"
@@ -298,7 +298,7 @@
                                 FontSize="{DynamicResource FontSizeHint}"
                                 FontWeight="Bold"
                                 Foreground="{StaticResource PrimaryBrush}"
-                                Text="{x:Static resources:Strings.K354}" />
+                                Text="{x:Static resources:Strings.Lbl_DeviceHealthScore}" />
                             <TextBlock
                                 Margin="10,0,0,0"
                                 VerticalAlignment="Center"
@@ -308,22 +308,22 @@
                                 Text="{Binding HealthScoreText}"
                                 ToolTip="{Binding HealthTooltip}"
                                 ToolTipService.ShowDuration="30000" />
-                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K587}" />
+                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_OEE}" />
                             <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
                                        Text="{Binding Oee, StringFormat={}{0:P1}}"
                                        ToolTip="{Binding OeeTooltip}"
                                        ToolTipService.ShowDuration="30000" />
-                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.M238}" />
+                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Msg_QualityRate}" />
                             <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
                                        Text="{Binding QualityRate, StringFormat={}{0:P1}}"
                                        ToolTip="{Binding QualityTooltip}"
                                        ToolTipService.ShowDuration="30000" />
-                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K023}" />
+                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_TotalOutput}" />
                             <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
                                        Text="{Binding TotalOutput, StringFormat={}{0:N0}}"
                                        ToolTip="{Binding OutputTooltip}"
                                        ToolTipService.ShowDuration="30000" />
-                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K090}" />
+                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_AlarmCount}" />
                             <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding AlarmCount, StringFormat={}{0:N0}}"
                                        ToolTip="{Binding AlarmCountTooltip}"
                                        ToolTipService.ShowDuration="30000" />
@@ -347,7 +347,7 @@
                             Margin="12,0,0,0"
                             Padding="10,3"
                             Command="{Binding RefreshCommand}"
-                            Content="{x:Static resources:Strings.K015}"
+                            Content="{x:Static resources:Strings.Lbl_Refresh}"
                             Style="{StaticResource ButtonDefault}" />
                         <TextBlock
                             VerticalAlignment="Center"
@@ -367,7 +367,7 @@
                             <ColumnDefinition Width="1.4*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K354}" />
+                            <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_DeviceHealthScore}" />
                             <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding HealthScoreText}" Foreground="{StaticResource PrimaryBrush}"
                                        ToolTip="{Binding HealthTooltip}" ToolTipService.ShowDuration="30000" />
                             <ItemsControl ItemsSource="{Binding HealthIssues}" Margin="0,4,0,0">
@@ -379,15 +379,15 @@
                             </ItemsControl>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="18,0,0,0">
-                            <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K049}" />
+                            <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_CurrentWorkOrder}" />
                             <TextBlock Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding CurrentWorkOrderText}" TextWrapping="Wrap" />
-                            <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K355}" />
+                            <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_ProductBatch}" />
                             <TextBlock Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding CurrentProductText}" TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Grid.Column="2" Margin="18,0,0,0">
-                            <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K356}" />
+                            <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_CurrentRecipe}" />
                             <TextBlock Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding CurrentRecipeText}" TextWrapping="Wrap" />
-                            <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiSub}" Text="{x:Static resources:Strings.K357}" />
+                            <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiSub}" Text="{x:Static resources:Strings.Lbl_RecipeValueCurrentDeviceConfig}" />
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -397,8 +397,8 @@
                         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
                             <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource PrimaryBrush}" />
                             <StackPanel Margin="8,0,0,0">
-                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K359}" />
-                                <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.K360}" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_ReviewConclusion}" />
+                                <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.Lbl_ConclusionGeneratedProductionDeviceQualityData}" />
                             </StackPanel>
                         </StackPanel>
                         <ItemsControl ItemsSource="{Binding ReviewConclusions}">
@@ -469,12 +469,12 @@
                                                             <DataTrigger Binding="{Binding Met}" Value="Met">
                                                                 <Setter Property="Visibility" Value="Visible" />
                                                                 <Setter Property="Foreground" Value="{StaticResource StatusRunBrush}" />
-                                                                <Setter Property="Text" Value="{x:Static resources:Strings.M112}" />
+                                                                <Setter Property="Text" Value="{x:Static resources:Strings.Msg_Reached}" />
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Met}" Value="NotMet">
                                                                 <Setter Property="Visibility" Value="Visible" />
                                                                 <Setter Property="Foreground" Value="{StaticResource StatusAlarmBrush}" />
-                                                                <Setter Property="Text" Value="{x:Static resources:Strings.M113}" />
+                                                                <Setter Property="Text" Value="{x:Static resources:Strings.Msg_Below}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -517,12 +517,12 @@
                             ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K023}" />
+                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_TotalOutput}" />
                                     <controls:KpiScopeChip Kind="Range" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource PrimaryBrush}" Text="{Binding TotalOutput, StringFormat={}{0:N0}}" />
-                                    <TextBlock Style="{StaticResource KpiSub}" Margin="4,0,0,0" Text="{x:Static resources:Strings.K014}" />
+                                    <TextBlock Style="{StaticResource KpiSub}" Margin="4,0,0,0" Text="{x:Static resources:Strings.Lbl_Pcs}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Style="{StaticResource KpiSub}" Text="{Binding TotalOk, StringFormat=OK {0:N0}}" />
@@ -537,12 +537,12 @@
                                 ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K090}" />
+                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_AlarmCount}" />
                                     <controls:KpiScopeChip Kind="Range" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding AlarmCount, StringFormat={}{0:N0}}" />
-                                    <TextBlock Style="{StaticResource KpiSub}" Margin="4,0,0,0" Text="{x:Static resources:Strings.K361}" />
+                                    <TextBlock Style="{StaticResource KpiSub}" Margin="4,0,0,0" Text="{x:Static resources:Strings.Lbl_Times}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Style="{StaticResource KpiSub}" Text="{Binding RecoveredAlarmCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F277}" />
@@ -568,7 +568,7 @@
                                 ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K091}" />
+                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_LongestDowntime}" />
                                     <controls:KpiScopeChip Kind="Range" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
@@ -593,7 +593,7 @@
                                     <TextBlock
                                         Margin="8,0,0,0" VerticalAlignment="Center"
                                         Style="{StaticResource KpiCellLabel}"
-                                        Text="{x:Static resources:Strings.K362}" />
+                                        Text="{x:Static resources:Strings.Lbl_PeakPeriod}" />
                                     <controls:KpiScopeChip Kind="Range" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
@@ -618,7 +618,7 @@
                                     <TextBlock
                                         Margin="8,0,0,0" VerticalAlignment="Center"
                                         Style="{StaticResource KpiCellLabel}"
-                                        Text="{x:Static resources:Strings.K363}" />
+                                        Text="{x:Static resources:Strings.Lbl_ValleyPeriod}" />
                                     <controls:KpiScopeChip Kind="Range" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
@@ -637,8 +637,8 @@
                         <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                             <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource ChartBaseSeriesBrush}" />
                             <StackPanel Margin="8,0,0,0">
-                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K364}" />
-                                <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.K365}" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_CycleComparison}" />
+                                <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.Lbl_ChangeVsPreviousPeriod}" />
                             </StackPanel>
                         </StackPanel>
                         <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
@@ -646,7 +646,7 @@
                                    Text="{Binding ComparisonSummaryText}" />
                         <UniformGrid Columns="4" Margin="24,0,24,0">
                             <StackPanel ToolTip="{Binding OutputTooltip}" ToolTipService.ShowDuration="30000">
-                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K366}" />
+                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_CurrentTotalOutput}" />
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TotalOutput, StringFormat={}{0:N0}}" />
                             </StackPanel>
                             <StackPanel>
@@ -655,13 +655,13 @@
                             </StackPanel>
                             <StackPanel ToolTip="{Binding QualityTooltip}" ToolTipService.ShowDuration="30000">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K367}" />
+                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_CurrentQualityRate}" />
                                     <controls:KpiScopeChip Kind="Range" />
                                 </StackPanel>
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding QualityRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                             <StackPanel ToolTip="{Binding OeeTooltip}" ToolTipService.ShowDuration="30000">
-                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K368}" />
+                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_CurrentOEE}" />
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding Oee, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </UniformGrid>
@@ -682,8 +682,8 @@
                             <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
                                 <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource ChartOkSeriesBrush}" />
                                 <StackPanel Margin="8,0,0,0">
-                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K369}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.K370}" />
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_OutputTrend}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.Lbl_ViewOutputChangesTimeRange}" />
                                 </StackPanel>
                             </StackPanel>
                             <Grid Height="240">
@@ -709,8 +709,8 @@
                             <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
                                 <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource StatusAlarmBrush}" />
                                 <StackPanel Margin="8,0,0,0">
-                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K371}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.K372}" />
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_Top5Alarms}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.Lbl_MainAlarmsCurrentTimeRange}" />
                                 </StackPanel>
                             </StackPanel>
                             <Grid>
@@ -780,7 +780,7 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                                 <!-- 空状态：TopAlarms 为空时显示 -->
-                                <controls:EmptyState IconKind="ShieldCheckOutline" Message="{x:Static resources:Strings.K374}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <controls:EmptyState IconKind="ShieldCheckOutline" Message="{x:Static resources:Strings.Lbl_NoAlarmRecords}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <controls:EmptyState.Style>
                                         <Style TargetType="controls:EmptyState">
                                             <Setter Property="Visibility" Value="Collapsed" />
@@ -802,8 +802,8 @@
                         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
                             <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource PrimaryBrush}" />
                             <StackPanel Margin="8,0,0,0">
-                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K375}" />
-                                <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.K376}" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_DeviceStatusTimeline}" />
+                                <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.Lbl_RunningPausedAlarmUnknownIntervalsClick}" />
                             </StackPanel>
                         </StackPanel>
                         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
@@ -899,8 +899,8 @@
                             <StackPanel Orientation="Horizontal">
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
                                 <StackPanel Margin="8,0,0,0">
-                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K378}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.K379}" />
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_CurrentDeviceDetails}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.Lbl_OutputRunTimeOEESelectedDevice}" />
                                 </StackPanel>
                             </StackPanel>
                             <ToggleButton
@@ -908,7 +908,7 @@
                                 VerticalAlignment="Center"
                                 Cursor="Hand"
                                 IsChecked="{Binding IsDeviceTableExpanded}"
-                                ToolTip="{x:Static resources:Strings.K379}">
+                                ToolTip="{x:Static resources:Strings.Lbl_OutputRunTimeOEESelectedDevice}">
                                 <ToggleButton.Style>
                                     <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
                                         <Setter Property="Padding" Value="10,3" />
@@ -964,9 +964,9 @@
                                 </ItemsPanelTemplate>
                             </DataGrid.ItemsPanel>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="{x:Static resources:Strings.K002}" Binding="{Binding DeviceName}" Width="170" MinWidth="150"
+                                <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Device}" Binding="{Binding DeviceName}" Width="170" MinWidth="150"
                                                     ElementStyle="{StaticResource DeviceNameCell}" />
-                                <DataGridTemplateColumn Header="{x:Static resources:Strings.K380}" Width="160" MinWidth="145">
+                                <DataGridTemplateColumn Header="{x:Static resources:Strings.Lbl_Output}" Width="160" MinWidth="145">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch">
@@ -995,17 +995,17 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="{x:Static resources:Strings.K001}" Binding="{Binding QualityRate, StringFormat={}{0:P1}}" Width="92" MinWidth="86">
+                                <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_QualityRate}" Binding="{Binding QualityRate, StringFormat={}{0:P1}}" Width="92" MinWidth="86">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock" BasedOn="{StaticResource DeviceCoreMetricCell}" />
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="{x:Static resources:Strings.K587}" Binding="{Binding Oee, StringFormat={}{0:P1}}" Width="86" MinWidth="80">
+                                <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_OEE}" Binding="{Binding Oee, StringFormat={}{0:P1}}" Width="86" MinWidth="80">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock" BasedOn="{StaticResource DeviceCoreMetricCell}" />
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTemplateColumn Header="{x:Static resources:Strings.K081}" Width="220" MinWidth="205">
+                                <DataGridTemplateColumn Header="{x:Static resources:Strings.Lbl_StatusDistribution}" Width="220" MinWidth="205">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -1029,7 +1029,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="{x:Static resources:Strings.K381}" Binding="{Binding TopAlarmName}" Width="*" MinWidth="180">
+                                <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_MainAlarms}" Binding="{Binding TopAlarmName}" Width="*" MinWidth="180">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
@@ -1056,8 +1056,8 @@
                         <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
                             <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource PrimaryBrush}" />
                                 <StackPanel Margin="8,0,0,0">
-                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K082}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.K382}" />
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_ShiftComparison}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.Lbl_OutputQualityDifferencesAcrossShifts}" />
                                 </StackPanel>
                         </StackPanel>
                         <Grid>
@@ -1080,7 +1080,7 @@
                                     </ItemsPanelTemplate>
                                 </DataGrid.ItemsPanel>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K022}" Binding="{Binding ShiftName}" Width="110">
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Shift}" Binding="{Binding ShiftName}" Width="110">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1089,7 +1089,7 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTemplateColumn Header="{x:Static resources:Strings.K383}" Width="230" MinWidth="210">
+                                    <DataGridTemplateColumn Header="{x:Static resources:Strings.Lbl_OutputComposition}" Width="230" MinWidth="210">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid VerticalAlignment="Center" Margin="8,0">
@@ -1117,7 +1117,7 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K023}" Binding="{Binding TotalCount, StringFormat={}{0:N0}}" Width="90">
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_TotalOutput}" Binding="{Binding TotalCount, StringFormat={}{0:N0}}" Width="90">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1128,7 +1128,7 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K001}" Binding="{Binding OkRatio, StringFormat={}{0:P1}}" Width="88">
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_QualityRate}" Binding="{Binding OkRatio, StringFormat={}{0:P1}}" Width="88">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1139,7 +1139,7 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K090}" Binding="{Binding AlarmCount, StringFormat={}{0:N0}}" Width="88">
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_AlarmCount}" Binding="{Binding AlarmCount, StringFormat={}{0:N0}}" Width="88">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1149,7 +1149,7 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K384}" Binding="{Binding AlarmRate, StringFormat={}{0:P1}}" Width="92">
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_AlarmDensity}" Binding="{Binding AlarmRate, StringFormat={}{0:P1}}" Width="92">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1159,7 +1159,7 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K587}" Binding="{Binding Oee, StringFormat={}{0:P1}}" Width="86">
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_OEE}" Binding="{Binding Oee, StringFormat={}{0:P1}}" Width="86">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1170,7 +1170,7 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K007}" Binding="{Binding RunTimeHours, StringFormat={}{0:F1}h}" Width="100">
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_RunTime}" Binding="{Binding RunTimeHours, StringFormat={}{0:F1}h}" Width="100">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1179,7 +1179,7 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K038}" Binding="{Binding AlarmDurationHours, StringFormat={}{0:F1}h}" Width="100">
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_AlarmDuration}" Binding="{Binding AlarmDurationHours, StringFormat={}{0:F1}h}" Width="100">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1189,7 +1189,7 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K385}" Binding="{Binding TargetAchievementRate, StringFormat={}{0:P1}}" Width="100">
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_TargetAchievement}" Binding="{Binding TargetAchievementRate, StringFormat={}{0:P1}}" Width="100">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1202,7 +1202,7 @@
                                 </DataGrid.Columns>
                             </DataGrid>
                             <!--  空状态：未配置班次或无数据时提示  -->
-                            <controls:EmptyState IconKind="CalendarClockOutline" Message="{x:Static resources:Strings.K386}" Hint="{x:Static resources:Strings.K387}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <controls:EmptyState IconKind="CalendarClockOutline" Message="{x:Static resources:Strings.Lbl_NoShiftData}" Hint="{x:Static resources:Strings.Lbl_ConfigureShiftsSettings}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <controls:EmptyState.Style>
                                     <Style TargetType="controls:EmptyState">
                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -1237,8 +1237,8 @@
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                                 <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource ChartBaseSeriesBrush}" />
                                 <StackPanel Margin="8,0,0,0">
-                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K388}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.K389}" />
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_OEELossBreakdown}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.Lbl_LocateLossesAcrossPerformanceAvailabilityQuality}" />
                                 </StackPanel>
                             </StackPanel>
                             <oxy:PlotView
@@ -1266,8 +1266,8 @@
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                                 <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource DangerBrush}" />
                                 <StackPanel Margin="8,0,0,0">
-                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K390}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.K391}" />
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_CurrentDeviceDefectPareto}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.Lbl_RankedDefectsAddedSelectedTimeRange}" />
                                 </StackPanel>
                             </StackPanel>
                             <Grid Grid.Row="1" MinHeight="200">
@@ -1276,7 +1276,7 @@
                                     Model="{Binding DefectParetoChart}"
                                     Background="Transparent"
                                     MinHeight="200" />
-                                <controls:EmptyState IconKind="ShieldCheckOutline" Message="{x:Static resources:Strings.K392}" Hint="{x:Static resources:Strings.K393}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <controls:EmptyState IconKind="ShieldCheckOutline" Message="{x:Static resources:Strings.Lbl_NoCumulativeDefects}" Hint="{x:Static resources:Strings.Lbl_DefectCountsComeDeviceCumulativeSnapshot}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <controls:EmptyState.Style>
                                         <Style TargetType="controls:EmptyState">
                                             <Setter Property="Visibility" Value="Collapsed" />
@@ -1299,17 +1299,17 @@
                         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
                             <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource StatusAlarmBrush}" />
                             <StackPanel Margin="8,0,0,0">
-                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K395}" />
-                                <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.K396}" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_DowntimeAnalysis}" />
+                                <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.Lbl_ComputedCurrentDeviceStatusAlarmHistory}" />
                             </StackPanel>
                         </StackPanel>
                         <UniformGrid Columns="4">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K397}" />
+                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_TotalDowntime}" />
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TotalDowntimeHours, Converter={StaticResource DurationToTextConverter}}" />
                             </StackPanel>
                             <StackPanel>
-                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K398}" />
+                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_AverageAlarmDuration}" />
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding AverageAlarmDurationMinutes, StringFormat={}{0:F1}min}" />
                             </StackPanel>
                             <StackPanel>
@@ -1317,7 +1317,7 @@
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding MtbfHours, Converter={StaticResource DurationToTextConverter}}" />
                             </StackPanel>
                             <StackPanel>
-                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K091}" />
+                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_LongestDowntime}" />
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding LongestDowntimeHours, Converter={StaticResource DurationToTextConverter}}"
                                            ToolTip="{Binding LongestDowntimeTooltip}"
                                            ToolTipService.ShowDuration="30000" />
@@ -1332,8 +1332,8 @@
                         <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
                             <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource ChartBaseSeriesBrush}" />
                             <StackPanel Margin="8,0,0,0">
-                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K399}" />
-                                <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.K400}" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_OutputHeatmap}" />
+                                <TextBlock Style="{StaticResource SubtitleText}" Text="{x:Static resources:Strings.Lbl_ViewOutputDistributionAcrossDevicesPeriods}" />
                             </StackPanel>
                         </StackPanel>
                         <Grid>
@@ -1343,7 +1343,7 @@
                                 Background="Transparent"
                                 Height="180" />
                             <!--  空状态：无设备或无产量数据时提示  -->
-                            <controls:EmptyState IconKind="GridLarge" Message="{x:Static resources:Strings.K401}" Hint="{x:Static resources:Strings.K402}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <controls:EmptyState IconKind="GridLarge" Message="{x:Static resources:Strings.Lbl_NoHeatmapData}" Hint="{x:Static resources:Strings.Lbl_DeviceRunningNoOutputAcquired}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <controls:EmptyState.Style>
                                     <Style TargetType="controls:EmptyState">
                                         <Setter Property="Visibility" Value="Collapsed" />

@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.ComponentModel;
 
 namespace Kanban.Collector.Core.Models;
 
@@ -8,14 +8,29 @@ public partial class ConnectionProfile : ObservableObject
     public const string DefaultId = "default";
     public const string DefaultName = "Default connection";
 
-    [ObservableProperty]
     private string _id = DefaultId;
 
-    [ObservableProperty]
+    public string Id
+    {
+        get => _id;
+    set => SetProperty(ref _id, value);
+    }
+
     private string _name = DefaultName;
 
-    [ObservableProperty]
+    public string Name
+    {
+        get => _name;
+    set => SetProperty(ref _name, value);
+    }
+
     private PlcConfig _config = new();
+
+    public PlcConfig Config
+    {
+        get => _config;
+    set => SetProperty(ref _config, value);
+    }
 
     public ConnectionProfile CreateSnapshot() => new()
     {

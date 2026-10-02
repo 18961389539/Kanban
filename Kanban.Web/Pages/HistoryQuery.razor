@@ -22,7 +22,7 @@
             <label class="filter-item grow">
                 <span class="filter-label">@L.T("Hq_SnCol")</span>
                 <input class="filter-input" value="@SnInput" @onchange="OnSnInput"
-                       placeholder="@L.T("K915")" @onkeydown="OnSnKey" />
+                       placeholder="@L.T("Lbl_EnterSNTraceEGSN20260830")" @onkeydown="OnSnKey" />
             </label>
         }
         else
@@ -493,7 +493,7 @@
         }
         else if (!SnHasQueried)
         {
-            <EmptyState Title="@L.T("K916")" Hint="@L.T("K917")" Icon="🔍" />
+            <EmptyState Title="@L.T("Lbl_EnterSNLookUpProductionTrace")" Hint="@L.T("Lbl_ShowsDeviceWorkOrderShiftTime")" Icon="🔍" />
         }
         else if (SnRows.Count == 0)
         {
@@ -502,7 +502,7 @@
         else
         {
             <section class="card">
-                <div class="card-title">@L.T("K914") <span class="badge-soft">@L.T("K919", SnRows.Count)</span></div>
+                <div class="card-title">@L.T("Lbl_SNTraceability") <span class="badge-soft">@L.T("Lbl_Total2", SnRows.Count)</span></div>
                 <div class="table-scroll">
                     <table class="hq-table">
                     <thead>
@@ -512,7 +512,7 @@
                             <th>@L.T("Hq_DeviceName")</th>
                             <th>@L.T("Hq_SnWorkOrder")</th>
                             <th>@L.T("Hq_Shift")</th>
-                            <th>@L.T("K924")</th>
+                            <th>@L.T("Lbl_Result2")</th>
                             <th>@L.T("Hq_SnSource")</th>
                         </tr>
                     </thead>

@@ -53,23 +53,23 @@ public sealed class ProductionReviewHealthScoreService : IProductionReviewHealth
             .Sum(segment => (segment.End - segment.Start).TotalMinutes) / 60.0;
         if (device.TargetCycle > 0 && runHours > 0 && totalOutput / runHours < device.TargetCycle * 0.8)
             issues.Add(new HealthIssue(HealthIssueKind.NoOutput,
-                string.Format(Strings.F195, totalOutput / runHours, device.TargetCycle)));
+                string.Format(Strings.Prompt_LowOutputActualPcsHourTarget, totalOutput / runHours, device.TargetCycle)));
 
         var currentAlarmCount = alarms.Count(alarm => alarm.EventType == AlarmEventType.Triggered);
         if (currentAlarmCount >= 3 && (previousAlarmCount == 0 || currentAlarmCount > previousAlarmCount * 1.5))
             issues.Add(new HealthIssue(HealthIssueKind.AlarmSpike,
-                string.Format(Strings.F130, currentAlarmCount, previousAlarmCount)));
+                string.Format(Strings.Prompt_AlarmSurgePeriodLastPeriod, currentAlarmCount, previousAlarmCount)));
 
         var defectCount = concentrations.Sum(item => item.Count);
         if (defectCount >= 3 && (previousDefectCount == 0 || defectCount > previousDefectCount * 1.5))
             issues.Add(new HealthIssue(HealthIssueKind.DefectSpike,
-                string.Format(Strings.F190, defectCount, previousDefectCount)));
+                string.Format(Strings.Prompt_DefectRateSurgePeriodLastPeriod, defectCount, previousDefectCount)));
 
         var idleRunning = timeline.FirstOrDefault(segment => segment.HasNoOutput
             && (segment.End - segment.Start).TotalMinutes >= 30);
         if (idleRunning != null)
             issues.Add(new HealthIssue(HealthIssueKind.NoOutput,
-                string.Format(Strings.F220, idleRunning.Start, idleRunning.End, (idleRunning.End - idleRunning.Start).TotalMinutes)));
+                string.Format(Strings.Prompt_RunningWithoutOutputLastedMin, idleRunning.Start, idleRunning.End, (idleRunning.End - idleRunning.Start).TotalMinutes)));
 
         var score = 100;
         foreach (var issue in issues)

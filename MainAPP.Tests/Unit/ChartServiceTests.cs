@@ -589,15 +589,15 @@ public class ChartServiceTests
         Assert.NotNull(chart);
 
         var line = chart!.Series.OfType<LineSeries>().Single();
-        Assert.Equal(MainAPP.Resources.Strings.M271, line.Title); // 累计占比
+        Assert.Equal(MainAPP.Resources.Strings.Msg_CumulativeRatio, line.Title); // 累计占比
 
         // 所有轴的 Title 与折线/柱的 Title 都不得含错误文案
         var wrongTexts = new[]
         {
-            MainAPP.Resources.Strings.M209, // 报警次数
-            MainAPP.Resources.Strings.M210, // 报警时长(分钟)
-            MainAPP.Resources.Strings.M211, // 停机时长(分钟)
-            MainAPP.Resources.Strings.M212, // 速度(件/小时)
+            MainAPP.Resources.Strings.Msg_AlarmCount, // 报警次数
+            MainAPP.Resources.Strings.Msg_AlarmDurationMin, // 报警时长(分钟)
+            MainAPP.Resources.Strings.Msg_DowntimeMin, // 停机时长(分钟)
+            MainAPP.Resources.Strings.Msg_SpeedPcsH, // 速度(件/小时)
         };
         var allTitles = chart.Axes.Select(a => a.Title)
             .Concat(chart.Series.Select(s => s.Title))
@@ -654,7 +654,7 @@ public class ChartServiceTests
         Assert.Equal(12, bars.Items[0].Value);
 
         var line = Assert.Single(chart.Series.OfType<LineSeries>());
-        Assert.Equal(MainAPP.Resources.Strings.M271, line.Title);
+        Assert.Equal(MainAPP.Resources.Strings.Msg_CumulativeRatio, line.Title);
         Assert.Equal(2, line.Points.Count);
         Assert.Equal(60, line.Points[0].Y, precision: 6);
         Assert.Equal(100, line.Points[1].Y, precision: 6);

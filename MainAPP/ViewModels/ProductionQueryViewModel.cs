@@ -153,7 +153,7 @@ public partial class ProductionQueryViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Error(ex, "产量查询失败");
-            QueryError = string.Format(Strings.F063, ex.Message);
+            QueryError = string.Format(Strings.Prompt_FailedQueryOutputHistory, ex.Message);
             return (0, 0);
         }
     }
@@ -207,7 +207,7 @@ public partial class ProductionQueryViewModel : ObservableObject
         return HistoryQueryHelper.BuildCsv(rows,
             $"# {string.Format(Strings.Csv_Prod_Range, fromDate.ToString("yyyy-MM-dd HH:mm:ss"), toDate.ToString("yyyy-MM-dd HH:mm:ss"))}",
             $"# {string.Format(Strings.Csv_Prod_Summary, TotalOk, TotalNg, QualityRate.ToString("P2"))}",
-            $"# {ProductionInsight ?? Strings.M176}");
+            $"# {ProductionInsight ?? Strings.Msg_NoInsights}");
     }
 
     private static string? BuildProductionInsight(List<(DateTime Time, int Ok, int Ng, int Group)> chartData)
@@ -224,9 +224,9 @@ public partial class ProductionQueryViewModel : ObservableObject
 
         var main = deviation switch
         {
-            > 0.2 => string.Format(Strings.F239, peak.Time, peak.Ok, deviation),
-            < -0.2 => string.Format(Strings.F240, peak.Time, peak.Ok, -deviation),
-            _ => string.Format(Strings.F064, avgOk, peak.Ok, peak.Time)
+            > 0.2 => string.Format(Strings.Prompt_PeakOKPcsAboveMean, peak.Time, peak.Ok, deviation),
+            < -0.2 => string.Format(Strings.Prompt_TroughOKPcsBelowMean, peak.Time, peak.Ok, -deviation),
+            _ => string.Format(Strings.Prompt_OutputFluctuatedSteadilyMeanOKPcs, avgOk, peak.Ok, peak.Time)
         };
 
         // 突降检测比较同一班次实例内相邻时间桶的产量增量，
@@ -243,8 +243,8 @@ public partial class ProductionQueryViewModel : ObservableObject
             var worst = drops.MaxBy(d => (d.PrevOk - d.CurrOk) / (double)d.PrevOk);
             var dropPct = 1.0 - worst.CurrOk / (double)worst.PrevOk;
             var suffix = drops.Count == 1
-                ? string.Format(Strings.F048, worst.Time, dropPct, worst.PrevOk, worst.CurrOk)
-                : string.Format(Strings.F050, drops.Count, worst.Time, dropPct, worst.PrevOk, worst.CurrOk);
+                ? string.Format(Strings.Prompt_OutputDroppedPcs, worst.Time, dropPct, worst.PrevOk, worst.CurrOk)
+                : string.Format(Strings.Prompt_DropsDetectedWorstDownPcs, drops.Count, worst.Time, dropPct, worst.PrevOk, worst.CurrOk);
             return $"{main}\n{suffix}";
         }
 
@@ -265,7 +265,7 @@ public partial class ProductionQueryViewModel : ObservableObject
             {
                 X = DateTimeAxis.ToDouble(curr.Time),
                 Y = curr.Ok,
-                Text = string.Format(Strings.F043, curr.Time),
+                Text = string.Format(Strings.Prompt_Drop, curr.Time),
                 Fill = ChartPalette.Alarm,
                 Stroke = OxyColors.White,
                 TextColor = ChartPalette.Alarm,

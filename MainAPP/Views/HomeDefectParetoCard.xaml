@@ -10,7 +10,7 @@
     xmlns:metrics="clr-namespace:Kanban.Contracts.Metrics;assembly=Kanban.Contracts"
     mc:Ignorable="d"
     d:DesignHeight="400"
-    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources">
+    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <!--
         主页仪表板卡片 6：缺陷帕累托（竖柱件数 + 累计占比折线）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
@@ -27,7 +27,7 @@
             <StackPanel Grid.Row="0" Margin="0,0,0,10">
                 <StackPanel Orientation="Horizontal">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Bug" />
-                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K317}" />
+                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.Lbl_DefectParetoTop8}" />
                     <controls:KpiScopeChip Kind="Shift" />
                 </StackPanel>
                 <TextBlock Margin="0,4,0,0"
@@ -63,7 +63,7 @@
                               Visibility="{Binding HasDefectParetoData, Converter={StaticResource BoolToVis}}" />
 
                 <controls:EmptyState IconKind="InboxOutline"
-                                     Message="{x:Static resources:Strings.K052}"
+                                     Message="{x:Static resources:Strings.Lbl_NoDefectData}"
                                      HorizontalAlignment="Center" VerticalAlignment="Center">
                     <controls:EmptyState.Style>
                         <Style TargetType="controls:EmptyState">

@@ -1,3 +1,4 @@
+using Kanban.Localization;
 using System.Collections.Generic;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Localization;
@@ -37,27 +38,10 @@ public class LocalizationTests
             .ToArray();
     }
 
-    private static string ResxFileName(string language)
-        => language switch
-        {
-            "zh-CN" => "Strings.resx",
-            "en-US" => "Strings.en.resx",
-            "ja-JP" => "Strings.ja.resx",
-            "pt-BR" => "Strings.pt-BR.resx",
-            _ => $"Strings.{language}.resx",
-        };
-
-    /// <summary>读取源 resx 文件（XML）的 key→value 映射。
-    /// 用源文件而非编译后的 .resources（后者为二进制格式）；验证的是源文件 key 一致性。</summary>
     private static Dictionary<string, string> ReadKeys(string language)
-    {
-        var fileName = ResxFileName(language);
-        var path = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "MainAPP", "Resources", fileName);
-        var doc = XDocument.Load(path);
-        return doc.Root!
-            .Elements("data")
-            .ToDictionary(e => e.Attribute("name")!.Value, e => e.Element("value")!.Value);
-    }
+        => LocalizationCatalog.Keys("Wpf").ToDictionary(
+            key => key,
+            key => LocalizationCatalog.Get("Wpf", key, language) ?? "");
 
     [Fact]
     public void AllConfiguredLocales_HaveIdenticalKeySets_AndNonEmptyValues()

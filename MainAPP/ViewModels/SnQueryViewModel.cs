@@ -50,7 +50,7 @@ public partial class SnQueryViewModel : ObservableObject
         QueryError = null;
         if (string.IsNullOrEmpty(sn))
         {
-            QueryError = MainAPP.Resources.Strings.K921;
+            QueryError = MainAPP.Resources.Strings.Lbl_PleaseEnterSNTrace;
             return;
         }
 
@@ -63,14 +63,14 @@ public partial class SnQueryViewModel : ObservableObject
             foreach (var record in list)
                 Results.Add(record);
             if (list.Count == 0)
-                QueryError = string.Format(MainAPP.Resources.Strings.K922, sn);
+                QueryError = string.Format(MainAPP.Resources.Strings.Lbl_NoTraceRecordsFoundSN, sn);
             Kanban.Collector.Core.Services.AuditLog.Record(
                 "History.Query", "History", sn, detail: string.Format(MainAPP.Resources.Strings.Audit_Detail_SnQuery, sn, list.Count));
         }
         catch (Exception ex)
         {
             Results.Clear();
-            QueryError = string.Format(MainAPP.Resources.Strings.K923, ex.Message);
+            QueryError = string.Format(MainAPP.Resources.Strings.Lbl_QueryFailed, ex.Message);
             Kanban.Collector.Core.Services.AuditLog.Record(
                 "History.Query", "History", sn, succeeded: false, detail: QueryError);
         }

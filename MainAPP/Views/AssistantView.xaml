@@ -6,7 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     xmlns:controls="clr-namespace:MainAPP.Controls"
-    xmlns:resources="clr-namespace:MainAPP.Resources"
+    xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
     d:DataContext="{d:DesignInstance Type=vm:AssistantViewModel}"
     d:DesignHeight="700"

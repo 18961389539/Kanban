@@ -149,7 +149,7 @@ public class DataSourceCsvIOService(
         {
             var summary = ExportDataSourcesToPath(device, path);
             _dialog.NotifySuccess(string.Format(
-                Strings.F331,
+                Strings.Prompt_ExportedSourcesValues,
                 summary.SourceCount,
                 summary.ValueCount,
                 Path.GetFileName(path)));
@@ -157,7 +157,7 @@ public class DataSourceCsvIOService(
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
             return false;
         }
     }
@@ -170,7 +170,7 @@ public class DataSourceCsvIOService(
             Strings.Csv_DataSource_FileName,
             device.Name,
             DateTime.Now);
-        return _dialog.ShowSaveFileDialog(Strings.M360, defaultFileName, Strings.M310);
+        return _dialog.ShowSaveFileDialog(Strings.Msg_CannotDisableDemoteLastAdministratorAccount, defaultFileName, Strings.Msg_CSVFilesCsvAllFiles);
     }
 
     /// <summary>将当前设备的数据源配置写入指定路径；可在线程池执行。</summary>
@@ -191,7 +191,7 @@ public class DataSourceCsvIOService(
 
     /// <summary>仅弹出文件选择对话框，返回用户选择的路径。</summary>
     public string? PickImportPath()
-        => _dialog.ShowOpenFileDialog(Strings.M361, Strings.M310);
+        => _dialog.ShowOpenFileDialog(Strings.Msg_CannotChangeOwnRoleDisableYourself, Strings.Msg_CSVFilesCsvAllFiles);
 
     /// <summary>
     /// 读取并校验数据源 CSV。该方法不修改设备状态，可在线程池执行。
@@ -209,7 +209,7 @@ public class DataSourceCsvIOService(
             csv.Context.RegisterClassMap<DataSourceCsvRecordMap>();
             if (!csv.Read())
             {
-                result.Errors.Add(Strings.F333);
+                result.Errors.Add(Strings.Prompt_CSVFileEmptyHasNoData);
                 return result;
             }
 
@@ -232,7 +232,7 @@ public class DataSourceCsvIOService(
                 .ToArray();
             if (missingHeaders.Length > 0)
             {
-                result.Errors.Add(string.Format(Strings.F346, string.Join(", ", missingHeaders)));
+                result.Errors.Add(string.Format(Strings.Prompt_MissingRequiredColumns, string.Join(", ", missingHeaders)));
                 return result;
             }
 
@@ -247,7 +247,7 @@ public class DataSourceCsvIOService(
                 var sourceName = record.SourceName.Trim();
                 if (string.IsNullOrWhiteSpace(sourceName))
                 {
-                    result.Errors.Add(string.Format(Strings.F334, rowNumber));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowSourceNameEmpty, rowNumber));
                     continue;
                 }
 
@@ -298,7 +298,7 @@ public class DataSourceCsvIOService(
                 }
                 else if (!HasSameSourceConfiguration(group.Source, candidateSource))
                 {
-                    result.Errors.Add(string.Format(Strings.F342, rowNumber));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowInconsistentConfigurationSameSource, rowNumber));
                     continue;
                 }
 
@@ -310,7 +310,7 @@ public class DataSourceCsvIOService(
 
                 if (string.IsNullOrWhiteSpace(record.ValueName))
                 {
-                    result.Errors.Add(string.Format(Strings.F335, rowNumber));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowValueNameEmpty, rowNumber));
                     continue;
                 }
 
@@ -320,7 +320,7 @@ public class DataSourceCsvIOService(
                 var valueKey = value.Name.Trim();
                 if (!group.ValueNames.Add(valueKey))
                 {
-                    result.Errors.Add(string.Format(Strings.F343, rowNumber, sourceName, value.Name));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowDuplicateValueSource, rowNumber, sourceName, value.Name));
                     continue;
                 }
 
@@ -330,11 +330,11 @@ public class DataSourceCsvIOService(
             }
 
             if (recordIndex == 0)
-                result.Errors.Add(Strings.F333);
+                result.Errors.Add(Strings.Prompt_CSVFileEmptyHasNoData);
         }
         catch (Exception ex)
         {
-            result.Errors.Add(string.Format(Strings.F134, ex.Message));
+            result.Errors.Add(string.Format(Strings.Prompt_FileReadParseFailed, ex.Message));
         }
 
         return result;
@@ -491,13 +491,13 @@ public class DataSourceCsvIOService(
         var valueName = record.ValueName.Trim();
         if (string.IsNullOrWhiteSpace(valueName))
         {
-            errors.Add(string.Format(Strings.F335, rowNumber));
+            errors.Add(string.Format(Strings.Prompt_RowValueNameEmpty, rowNumber));
             return false;
         }
 
         if (!CsvLocalization.TryParseDataSourceValueType(record.ValueDataType, out var dataType))
         {
-            errors.Add(string.Format(Strings.F336, rowNumber, record.ValueDataType));
+            errors.Add(string.Format(Strings.Prompt_RowInvalidValueType, rowNumber, record.ValueDataType));
             return false;
         }
 
@@ -629,19 +629,19 @@ public class DataSourceCsvIOService(
         if (string.IsNullOrWhiteSpace(address))
         {
             if (allowEmpty) return true;
-            errors.Add(string.Format(Strings.F183, rowNumber));
+            errors.Add(string.Format(Strings.Prompt_RowPLCAddressEmpty, rowNumber));
             return false;
         }
 
         var parsed = CurrentCodec.Parse(address);
         if (parsed is not { IsValid: true })
         {
-            errors.Add(string.Format(Strings.F337, rowNumber, address, parsed.ErrorMessage));
+            errors.Add(string.Format(Strings.Prompt_RowAddressInvalid, rowNumber, address, parsed.ErrorMessage));
             return false;
         }
         if (parsed.Type != expectedType)
         {
-            errors.Add(string.Format(Strings.F338, rowNumber, address, expectedType, parsed.Type));
+            errors.Add(string.Format(Strings.Prompt_RowAddressTypeMismatchExpectedActual, rowNumber, address, expectedType, parsed.Type));
             return false;
         }
         return true;
@@ -701,20 +701,20 @@ public class DataSourceCsvIOService(
         }
         catch (JsonException ex)
         {
-            errors.Add(string.Format(Strings.F340, rowNumber, ex.Message));
+            errors.Add(string.Format(Strings.Prompt_RowInvalidEnumJSON, rowNumber, ex.Message));
             return false;
         }
 
         if (records == null)
         {
-            errors.Add(string.Format(Strings.F340, rowNumber, "JSON must be an array"));
+            errors.Add(string.Format(Strings.Prompt_RowInvalidEnumJSON, rowNumber, "JSON must be an array"));
             return false;
         }
 
         if (records.Any(record => string.IsNullOrWhiteSpace(record.DisplayName))
             || records.GroupBy(record => record.Value).Any(group => group.Count() > 1))
         {
-            errors.Add(string.Format(Strings.F341, rowNumber));
+            errors.Add(string.Format(Strings.Prompt_RowDuplicateEnumValues, rowNumber));
             return false;
         }
 
@@ -776,7 +776,7 @@ public class DataSourceCsvIOService(
         int rowNumber,
         string field,
         string? value)
-        => errors.Add(string.Format(Strings.F339, rowNumber, field, value ?? string.Empty));
+        => errors.Add(string.Format(Strings.Prompt_RowInvalidValueField, rowNumber, field, value ?? string.Empty));
 
     private static void EnsureIds(DataSource source)
     {

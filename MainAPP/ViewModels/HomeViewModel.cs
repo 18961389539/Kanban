@@ -178,7 +178,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     /// <summary>工单进度文本：OK产量 / 计划产量（如 "1200 / 5000 件"）。</summary>
     public string WorkOrderProgressText => CurrentWorkOrder != null
-        ? string.Format(Strings.F029, _currentWorkOrderOk, CurrentWorkOrder.TargetQuantity)
+        ? string.Format(Strings.Prompt_Pcs2, _currentWorkOrderOk, CurrentWorkOrder.TargetQuantity)
         : "";
 
     /// <summary>工单进度比例（0.0-1.0，超额时 Clamp 到 1.0 避免进度条溢出）。</summary>
@@ -317,8 +317,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// 上班次行不再隐藏，无数据时 OK/NG 显示 0）。
     /// </summary>
     public string LastShiftLabel => string.IsNullOrEmpty(LastShiftName)
-        ? Strings.K260
-        : string.Format(Strings.F265, LastShiftName);
+        ? Strings.Lbl_PreviousShift
+        : string.Format(Strings.Prompt_LastShift, LastShiftName);
     /// <summary>
     /// 本班次 vs 上班次产量差异显示文本：正数前缀 "+"，负数带 "-"，0 返回空字符串。
     /// 用于 UI 在差异为 0 时隐藏徽章。
@@ -519,7 +519,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     /// <summary>截断提示文案，口径与 <see cref="AlarmCenterViewModel.ActiveTruncationHint"/> 一致。</summary>
     public string ActiveTruncationHint => HasActiveAlarmTruncation
-        ? string.Format(Strings.K708, MaxHomeActiveAlarms)
+        ? string.Format(Strings.Lbl_ShowingFirstOnly, MaxHomeActiveAlarms)
         : string.Empty;
 
     // ──────────── 第 2 行 列 2：当前班次良率 ────────────
@@ -535,20 +535,20 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     public string DataStatusText => DataStatusKind switch
     {
-        HomeDataStatus.Disconnected => _runtimeMode.IsRemote ? Strings.M070 : Strings.M071,
-        HomeDataStatus.NoData => Strings.M072,
-        HomeDataStatus.Live => Strings.K083,
-        _ => Strings.K144,
+        HomeDataStatus.Disconnected => _runtimeMode.IsRemote ? Strings.Msg_ServiceDisconnected : Strings.Msg_PLCDisconnected,
+        HomeDataStatus.NoData => Strings.Msg_NoData,
+        HomeDataStatus.Live => Strings.Lbl_CurrentStatus,
+        _ => Strings.Lbl_NoDeviceSelected,
     };
 
     public string DataStatusTooltip => DataStatusKind switch
     {
         HomeDataStatus.Disconnected => _runtimeMode.IsRemote
-            ? Strings.M050
-            : Strings.K341,
-        HomeDataStatus.NoData => Strings.K051,
-        HomeDataStatus.Live => Strings.K083,
-        _ => Strings.K144,
+            ? Strings.Msg_CollectorConnected
+            : Strings.Lbl_PLCDisconnectedLiveDataMayStale,
+        HomeDataStatus.NoData => Strings.Lbl_NoOutputData,
+        HomeDataStatus.Live => Strings.Lbl_CurrentStatus,
+        _ => Strings.Lbl_NoDeviceSelected,
     };
 
     private bool CanDisplayKpiData => DataStatusKind == HomeDataStatus.Live;
@@ -568,8 +568,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         => $"{qualityRate - KpiThresholds.QualityGood:+#0.0%;-#0.0%;+0.0%}";
     public string RealtimeSpeedDisplay => CanDisplayKpiData ? $"{RealtimeSpeed:N0}" : "—";
     public string TotalOutputDisplay => CanDisplayKpiData ? $"{TotalOutput:N0}" : "—";
-    public string TotalOkProductionDisplay => CanDisplayKpiData ? string.Format(Strings.F030, TotalOkProduction) : "—";
-    public string TotalNgProductionDisplay => CanDisplayKpiData ? string.Format(Strings.F028, TotalNgProduction) : "—";
+    public string TotalOkProductionDisplay => CanDisplayKpiData ? string.Format(Strings.Prompt_Pcs3, TotalOkProduction) : "—";
+    public string TotalNgProductionDisplay => CanDisplayKpiData ? string.Format(Strings.Prompt_Pcs, TotalNgProduction) : "—";
     public string NgRateDisplay => CanDisplayKpiData ? $"{NgRate:P2}" : "—";
     public string ShiftOkProductionDisplay => CanDisplayKpiData ? $"{TotalOkProduction:N0}" : "—";
     public string ShiftNgProductionDisplay => CanDisplayKpiData ? $"{TotalNgProduction:N0}" : "—";
@@ -661,7 +661,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// 活跃报警空状态文案：有报警但被筛选掉时提示调整筛选；否则提示暂无活跃故障。
     /// 口径与 <see cref="AlarmCenterViewModel.ActiveEmptyStateMessage"/> 一致。
     /// </summary>
-    [ObservableProperty] private string _activeEmptyStateMessage = Strings.M061;
+    [ObservableProperty] private string _activeEmptyStateMessage = Strings.Msg_NoActiveFaults;
 
     /// <summary>
     /// 总产量 = OK + NG（会话累计，用于当前生产进度状态卡片）。口径见 SnapshotMetrics（与 WASM 共用）。
@@ -689,8 +689,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         {
             if (TargetCycleSec <= 0 || ActualCycleSec <= 0) return "";
             var diff = ActualCycleSec - TargetCycleSec;
-            if (Math.Abs(diff) < 0.01) return Strings.M012;
-            return diff > 0 ? string.Format(Strings.F047, diff) : string.Format(Strings.F046, Math.Abs(diff));
+            if (Math.Abs(diff) < 0.01) return Strings.Msg_Met;
+            return diff > 0 ? string.Format(Strings.Prompt_SSlower, diff) : string.Format(Strings.Prompt_SFaster, Math.Abs(diff));
         }
     }
 
@@ -800,7 +800,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     {
         FilteredActiveAlarms.Refresh();
         IsActiveAlarmEmptyStateVisible = !FilteredActiveAlarms.Cast<object>().Any();
-        ActiveEmptyStateMessage = ActiveAlarms.Count > 0 ? Strings.M060 : Strings.M061;
+        ActiveEmptyStateMessage = ActiveAlarms.Count > 0 ? Strings.Msg_NoMatchingAlarms : Strings.Msg_NoActiveFaults;
     }
 
     /// <summary>切换故障静音开关（UI 按钮命令）。</summary>
@@ -1424,7 +1424,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         {
             var idealOutput = dev.TargetCycle * (rt.RunTime / 3600.0);
             // 拆分显示 OK/NG，让用户直观看到 NG 也计入性能率分子（总产量口径）
-            PerformanceFormulaText = string.Format(Strings.F037, rt.TotalOkProduction, rt.TotalNgProduction, idealOutput);
+            PerformanceFormulaText = string.Format(Strings.Prompt_Pcs5, rt.TotalOkProduction, rt.TotalNgProduction, idealOutput);
         }
         else
         {
@@ -1433,7 +1433,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
         var totalOutput = rt.TotalOkProduction + rt.TotalNgProduction;
         QualityFormulaText = totalOutput > 0
-            ? string.Format(Strings.F036, rt.TotalOkProduction, totalOutput)
+            ? string.Format(Strings.Prompt_Pcs4, rt.TotalOkProduction, totalOutput)
             : "— / —";
     }
 

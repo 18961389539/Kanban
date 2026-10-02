@@ -1,4 +1,4 @@
-Resource,Key,zh-CN,en-US,ja-JP,pt-BR
+﻿Resource,Key,zh-CN,en-US,ja-JP,pt-BR
 Wpf,Nav_Home,,,,Painel inicial
-Wpf,K066,,,,Detalhes do dispositivo
+Wpf,Lbl_DeviceDetail,,,,Detalhes do dispositivo
 Core,PlcIpInvalid,,PLC address '{0}' is invalid,,

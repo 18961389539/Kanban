@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Kanban.Localization</RootNamespace>
+    <AssemblyName>Kanban.Localization</AssemblyName>
+  </PropertyGroup>
+
+  <!-- CSV 是唯一文案源。编译前生成 LocalizationCatalog.cs，WPF / Core / 屏端都读这一份。 -->
+  <Target Name="GenerateLocalizationCatalog" BeforeTargets="CoreCompile">
+    <Exec Command="py $(ProjectDir)..\ci\generate_localization.py"
+          WorkingDirectory="$(ProjectDir).."
+          ContinueOnError="false" />
+  </Target>
+
+</Project>

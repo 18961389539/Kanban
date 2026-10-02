@@ -20,7 +20,7 @@ public sealed class ShiftProgressProvider
         // 即使本方法在 UI 线程调用，也必须经锁内快照读取。
         var (shift, start, end) = ShiftConfigResolver.ResolveCurrentShift(_appSettings.GetShiftsSnapshot(), now);
         if (shift == null)
-            return new ShiftProgressSnapshot(false, Strings.M115, "", 0, "");
+            return new ShiftProgressSnapshot(false, Strings.Msg_OffShiftPeriod, "", 0, "");
 
         var totalSecs = (end - start).TotalSeconds;
         var elapsedSecs = (now - start).TotalSeconds;
@@ -30,7 +30,7 @@ public sealed class ShiftProgressProvider
         return new ShiftProgressSnapshot(
             true,
             shift.Name,
-            string.Format(Strings.F117,
+            string.Format(Strings.Prompt_RunningRemaining,
                 DurationFormatter.FormatCompact(elapsedSecs),
                 DurationFormatter.FormatCompact(remainingSecs)),
             ratio,

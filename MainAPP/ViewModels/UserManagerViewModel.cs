@@ -194,7 +194,7 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
         // 角色胶囊（计数随集合重建，选中态回填）
         var counts = Users.GroupBy(u => u.Role).ToDictionary(g => g.Key, g => g.Count());
         RoleFilters.Clear();
-        RoleFilters.Add(new UserRoleFilterOption(null, Strings.K004, Users.Count) { IsSelected = SelectedRoleFilter is null });
+        RoleFilters.Add(new UserRoleFilterOption(null, Strings.Lbl_All, Users.Count) { IsSelected = SelectedRoleFilter is null });
         foreach (var role in AvailableRoles)
         {
             RoleFilters.Add(new UserRoleFilterOption(role, RoleText(role), counts.GetValueOrDefault(role)) { IsSelected = SelectedRoleFilter == role });
@@ -256,9 +256,9 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
 
     private static string RoleText(UserRole role) => role switch
     {
-        UserRole.Admin => Strings.M334,
-        UserRole.Engineer => Strings.M333,
-        _ => Strings.M332,
+        UserRole.Admin => Strings.Msg_Administrator,
+        UserRole.Engineer => Strings.Msg_Engineer,
+        _ => Strings.Msg_OperatorText,
     };
 
     /// <summary>刷新安全体检：默认口令 / 免密账号 / 从未登录（创建超 30 天）。</summary>
@@ -273,12 +273,12 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
                 && (PasswordHasher.Verify(UserStore.DefaultAdminPassword, u.PasswordHash)
                     || PasswordHasher.Verify(UserStore.DefaultEngineerPassword, u.PasswordHash)))
             {
-                parts.Add(Strings.M373);
+                parts.Add(Strings.Msg_DefaultPassword);
                 isDanger = true;
             }
-            if (string.IsNullOrEmpty(u.PasswordHash)) parts.Add(Strings.M374);
+            if (string.IsNullOrEmpty(u.PasswordHash)) parts.Add(Strings.Msg_PasswordlessAccount);
             if (u.LastLoginAt is null && DateTime.Now - u.CreatedAt > SecurityRiskItem.NeverLoginThreshold)
-                parts.Add(Strings.M375);
+                parts.Add(Strings.Msg_NeverLogged);
             if (parts.Count > 0)
             {
                 SecurityRisks.Add(new SecurityRiskItem(u, string.Join("、", parts), isDanger));
@@ -307,22 +307,22 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
     {
         if (string.IsNullOrWhiteSpace(NewUsername))
         {
-            _dialog.NotifyWarning(Strings.M316);
+            _dialog.NotifyWarning(Strings.Msg_Username);
             return;
         }
         if (string.IsNullOrEmpty(password))
         {
-            _dialog.NotifyWarning(Strings.M317);
+            _dialog.NotifyWarning(Strings.Msg_Password);
             return;
         }
         if (!PasswordPolicy.IsLongEnough(password))
         {
-            _dialog.NotifyWarning(Strings.M364);
+            _dialog.NotifyWarning(Strings.Msg_PasswordMustLeast8Characters);
             return;
         }
         if (password != NewPasswordConfirm)
         {
-            _dialog.NotifyWarning(Strings.M365);
+            _dialog.NotifyWarning(Strings.Msg_TwoPasswordsDoMatch);
             return;
         }
 
@@ -339,7 +339,7 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
 
         if (!_userStore.Add(user))
         {
-            _dialog.NotifyWarning(Strings.M326);
+            _dialog.NotifyWarning(Strings.Msg_UsernameAlreadyExists);
             return;
         }
 
@@ -352,7 +352,7 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
         NewMustChangePassword = false;
         NewPasswordStrength = 0;
         OnPropertyChanged(nameof(NewPasswordStrengthText));
-        _dialog.NotifySuccess(string.Format(Strings.M322));
+        _dialog.NotifySuccess(string.Format(Strings.Msg_AddUser));
         // 审计详情走本地化（原硬编码中文在非中文界面下仍写中文详情）
         AuditLog.Record("User.Add", "User", user.Username, detail: user.MustChangePassword
             ? string.Format(Strings.Audit_Detail_RoleMustChangePwd, RoleText(user.Role))
@@ -372,7 +372,7 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
         if (string.Equals(username, _session.CurrentUser?.Username, StringComparison.OrdinalIgnoreCase)
             && (EditRole != SelectedUser.Role || !EditIsActive))
         {
-            _dialog.NotifyWarning(Strings.M361);
+            _dialog.NotifyWarning(Strings.Msg_CannotChangeOwnRoleDisableYourself);
             return;
         }
 
@@ -381,19 +381,19 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
             && (EditRole != UserRole.Admin || !EditIsActive)
             && Users.Count(u => u.Role == UserRole.Admin && u.IsActive) <= 1)
         {
-            _dialog.NotifyWarning(Strings.M360);
+            _dialog.NotifyWarning(Strings.Msg_CannotDisableDemoteLastAdministratorAccount);
             return;
         }
 
         var before = (SelectedUser.Role, SelectedUser.DisplayName, SelectedUser.IsActive);
         if (!_userStore.Update(username, EditRole, EditDisplayName, EditIsActive))
         {
-            _dialog.NotifyWarning(Strings.M360);
+            _dialog.NotifyWarning(Strings.Msg_CannotDisableDemoteLastAdministratorAccount);
             return;
         }
 
         LoadEditorState(SelectedUser);
-        _dialog.NotifySuccess(Strings.M320);
+        _dialog.NotifySuccess(Strings.Msg_UserManagement);
         AuditLog.Record("User.Update", "User", username,
             before: before,
             after: (SelectedUser.Role, SelectedUser.DisplayName, SelectedUser.IsActive));
@@ -418,22 +418,22 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
         }
 
         var confirm = _dialog.Show(
-            string.Format(Strings.F324, Strings.M323, target.DisplayLabel),
-            Strings.M323, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            string.Format(Strings.Prompt_Text3, Strings.Msg_DeleteUser, target.DisplayLabel),
+            Strings.Msg_DeleteUser, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
 
         var username = target.Username;
         var role = target.Role;
         if (!_userStore.Remove(username))
         {
-            _dialog.NotifyWarning(Strings.M327);
+            _dialog.NotifyWarning(Strings.Msg_CannotDeleteLastAdminAccount);
             return;
         }
 
         AuditLog.Record("User.Delete", "User", username, detail: string.Format(Strings.Audit_Detail_Role, RoleText(role)));
         SelectedUser = null;
         // 删除成功补齐反馈（新增/重置密码均有 NotifySuccess，唯独删除只有行消失）
-        _dialog.NotifySuccess(Strings.M323);
+        _dialog.NotifySuccess(Strings.Msg_DeleteUser);
     }
 
     /// <summary>重置用户密码（列表选中/行内快捷共用；密码经 ChangePasswordDialog 收集）。</summary>
@@ -443,19 +443,19 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
         var target = user ?? SelectedUser;
         if (target is null) return;
 
-        var dialog = new Views.ChangePasswordDialog(Strings.M324, target.DisplayLabel);
+        var dialog = new Views.ChangePasswordDialog(Strings.Msg_ResetPassword, target.DisplayLabel);
         if (UiDispatcher.MainWindow is Window owner) dialog.Owner = owner;
         if (dialog.ShowDialog() != true) return;
 
         var password = dialog.Password;
         if (!PasswordPolicy.IsLongEnough(password))
         {
-            _dialog.NotifyWarning(Strings.M364);
+            _dialog.NotifyWarning(Strings.Msg_PasswordMustLeast8Characters);
             return;
         }
 
         _userStore.ResetPassword(target.Username, password);
-        _dialog.NotifySuccess(Strings.M324);
+        _dialog.NotifySuccess(Strings.Msg_ResetPassword);
         AuditLog.Record("User.ResetPassword", "User", target.Username);
     }
 

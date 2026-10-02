@@ -118,7 +118,7 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
 
     public bool HasPreviousPage => Page > 1;
     public bool HasNextPage => Page < TotalPages;
-    public string PageSummary => string.Format(Strings.K624, Page, TotalPages, Total);
+    public string PageSummary => string.Format(Strings.Lbl_PageEntries, Page, TotalPages, Total);
 
     [RelayCommand]
     private void Query()
@@ -221,9 +221,9 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
     private async Task ExportCsvAsync()
     {
         var path = _dialog.ShowSaveFileDialog(
-            Strings.K633,
+            Strings.Lbl_ExportAuditLog,
             $"audit_{DateTime.Now:yyyyMMddHHmm}.csv",
-            Strings.M310);
+            Strings.Msg_CSVFilesCsvAllFiles);
         if (string.IsNullOrWhiteSpace(path)) return;
 
         IsLoading = true;
@@ -235,12 +235,12 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
             if (truncated)
             {
                 Log.Warning("审计归档截断：匹配 {Total} 条，超过导出上限 {Limit} 条", total, ExportMaxResults);
-                _dialog.NotifyWarning(string.Format(Strings.K635, total, ExportMaxResults));
+                _dialog.NotifyWarning(string.Format(Strings.Lbl_AuditExportTruncatedEntriesMatchedExceeds, total, ExportMaxResults));
                 return;
             }
             if (items is null || items.Count == 0)
             {
-                _dialog.NotifyInfo(Strings.K634);
+                _dialog.NotifyInfo(Strings.Lbl_NoAuditEntriesExportCurrentFilters);
                 return;
             }
 
@@ -263,12 +263,12 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
             });
             await Task.Run(() => File.WriteAllText(path, csv, new UTF8Encoding(true)));
             AuditLog.Record("Export.Csv", "Export", Path.GetFileName(path), detail: string.Format(Strings.Audit_Detail_AuditArchive, items.Count));
-            _dialog.NotifySuccess(string.Format(Strings.K631, items.Count));
+            _dialog.NotifySuccess(string.Format(Strings.Lbl_ExportedAuditEntries, items.Count));
         }
         catch (Exception ex)
         {
             Log.Error(ex, "审计 CSV 导出失败");
-            _dialog.NotifyError(string.Format(Strings.K632, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Lbl_AuditExportFailed, ex.Message));
         }
         finally
         {
@@ -281,9 +281,9 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
     private async Task ExportJsonAsync()
     {
         var path = _dialog.ShowSaveFileDialog(
-            Strings.K633,
+            Strings.Lbl_ExportAuditLog,
             $"audit_{DateTime.Now:yyyyMMddHHmm}.json",
-            Strings.K695);
+            Strings.Lbl_JSONFilesJsonAllFiles);
         if (string.IsNullOrWhiteSpace(path)) return;
 
         IsLoading = true;
@@ -294,12 +294,12 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
             if (truncated)
             {
                 Log.Warning("审计归档截断：匹配 {Total} 条，超过导出上限 {Limit} 条", total, ExportMaxResults);
-                _dialog.NotifyWarning(string.Format(Strings.K635, total, ExportMaxResults));
+                _dialog.NotifyWarning(string.Format(Strings.Lbl_AuditExportTruncatedEntriesMatchedExceeds, total, ExportMaxResults));
                 return;
             }
             if (items is null || items.Count == 0)
             {
-                _dialog.NotifyInfo(Strings.K634);
+                _dialog.NotifyInfo(Strings.Lbl_NoAuditEntriesExportCurrentFilters);
                 return;
             }
 
@@ -307,12 +307,12 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
                 new JsonSerializerOptions { WriteIndented = true }));
             await Task.Run(() => File.WriteAllText(path, json, new UTF8Encoding(true)));
             AuditLog.Record("Export.Json", "Export", Path.GetFileName(path), detail: string.Format(Strings.Audit_Detail_AuditArchive, items.Count));
-            _dialog.NotifySuccess(string.Format(Strings.K631, items.Count));
+            _dialog.NotifySuccess(string.Format(Strings.Lbl_ExportedAuditEntries, items.Count));
         }
         catch (Exception ex)
         {
             Log.Error(ex, "审计 JSON 导出失败");
-            _dialog.NotifyError(string.Format(Strings.K632, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Lbl_AuditExportFailed, ex.Message));
         }
         finally
         {

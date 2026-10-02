@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.ComponentModel;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
@@ -197,11 +197,16 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// </summary>
     private readonly object _resetLock = new();
 
+    private bool _isRunning;
+
     /// <summary>
     /// 采集循环是否正在运行
     /// </summary>
-    [ObservableProperty]
-    private bool _isRunning;
+    public bool IsRunning
+    {
+        get => _isRunning;
+    set => SetProperty(ref _isRunning, value);
+    }
 
     /// <summary>
     /// 测量两次采集之间的真实时间间隔（包含 PLC 读取耗时 + Task.Delay），

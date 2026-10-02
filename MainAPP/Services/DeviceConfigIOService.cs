@@ -29,7 +29,7 @@ public class DeviceConfigIOService(
     public event EventHandler? BackupAvailabilityChanged;
 
     // 文件对话框过滤器（本地化资源，与 RecipeJsonIOService 同源 K695）
-    private static string DeviceFileFilter => Strings.K695;
+    private static string DeviceFileFilter => Strings.Lbl_JSONFilesJsonAllFiles;
 
     /// <summary>
     /// 导出当前全部设备配置到用户选择的 JSON 文件（原子写入，备份上一版本）。
@@ -40,18 +40,18 @@ public class DeviceConfigIOService(
     /// <returns>是否导出成功（用户取消或写盘失败返回 false）。</returns>
     public bool ExportConfig(int deviceCount)
     {
-        var path = dialog.ShowSaveFileDialog(Strings.M226, "devices.json", DeviceFileFilter);
+        var path = dialog.ShowSaveFileDialog(Strings.Msg_ExportDeviceConfig, "devices.json", DeviceFileFilter);
         if (string.IsNullOrEmpty(path)) return false;
 
         try
         {
             deviceRepository.ExportToFile(path);
-            dialog.NotifySuccess(string.Format(Strings.F105, deviceCount, Path.GetFileName(path)));
+            dialog.NotifySuccess(string.Format(Strings.Prompt_ExportedDevices, deviceCount, Path.GetFileName(path)));
             return true;
         }
         catch (Exception ex)
         {
-            dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
             return false;
         }
     }
@@ -64,7 +64,7 @@ public class DeviceConfigIOService(
     /// <returns>导入的设备列表；用户取消、解析失败或取消确认时返回 null。</returns>
     public List<Device>? ImportConfig(int currentDeviceCount)
     {
-        var path = dialog.ShowOpenFileDialog(Strings.M227, DeviceFileFilter);
+        var path = dialog.ShowOpenFileDialog(Strings.Msg_ImportDeviceConfig, DeviceFileFilter);
         if (string.IsNullOrEmpty(path)) return null;
 
         List<Device>? imported;
@@ -75,13 +75,13 @@ public class DeviceConfigIOService(
         }
         catch (Exception ex)
         {
-            dialog.NotifyError(string.Format(Strings.F134, ex.Message));
+            dialog.NotifyError(string.Format(Strings.Prompt_FileReadParseFailed, ex.Message));
             return null;
         }
 
         if (imported == null)
         {
-            dialog.NotifyWarning(Strings.M003);
+            dialog.NotifyWarning(Strings.Msg_NoDeviceDataSelectedFile);
             return null;
         }
 
@@ -96,19 +96,19 @@ public class DeviceConfigIOService(
         var importErrors = DeviceConfigValidator.CollectAddressTypeErrors(imported, importCodec);
         if (importErrors.Count > 0)
         {
-            dialog.NotifyError(string.Format(Strings.F067, importErrors.Count));
+            dialog.NotifyError(string.Format(Strings.Prompt_SaveFailedConfigurationIssuesFoundPlease, importErrors.Count));
             dialog.ShowConfigErrors(importErrors);
             return null;
         }
 
         // 二次确认：替换会丢弃当前内存中的设备配置（含未保存改动）
         var confirm = dialog.Show(
-            string.Format(Strings.F089, imported.Count, currentDeviceCount),
-            Strings.M119, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            string.Format(Strings.Prompt_ImportReplaceCurrentDevicesDevicesFile, imported.Count, currentDeviceCount),
+            Strings.Msg_ConfirmImport, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return null;
 
         deviceRepository.ReplaceAll(imported);
-        dialog.NotifySuccess(string.Format(Strings.F101, imported.Count));
+        dialog.NotifySuccess(string.Format(Strings.Prompt_DevicesImportedClickSavePersist, imported.Count));
         return imported;
     }
 
@@ -124,7 +124,7 @@ public class DeviceConfigIOService(
         var backupPath = deviceRepository.FilePath + ".bak";
         if (!File.Exists(backupPath))
         {
-            dialog.NotifyWarning(Strings.M004);
+            dialog.NotifyWarning(Strings.Msg_PreviousVersionBackupFound);
             return null;
         }
 
@@ -136,18 +136,18 @@ public class DeviceConfigIOService(
         }
         catch (Exception ex)
         {
-            dialog.NotifyError(string.Format(Strings.F084, ex.Message));
+            dialog.NotifyError(string.Format(Strings.Prompt_BackupFileReadParseFailed, ex.Message));
             return null;
         }
 
         if (restored == null)
         {
-            dialog.NotifyWarning(Strings.M005);
+            dialog.NotifyWarning(Strings.Msg_BackupFileEmptyInvalid);
             return null;
         }
 
         deviceRepository.ReplaceAll(restored);
-        dialog.NotifySuccess(string.Format(Strings.F108, restored.Count));
+        dialog.NotifySuccess(string.Format(Strings.Prompt_RestoredPreviousVersionDevicesClickSave, restored.Count));
         return restored;
     }
 
@@ -163,21 +163,21 @@ public class DeviceConfigIOService(
             }
             catch (Exception ex)
             {
-                dialog.NotifyError(string.Format(Strings.F084, ex.Message));
+                dialog.NotifyError(string.Format(Strings.Prompt_BackupFileReadParseFailed, ex.Message));
                 return null;
             }
 
             if (restored == null)
             {
                 SetRemoteBackupAvailability(false);
-                dialog.NotifyWarning(Strings.M004);
+                dialog.NotifyWarning(Strings.Msg_PreviousVersionBackupFound);
                 return null;
             }
 
             var restoredList = restored.ToList();
             deviceRepository.ReplaceAll(restoredList);
             SetRemoteBackupAvailability(true);
-            dialog.NotifySuccess(string.Format(Strings.F108, restoredList.Count));
+            dialog.NotifySuccess(string.Format(Strings.Prompt_RestoredPreviousVersionDevicesClickSave, restoredList.Count));
             return restoredList;
         }
 

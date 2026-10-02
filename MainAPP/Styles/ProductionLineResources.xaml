@@ -3,7 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:conv="clr-namespace:MainAPP.Converters"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
-    xmlns:resources="clr-namespace:MainAPP.Resources">
+    xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
 
     <!--  ============ 产线页布局共享资源 ============  -->
     <!--  放在 App.xaml 全局注册：子 UserControl（Large/Medium/CompactTable Layout）
@@ -190,7 +190,7 @@
                             <Border Grid.Column="0" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0"
                                     ToolTip="{Binding OkTooltip}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K588}" />
+                                    <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.Lbl_OK2}" />
                                     <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource SuccessBrush}"
                                                Text="{Binding Runtime.TotalOkProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F315}" />
                                 </StackPanel>
@@ -198,7 +198,7 @@
                             <Border Grid.Column="1" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0"
                                     ToolTip="{Binding NgTooltip}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K589}" />
+                                    <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.Lbl_NG}" />
                                     <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource DangerBrush}"
                                                Text="{Binding Runtime.TotalNgProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F316}" />
                                 </StackPanel>
@@ -206,7 +206,7 @@
                             <Border Grid.Column="2" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0"
                                     ToolTip="{Binding TotalOutputTooltip}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K590}" />
+                                    <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.Lbl_Total}" />
                                     <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource PrimaryTextBrush}"
                                                Text="{Binding TotalOutput, Converter={StaticResource LocFormatConverter}, ConverterParameter=F315}" />
                                 </StackPanel>
@@ -232,7 +232,7 @@
                                 </TextBlock>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0" ToolTip="{Binding RunTimeTooltip}">
-                                <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K593}" />
+                                <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Run}" />
                                 <TextBlock Margin="5,0,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                            Foreground="{StaticResource PrimaryTextBrush}"
                                            Text="{Binding RunTimeFormatted}" />
@@ -272,7 +272,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Style="{StaticResource OeeMetricLabel}"
-                                           Text="{x:Static resources:Strings.K587}" />
+                                           Text="{x:Static resources:Strings.Lbl_OEE}" />
                                 <TextBlock Grid.Column="1"
                                            FontFamily="Consolas"
                                            FontSize="{DynamicResource FontSizeKpiMd}"
@@ -289,7 +289,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Style="{StaticResource OeeMetricLabel}"
-                                           Text="{x:Static resources:Strings.K656}" />
+                                           Text="{x:Static resources:Strings.Lbl_TimeAvailability3}" />
                                 <TextBlock Grid.Column="1" Style="{StaticResource OeeMetricValue}"
                                            Foreground="{StaticResource StatusRunBrush}"
                                            Text="{Binding Runtime.AvailabilityRate, StringFormat={}{0:P1}}" />
@@ -300,7 +300,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Style="{StaticResource OeeMetricLabel}"
-                                           Text="{x:Static resources:Strings.K657}" />
+                                           Text="{x:Static resources:Strings.Lbl_PerformanceRate2}" />
                                 <TextBlock Grid.Column="1" Style="{StaticResource OeeMetricValue}"
                                            Foreground="{StaticResource PrimaryBrush}"
                                            Text="{Binding Runtime.PerformanceRate, StringFormat={}{0:P1}}" />
@@ -311,7 +311,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Style="{StaticResource OeeMetricLabel}"
-                                           Text="{x:Static resources:Strings.K658}" />
+                                           Text="{x:Static resources:Strings.Lbl_QualityRate2}" />
                                 <TextBlock Grid.Column="1" Style="{StaticResource OeeMetricValue}"
                                            Foreground="{StaticResource ChartOkSeriesBrush}"
                                            Text="{Binding Runtime.QualityRate, StringFormat={}{0:P1}}" />
@@ -364,7 +364,7 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#x2192;" FontSize="{DynamicResource FontSizeKpiXs}" Margin="0,0,6,0"
                                        Foreground="{StaticResource PrimaryBrush}" />
-                            <TextBlock Text="{x:Static resources:Strings.K594}" VerticalAlignment="Center" />
+                            <TextBlock Text="{x:Static resources:Strings.Lbl_Details}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                 </Grid>

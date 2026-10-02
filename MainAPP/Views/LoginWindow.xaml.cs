@@ -28,7 +28,7 @@ public partial class LoginWindow : Window
             if (_viewModel.NeedsPasswordChange)
             {
                 var changeDialog = new ChangePasswordDialog(
-                    MainAPP.Resources.Strings.M377, MainAPP.Resources.Strings.M368);
+                    MainAPP.Resources.Strings.Msg_ChangePassword, MainAPP.Resources.Strings.Msg_MustChangePasswordFirstLogin);
                 changeDialog.Owner = this;
                 if (changeDialog.ShowDialog() != true)
                 {

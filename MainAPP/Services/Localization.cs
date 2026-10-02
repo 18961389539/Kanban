@@ -1,3 +1,4 @@
+using Kanban.Localization;
 using System.Globalization;
 using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Services;
@@ -46,6 +47,8 @@ public static class Localization
         CultureInfo.CurrentCulture = culture;
         CultureInfo.CurrentUICulture = culture;
         s_appliedLanguageCode = culture.Name;
+        MainAPP.Resources.Strings.TryGetOverride = (key, uiCulture) =>
+            LocalizationOverrideStore.TryGet("Wpf", key, uiCulture, out var value) ? value : null;
         MainAPP.Resources.Strings.CaptureCulture(culture);
     }
 

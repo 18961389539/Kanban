@@ -11,24 +11,24 @@ FIELDNAMES = ["Resource", "Key", "zh-CN", "en-US", "ja-JP", "pt-BR"]
 
 # key -> {language: value}
 FIXES: dict[str, dict[str, str]] = {
-    "K008": {"en-US": "Work Order No", "pt-BR": "Nº do pedido"},
+    "Lbl_WorkOrderNo": {"en-US": "Work Order No", "pt-BR": "Nº do pedido"},
     "Web_Wo_OrderNo": {"en-US": "Order No", "pt-BR": "Nº do pedido"},
-    "K183": {"en-US": "Current value:", "pt-BR": "Valor atual:"},
-    "K415": {"en-US": "Current Shift:", "pt-BR": "Turno atual:"},
-    "K474": {"en-US": "Machine Code:", "pt-BR": "Código da máquina:"},
-    "K475": {"en-US": "License Type:", "pt-BR": "Tipo de licença:"},
-    "K476": {"en-US": "Activation Time:", "pt-BR": "Hora de ativação:"},
-    "K477": {"en-US": "Expiry Time:", "pt-BR": "Hora de expiração:"},
-    "K478": {"en-US": "License Key:", "pt-BR": "Chave de licença:"},
-    "M166": {"en-US": "Address conflict「", "pt-BR": "Conflito de endereço「"},
-    "K692": {"en-US": "(Copy)", "pt-BR": "(Cópia)"},
-    "F042": {
+    "Lbl_CurrentValue": {"en-US": "Current value:", "pt-BR": "Valor atual:"},
+    "Lbl_CurrentShift": {"en-US": "Current Shift:", "pt-BR": "Turno atual:"},
+    "Lbl_MachineCode": {"en-US": "Machine Code:", "pt-BR": "Código da máquina:"},
+    "Lbl_LicenseType": {"en-US": "License Type:", "pt-BR": "Tipo de licença:"},
+    "Lbl_ActivationTime": {"en-US": "Activation Time:", "pt-BR": "Hora de ativação:"},
+    "Lbl_ExpiryTime": {"en-US": "Expiry Time:", "pt-BR": "Hora de expiração:"},
+    "Lbl_LicenseKey": {"en-US": "License Key:", "pt-BR": "Chave de licença:"},
+    "Msg_AddressConflict": {"en-US": "Address conflict「", "pt-BR": "Conflito de endereço「"},
+    "Lbl_Copy2": {"en-US": "(Copy)", "pt-BR": "(Cópia)"},
+    "Prompt_Expires": {
         "en-US": "· Expires {0:yyyy-MM-dd}",
         "ja-JP": "· 有効期限 {0:yyyy-MM-dd}",
         "pt-BR": "· Expira em {0:yyyy-MM-dd}",
     },
-    "K686": {"en-US": "Applying recipe…", "pt-BR": "Aplicando receita…"},
-    "F059": {
+    "Lbl_ApplyingRecipe": {"en-US": "Applying recipe…", "pt-BR": "Aplicando receita…"},
+    "Prompt_MainDefectCumulativePcs": {
         "en-US": "Main defect is {0} ({1}), cumulative {2:N0} pcs, {3:F1}%",
         "pt-BR": "Defeito principal: {0} ({1}), acumulado {2:N0} pcs, {3:F1}%",
     },
@@ -36,7 +36,7 @@ FIXES: dict[str, dict[str, str]] = {
         "en-US": "Top defect: {0} ({1}), {2:N0} pcs, {3:F1}%",
         "pt-BR": "Defeito principal: {0} ({1}), {2:N0} pcs, {3:F1}%",
     },
-    "F195": {
+    "Prompt_LowOutputActualPcsHourTarget": {
         "en-US": "Takt anomaly: actual {0:F1} pcs/hour, target {1:F0} pcs/hour, below 80%",
         "ja-JP": "タクト異常: 実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%",
         "pt-BR": "Anomalia de takt: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%",
@@ -46,33 +46,33 @@ FIXES: dict[str, dict[str, str]] = {
         "ja-JP": "タクト異常：実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%",
         "pt-BR": "Anomalia de ciclo: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%",
     },
-    "K142": {"ja-JP": "エラー項目をダブルクリックして対応する設備とタブに移動。"},
-    "K210": {
+    "Lbl_DoubleClickErrorJumpDeviceTab": {"ja-JP": "エラー項目をダブルクリックして対応する設備とタブに移動。"},
+    "Lbl_Writes1ShiftChangeManualReset": {
         "ja-JP": "シフト切替または手動クリア時にこのアドレスへ1を書込み、PLCプログラムがOK/NGカウンタをクリアします。",
     },
-    "K315": {"ja-JP": "設備と時間範囲を選択して「照会」をクリックすると、その期間のOEE指標を計算します。"},
-    "K433": {
+    "Lbl_SelectDeviceTimeRangeClickQuery": {"ja-JP": "設備と時間範囲を選択して「照会」をクリックすると、その期間のOEE指標を計算します。"},
+    "Lbl_ActualCycleIncludesPLCReadTime": {
         "ja-JP": "実周期はPLC読取りとポーリング待ちを含みます。最大周期が設定間隔を超え続ける場合はPLC応答・ネットワーク・アドレス数を確認してください。",
     },
-    "K439": {
+    "Lbl_SuccessfulReadsLastRound0Triggers": {
         "ja-JP": "直近成功読取りは前ラウンドで少なくとも1台成功した設備数。0台は切断判定または読取り可能アドレスなしを意味します。",
     },
-    "K473": {
+    "Lbl_ViewLicenseStatusReactivateBackUp": {
         "ja-JP": "現在のライセンス状態を表示。必要に応じて再アクティベーションやバックアップを行います。",
     },
     "K481": {"ja-JP": "データソース（ローカル収集 / リモート収集）と実行モードを選択します。"},
-    "K483": {
+    "Lbl_RemoteModeConnectsKanbanCollectorService": {
         "ja-JP": "リモートモードはKanban.Collectorに接続し、複数画面で同一データソースを共有します。",
     },
-    "K492": {
+    "Lbl_ViewerModeKeepsOnlyDashboardPages": {
         "ja-JP": "表示モードは大画面ページのみを残し終了を制限します。工場画面向け（保存後再起動で有効）です。",
     },
-    "K498": {"ja-JP": "通信アドレス、収集頻度、表示密度を設定します。"},
+    "Lbl_ConfigureCommunicationAddressAcquisitionRateDisp": {"ja-JP": "通信アドレス、収集頻度、表示密度を設定します。"},
     "K500": {"ja-JP": "PLCブランドを選択し通信パラメータを設定します。"},
-    "K511": {"ja-JP": "一括読取り、ポーリング、履歴書込みのペースを調整します。"},
-    "K513": {"ja-JP": "バッチ内で許容する未設定アドレス数。0は完全連続のみ結合します。"},
-    "K540": {"ja-JP": "生産シフトと時間範囲を管理します。"},
-    "K541": {
+    "Lbl_AdjustBatchReadPollingHistoryWrite": {"ja-JP": "一括読取り、ポーリング、履歴書込みのペースを調整します。"},
+    "Lbl_AllowedUnconfiguredGapsWithinBatch0": {"ja-JP": "バッチ内で許容する未設定アドレス数。0は完全連続のみ結合します。"},
+    "Lbl_ManageProductionShiftsTimeRanges": {"ja-JP": "生産シフトと時間範囲を管理します。"},
+    "Lbl_ShiftsApplyImmediatelyAcquisitionUsesThem": {
         "ja-JP": "シフトは即時有効になり次回ポーリングから適用されます。現在のシフトが再判定される可能性があります。",
     },
     "Settings_Warn_PlcChanged": {

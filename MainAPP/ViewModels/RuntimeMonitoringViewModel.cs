@@ -24,9 +24,9 @@ internal static class RuntimeHealthText
     public static string Format(bool isConnected, bool isRunning, bool lastCycleSucceeded, int consecutiveFailures)
     {
         // 通信中断修复 2026-08-15：断开时必须返回 K419（通信中断），否则 UI 红色触发器永不命中
-        if (!isConnected) return Strings.K419;
-        if (!isRunning) return Strings.M014;
-        return lastCycleSucceeded ? Strings.K418 : string.Format(Strings.F227, consecutiveFailures);
+        if (!isConnected) return Strings.Lbl_CommunicationLost;
+        if (!isRunning) return Strings.Msg_AcquisitionStopped;
+        return lastCycleSucceeded ? Strings.Lbl_RunningNormally : string.Format(Strings.Prompt_ConsecutiveFailures, consecutiveFailures);
     }
 }
 
@@ -38,11 +38,11 @@ public sealed partial class DeviceAcquisitionStatusItem : ObservableObject
     [ObservableProperty] private string _deviceId = string.Empty;
     [ObservableProperty] private string _deviceName = string.Empty;
     [ObservableProperty] private string _statusText = Strings.Status_Unknown;
-    [ObservableProperty] private string _acquisitionText = Strings.K402;
+    [ObservableProperty] private string _acquisitionText = Strings.Lbl_DeviceRunningNoOutputAcquired;
     [ObservableProperty] private int _configuredAddressCount;
     [ObservableProperty] private int _okProduction;
     [ObservableProperty] private int _ngProduction;
-    public string ReadSummary => ConfiguredAddressCount == 0 ? Strings.M161 : string.Format(Strings.F022, ConfiguredAddressCount);
+    public string ReadSummary => ConfiguredAddressCount == 0 ? Strings.Msg_NoAddressConfigured : string.Format(Strings.Prompt_Addresses, ConfiguredAddressCount);
     public string ProductionSummary => $"{OkProduction:N0} / {NgProduction:N0}";
 
     partial void OnConfiguredAddressCountChanged(int value) => OnPropertyChanged(nameof(ReadSummary));
@@ -184,24 +184,24 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public string PlcEndpoint => $"{_appSettings.PlcConfig.IpAddress}:{_appSettings.PlcConfig.Port}";
     public string DisconnectDurationText => _disconnectDurationSeconds is { } seconds
         ? FormatDuration(TimeSpan.FromSeconds(seconds))
-        : Strings.M049;
+        : Strings.Msg_Disconnected;
     public string ConnectionTooltip => FormatHelper.Tip(Strings.Mo_Tip_ConnStatus, ConnectionStatus);
     public string AcquisitionHealthTooltip => FormatHelper.Tip(Strings.Mo_Tip_Health, HealthText);
     public string DisconnectDurationTooltip => FormatHelper.Tip(
         Strings.Mo_Tip_DisconnectDuration,
         string.IsNullOrEmpty(DisconnectDurationText) ? "—" : DisconnectDurationText);
-    public string RecoveryFileText => RecoveryFileExists ? string.Format(Strings.F088, FormatBytes(RecoveryFileBytes)) : Strings.M052;
-    public string DataConsistencyText => ConfigurationIssueCount == 0 ? Strings.M053 : string.Format(Strings.F078, ConfigurationIssueCount);
+    public string RecoveryFileText => RecoveryFileExists ? string.Format(Strings.Prompt_Present, FormatBytes(RecoveryFileBytes)) : Strings.Msg_NoBacklog;
+    public string DataConsistencyText => ConfigurationIssueCount == 0 ? Strings.Msg_ConfigurationOK : string.Format(Strings.Prompt_IssuesFound, ConfigurationIssueCount);
     public string DeviceReadSummary => $"{LastSuccessfulDevices} / {ConfiguredDevices}";
     public string CpuMemoryText => $"{CpuUsagePercent:F1}% / {MemoryMb:F0} MB";
-    public string GpuUsageText => GpuAvailable ? $"{GpuUsagePercent:F1}%" : Strings.M054;
+    public string GpuUsageText => GpuAvailable ? $"{GpuUsagePercent:F1}%" : Strings.Msg_Unavailable;
     public string AddressIssueSummary => $"{InvalidAddressCount} / {AddressConflictCount}";
     public string ProcessUptimeText => ProcessUptime.ToString(@"d\.hh\:mm\:ss");
-    public string ReadDetailText => string.Format(Strings.F024, EstimatedReadOperations, ConfiguredReadAddressCount);
-    public string HistoryStorageText => string.Format(Strings.F118, FormatBytes(ProductionDatabaseBytes), FormatBytes(ProductionWalBytes));
-    public string DataSourceStorageText => string.Format(Strings.F118, FormatBytes(DataSourceDatabaseBytes), FormatBytes(DataSourceWalBytes));
-    public string TotalStorageText => string.Format(Strings.F118, FormatBytes(TotalDatabaseBytes), FormatBytes(TotalWalBytes));
-    public string DataSourceRecoveryFileText => DataSourceRecoveryFileExists ? string.Format(Strings.F088, FormatBytes(DataSourceRecoveryFileBytes)) : Strings.M052;
+    public string ReadDetailText => string.Format(Strings.Prompt_Addresses2, EstimatedReadOperations, ConfiguredReadAddressCount);
+    public string HistoryStorageText => string.Format(Strings.Prompt_DBWAL, FormatBytes(ProductionDatabaseBytes), FormatBytes(ProductionWalBytes));
+    public string DataSourceStorageText => string.Format(Strings.Prompt_DBWAL, FormatBytes(DataSourceDatabaseBytes), FormatBytes(DataSourceWalBytes));
+    public string TotalStorageText => string.Format(Strings.Prompt_DBWAL, FormatBytes(TotalDatabaseBytes), FormatBytes(TotalWalBytes));
+    public string DataSourceRecoveryFileText => DataSourceRecoveryFileExists ? string.Format(Strings.Prompt_Present, FormatBytes(DataSourceRecoveryFileBytes)) : Strings.Msg_NoBacklog;
     public string HistoryQueueText => string.Format(
         Strings.Rtmon_HistoryQueueSummary,
         ProductionQueuePeakCount,
@@ -216,18 +216,18 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         DataSourceFlushP95Milliseconds,
         DataSourceFlushP99Milliseconds,
         DataSourceFlushFailureCount);
-    public string StageTimingText => string.Format(Strings.F002, DwordReadMilliseconds, AlarmReadMilliseconds, DefectReadMilliseconds, CounterAlarmReadMilliseconds, HistoryWriteMilliseconds);
-    public string BatchPlanText => string.Format(Strings.F236, BatchPlanRebuilds, BatchPlanBuildMilliseconds);
-    public string ProcessResourceText => string.Format(Strings.F186, ProcessThreadCount, ProcessHandleCount);
-    public string SystemMemoryText => string.Format(Strings.F221, MemoryMb, AvailableMemoryMb);
-    public string DiskFreeText => string.Format(Strings.F074, FreeDiskGb);
+    public string StageTimingText => string.Format(Strings.Prompt_DWordMsMBitMsDefect, DwordReadMilliseconds, AlarmReadMilliseconds, DefectReadMilliseconds, CounterAlarmReadMilliseconds, HistoryWriteMilliseconds);
+    public string BatchPlanText => string.Format(Strings.Prompt_RebuildsLastMs, BatchPlanRebuilds, BatchPlanBuildMilliseconds);
+    public string ProcessResourceText => string.Format(Strings.Prompt_ThreadsHandles, ProcessThreadCount, ProcessHandleCount);
+    public string SystemMemoryText => string.Format(Strings.Prompt_ProcessMBAvailableMB, MemoryMb, AvailableMemoryMb);
+    public string DiskFreeText => string.Format(Strings.Prompt_GBFree, FreeDiskGb);
     public int PollingIntervalMs => _appSettings.PollingIntervalMs;
     public int HistoryWriteIntervalScans => _appSettings.HistoryWriteIntervalScans;
     public int TotalDeviceCount => DeviceStatuses.Count;
     public string HealthText => RuntimeHealthText.Format(IsConnected, IsAcquisitionRunning, LastCycleSucceeded, ConsecutiveFailureCycles);
     public string SuccessRateTooltip => FormatHelper.Tip(
         Strings.Mo_Tip_SuccessRate,
-        SuccessRateDisplay is { } rate ? $"{rate:F1}%" : Strings.K595);
+        SuccessRateDisplay is { } rate ? $"{rate:F1}%" : Strings.Lbl_N);
     public string ConsecutiveFailTooltip => FormatHelper.Tip(Strings.Mo_Tip_ConsecutiveFail, ConsecutiveFailureCycles);
     public string PendingHistoryTooltip => FormatHelper.Tip(Strings.Mo_Tip_PendingHistory, PendingHistoryCount);
     public bool HasRefreshError => !string.IsNullOrWhiteSpace(RefreshErrorMessage);
@@ -420,7 +420,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         }
         catch (Exception ex)
         {
-            _dialogService.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialogService.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
         }
     }
 
@@ -451,52 +451,52 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         var sb = new StringBuilder();
         sb.AppendLine(Strings.Rtmon_DiagnosticsTitle);
         sb.AppendLine($"{Strings.Rtmon_DiagnosticsGeneratedAt}: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-        sb.AppendLine($"{Strings.Rtmon_RuntimeMode}: {(IsLocalMode ? Strings.Settings_CollectorLocalMode : Strings.K487)}");
-        sb.AppendLine(string.Format(Strings.F284, LastRefreshTime));
+        sb.AppendLine($"{Strings.Rtmon_RuntimeMode}: {(IsLocalMode ? Strings.Settings_CollectorLocalMode : Strings.Lbl_RemoteAcquisitionMode)}");
+        sb.AppendLine(string.Format(Strings.Prompt_Refreshed, LastRefreshTime));
 
         AppendSection(sb, Strings.Rtmon_DiagOverview);
-        sb.AppendLine($"  {Strings.K425}: {HealthText}");
-        sb.AppendLine($"  {Strings.K099}: {ConnectionStatus}");
-        sb.AppendLine($"  {Strings.K100}: {TotalDisconnectCount}");
-        sb.AppendLine($"  {Strings.K442}: {DisconnectDurationText}");
-        sb.AppendLine($"  {Strings.K424}: {ConsecutiveFailureCycles}");
-        sb.AppendLine($"  {Strings.K423}: {(string.IsNullOrWhiteSpace(LastFailureMessage) ? Strings.K583 : LastFailureMessage)}");
+        sb.AppendLine($"  {Strings.Lbl_SystemHealth}: {HealthText}");
+        sb.AppendLine($"  {Strings.Lbl_PLCConnection}: {ConnectionStatus}");
+        sb.AppendLine($"  {Strings.Lbl_CumulativeDisconnects}: {TotalDisconnectCount}");
+        sb.AppendLine($"  {Strings.Lbl_DisconnectDuration}: {DisconnectDurationText}");
+        sb.AppendLine($"  {Strings.Lbl_ConsecutiveFailures}: {ConsecutiveFailureCycles}");
+        sb.AppendLine($"  {Strings.Lbl_AcquisitionAbnormal}: {(string.IsNullOrWhiteSpace(LastFailureMessage) ? Strings.Lbl_NoData : LastFailureMessage)}");
         if (LastFailureAt is { } failedAt)
-            sb.AppendLine($"    {string.Format(Strings.F279, failedAt)}");
+            sb.AppendLine($"    {string.Format(Strings.Prompt_LastOccurred, failedAt)}");
         if (HasRefreshError)
             sb.AppendLine($"  {Strings.Rtmon_RefreshFailed}: {RefreshErrorMessage}");
         if (IsCollectorUnreachable)
             sb.AppendLine($"  {Strings.Rtmon_CollectorUnreachable}");
 
-        AppendSection(sb, Strings.K427);
-        sb.AppendLine($"  {Strings.K428}: {string.Format(Strings.F247, CompletedCycles)}");
-        sb.AppendLine($"  {Strings.K429}: {AverageCycleMilliseconds:F1} ms");
-        sb.AppendLine($"  {Strings.K430}: {MaxCycleMilliseconds} ms");
-        sb.AppendLine($"  {Strings.K431}: {PollingIntervalMs} ms");
-        sb.AppendLine($"  {Strings.K432}: {string.Format(Strings.F283, HistoryWriteIntervalScans)}");
+        AppendSection(sb, Strings.Lbl_AcquisitionLoop);
+        sb.AppendLine($"  {Strings.Lbl_CompletedPolls}: {string.Format(Strings.Prompt_Times3, CompletedCycles)}");
+        sb.AppendLine($"  {Strings.Lbl_AverageCycle}: {AverageCycleMilliseconds:F1} ms");
+        sb.AppendLine($"  {Strings.Lbl_MaxCycle}: {MaxCycleMilliseconds} ms");
+        sb.AppendLine($"  {Strings.Lbl_ConfiguredPollInterval}: {PollingIntervalMs} ms");
+        sb.AppendLine($"  {Strings.Lbl_HistoryWriteFrequency}: {string.Format(Strings.Prompt_EveryPolls, HistoryWriteIntervalScans)}");
 
-        AppendSection(sb, Strings.K434);
-        sb.AppendLine($"  {Strings.K435}: {TotalDeviceCount}");
-        sb.AppendLine($"  {Strings.K436}: {LastSuccessfulDevices}");
-        sb.AppendLine($"  {Strings.K437}: {LastSuccessfulAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? Strings.K595}");
-        sb.AppendLine($"  {Strings.K446}: {ReadDetailText}");
-        sb.AppendLine($"  {Strings.K447}: {DeviceReadSummary}");
+        AppendSection(sb, Strings.Lbl_DeviceReads);
+        sb.AppendLine($"  {Strings.Lbl_ConfiguredDevices}: {TotalDeviceCount}");
+        sb.AppendLine($"  {Strings.Lbl_RecentSuccessfulReads}: {LastSuccessfulDevices}");
+        sb.AppendLine($"  {Strings.Lbl_LastSuccessTime}: {LastSuccessfulAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? Strings.Lbl_N}");
+        sb.AppendLine($"  {Strings.Lbl_ReadPointsConfigured}: {ReadDetailText}");
+        sb.AppendLine($"  {Strings.Lbl_RecentSuccessfulDevices}: {DeviceReadSummary}");
 
-        AppendSection(sb, Strings.K440);
-        sb.AppendLine($"  {Strings.K441}: {PlcEndpoint}");
-        sb.AppendLine($"  {Strings.K443}: {string.Format(Strings.F291, ConsecutiveFailures)}");
+        AppendSection(sb, Strings.Lbl_PLCCommunicationDetails);
+        sb.AppendLine($"  {Strings.Lbl_ConnectionEndpoint}: {PlcEndpoint}");
+        sb.AppendLine($"  {Strings.Lbl_ConsecutiveFailureRetries}: {string.Format(Strings.Prompt_Times4, ConsecutiveFailures)}");
 
-        AppendSection(sb, Strings.K444);
-        sb.AppendLine($"  {Strings.K445}: {(SuccessRateDisplay is { } rate ? $"{rate:F1}%" : Strings.K595)}");
+        AppendSection(sb, Strings.Lbl_AcquisitionQualityReadPerformance);
+        sb.AppendLine($"  {Strings.Lbl_PollSuccessRate}: {(SuccessRateDisplay is { } rate ? $"{rate:F1}%" : Strings.Lbl_N)}");
         sb.AppendLine($"  {Strings.Rtmon_P95Cycle}: {CycleP95Milliseconds} ms");
         sb.AppendLine($"  {Strings.Rtmon_P99Cycle}: {CycleP99Milliseconds} ms");
 
-        AppendSection(sb, Strings.K450);
-        sb.AppendLine($"  {Strings.K451}: {PendingHistoryCount}");
-        sb.AppendLine($"  {Strings.K452}: {RecoveryFileText}");
-        sb.AppendLine($"  {Strings.K453}: {LastHistoryFlushAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? Strings.K595}");
-        sb.AppendLine($"  {Strings.K454}: {HistoryFlushFailureCount}");
-        sb.AppendLine($"  {Strings.K455}: {HistoryStorageText}");
+        AppendSection(sb, Strings.Lbl_HistoryWriteHealth);
+        sb.AppendLine($"  {Strings.Lbl_PendingSnapshots}: {PendingHistoryCount}");
+        sb.AppendLine($"  {Strings.Lbl_RecoveryFiles}: {RecoveryFileText}");
+        sb.AppendLine($"  {Strings.Lbl_LastSuccessfulWrite}: {LastHistoryFlushAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? Strings.Lbl_N}");
+        sb.AppendLine($"  {Strings.Lbl_WriteFailures}: {HistoryFlushFailureCount}");
+        sb.AppendLine($"  {Strings.Lbl_DatabaseStorage}: {HistoryStorageText}");
         sb.AppendLine($"  {Strings.Rtmon_DataSourcePending}: {PendingDataSourceCount}");
         sb.AppendLine($"  {Strings.Rtmon_DataSourceRecovery}: {DataSourceRecoveryFileText}");
         sb.AppendLine($"  {Strings.Rtmon_QueuePeakOverflow}: {HistoryQueueText}");
@@ -504,28 +504,28 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         sb.AppendLine($"  {Strings.Rtmon_DataSourceDatabase}: {DataSourceStorageText}");
         sb.AppendLine($"  {Strings.Rtmon_TotalDatabase}: {TotalStorageText}");
 
-        AppendSection(sb, Strings.K456);
-        sb.AppendLine($"  {Strings.K457}: {CpuMemoryText}");
-        sb.AppendLine($"  {Strings.K458}: {ProcessUptimeText}");
-        sb.AppendLine($"  {Strings.K459}: {GpuUsageText}");
-        sb.AppendLine($"  {Strings.K460}: {DataConsistencyText}");
-        sb.AppendLine($"  {Strings.K461}: {ProcessResourceText}");
-        sb.AppendLine($"  {Strings.K462}: {SystemMemoryText}");
-        sb.AppendLine($"  {Strings.K463}: {DiskFreeText}");
+        AppendSection(sb, Strings.Lbl_AcquisitionProcessResourcesConfiguration);
+        sb.AppendLine($"  {Strings.Lbl_CPUMemory}: {CpuMemoryText}");
+        sb.AppendLine($"  {Strings.Lbl_ProgramUptime}: {ProcessUptimeText}");
+        sb.AppendLine($"  {Strings.Lbl_GPUUsage}: {GpuUsageText}");
+        sb.AppendLine($"  {Strings.Lbl_ConfigCheck}: {DataConsistencyText}");
+        sb.AppendLine($"  {Strings.Lbl_ProcessResources}: {ProcessResourceText}");
+        sb.AppendLine($"  {Strings.Lbl_MemoryDisk}: {SystemMemoryText}");
+        sb.AppendLine($"  {Strings.Lbl_FreeDisk}: {DiskFreeText}");
         sb.AppendLine($"  {Strings.Rtmon_AddressConflict}: {AddressConflictCount}");
         sb.AppendLine($"  {Strings.Rtmon_InvalidAddress}: {InvalidAddressCount}");
-        sb.AppendLine($"  {Strings.K465}: {StageTimingText}");
-        sb.AppendLine($"  {Strings.K466}: {BatchPlanText}");
+        sb.AppendLine($"  {Strings.Lbl_StageDuration}: {StageTimingText}");
+        sb.AppendLine($"  {Strings.Lbl_BatchPlan}: {BatchPlanText}");
 
-        AppendSection(sb, Strings.K467);
+        AppendSection(sb, Strings.Lbl_DeviceAcquisitionStatus);
         if (DeviceStatuses.Count == 0)
         {
-            sb.AppendLine($"  {Strings.K583}");
+            sb.AppendLine($"  {Strings.Lbl_NoData}");
         }
         else
         {
             // 制表符分隔：直接粘进 Excel / 工单表格能自动分列
-            sb.AppendLine($"  {Strings.K002}\t{Strings.K083}\t{Strings.K468}\t{Strings.K469}\t{Strings.Wo_OkNg}");
+            sb.AppendLine($"  {Strings.Lbl_Device}\t{Strings.Lbl_CurrentStatus}\t{Strings.Lbl_Round}\t{Strings.Lbl_ReadConfig}\t{Strings.Wo_OkNg}");
             foreach (var d in DeviceStatuses)
                 sb.AppendLine($"  {d.DeviceName}\t{d.StatusText}\t{d.AcquisitionText}\t{d.ReadSummary}\t{d.ProductionSummary}");
         }
@@ -626,7 +626,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         IsConnected = false;
         IsCollectorUnreachable = true;
         IsAcquisitionRunning = false;
-        ConnectionStatus = Strings.M050;
+        ConnectionStatus = Strings.Msg_CollectorConnected;
         _disconnectDurationSeconds = _collectorOutage.Observe(DateTime.UtcNow);
         RefreshErrorMessage = message;
         OnPropertyChanged(nameof(DisconnectDurationText));
@@ -806,8 +806,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
                 DeviceName = d.DeviceName,
                 StatusText = RuntimeDeviceStatusText.Format(d.StatusWord, (int)d.OfflineCause),
                 AcquisitionText = d.ConfiguredAddressCount == 0
-                    ? Strings.M162
-                    : d.LastCycleSucceeded ? Strings.M163 : Strings.M164,
+                    ? Strings.Msg_Configured
+                    : d.LastCycleSucceeded ? Strings.Msg_CycleSucceeded : Strings.Msg_CycleFailed,
                 ConfiguredAddressCount = d.ConfiguredAddressCount,
                 OkProduction = d.OkProduction,
                 NgProduction = d.NgProduction,
@@ -833,7 +833,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             PlotAreaBorderThickness = new OxyThickness(0, 0, 0, 1),
         };
         model.Axes.Add(new DateTimeAxis { Position = AxisPosition.Bottom, StringFormat = "HH:mm:ss", TextColor = ChartPalette.MutedText, AxislineColor = OxyColors.Transparent, MajorGridlineStyle = LineStyle.None });
-        model.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Title = Strings.M357, TextColor = ChartPalette.MutedText, AxislineColor = OxyColors.Transparent, MajorGridlineColor = ChartPalette.Grid, MajorGridlineStyle = LineStyle.Solid });
+        model.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Title = Strings.Msg_Ms, TextColor = ChartPalette.MutedText, AxislineColor = OxyColors.Transparent, MajorGridlineColor = ChartPalette.Grid, MajorGridlineStyle = LineStyle.Solid });
         model.Series.Add(new LineSeries { Color = ChartPalette.Base, StrokeThickness = 2, MarkerType = MarkerType.None });
         return model;
     }
@@ -888,8 +888,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(duration.TotalSeconds);
 
     private static string FormatBytes(long bytes) => bytes >= 1024 * 1024
-        ? $"{bytes / 1024d / 1024d:F1}{Strings.M358}"
-        : $"{bytes / 1024d:F1}{Strings.M359}";
+        ? $"{bytes / 1024d / 1024d:F1}{Strings.Msg_MB}"
+        : $"{bytes / 1024d:F1}{Strings.Msg_KB}";
 
     public void Dispose()
     {

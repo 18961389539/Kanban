@@ -10,7 +10,7 @@
     xmlns:conv="clr-namespace:MainAPP.Converters"
     mc:Ignorable="d"
     d:DesignHeight="600"
-    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources">
+    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <!--
         设备管理 Tab 1：设备参数。
         DataContext 由父级 DeviceManagerView 传入 DeviceManagerViewModel；
@@ -35,7 +35,7 @@
                 <StackPanel Orientation="Horizontal">
                     <materialIcons:MaterialIcon Kind="LanDisconnect" Width="18" Height="18" Foreground="{StaticResource DangerBrush}" />
                     <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource DangerBrush}"
-                               Text="{x:Static resources:Strings.K192}" />
+                               Text="{x:Static resources:Strings.Lbl_PLCDisconnectedReadWriteClearOperations}" />
                 </StackPanel>
             </Border>
 
@@ -72,14 +72,14 @@
                     <TextBlock
                         FontWeight="Bold"
                         Foreground="{StaticResource DangerBrush}"
-                        Text="{x:Static resources:Strings.K193}" />
+                        Text="{x:Static resources:Strings.Lbl_CurrentDeviceHasConfigurationIssues}" />
                     <ItemsControl ItemsSource="{Binding DataContext.CurrentDeviceValidationErrors, RelativeSource={RelativeSource AncestorType=UserControl}}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Button
                                     Margin="0,6,0,0"
                                     HorizontalContentAlignment="Left"
-                                    AutomationProperties.Name="{x:Static resources:Strings.K194}"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ConfigErrorClickLocate}"
                                     Command="{Binding DataContext.FocusValidationErrorCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}"
                                     Content="{Binding Message}"
@@ -93,22 +93,22 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K195}" />
+            <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_BasicParameters}" />
             <hc:Divider Margin="0,8" />
 
             <hc:TextBox
                 Margin="0,8,0,16"
-                hc:InfoElement.Title="{x:Static resources:Strings.K062}"
+                hc:InfoElement.Title="{x:Static resources:Strings.Lbl_DeviceName}"
                 hc:InfoElement.TitlePlacement="Top"
-                AutomationProperties.Name="{x:Static resources:Strings.K062}"
+                AutomationProperties.Name="{x:Static resources:Strings.Lbl_DeviceName}"
                 Style="{StaticResource TextBoxExtend}"
                 IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
             <hc:TextBox
                 Margin="0,0,0,16"
-                hc:InfoElement.Title="{x:Static resources:Strings.K196}"
+                hc:InfoElement.Title="{x:Static resources:Strings.Lbl_TargetOutputPcsHour}"
                 hc:InfoElement.TitlePlacement="Top"
-                AutomationProperties.Name="{x:Static resources:Strings.K197}"
+                AutomationProperties.Name="{x:Static resources:Strings.Lbl_TargetOutput}"
                 Style="{StaticResource TextBoxExtend}"
                 IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 Text="{Binding TargetCycle, UpdateSourceTrigger=PropertyChanged}" />
@@ -116,7 +116,7 @@
             <TextBlock
                 Margin="0,8,0,0"
                 Style="{StaticResource SectionTitleText}"
-                Text="{x:Static resources:Strings.K198}" />
+                Text="{x:Static resources:Strings.Lbl_PLCAddressConfig}" />
             <hc:Divider Margin="0,8" />
 
             <Grid Margin="0,8,0,16">
@@ -128,9 +128,9 @@
                 <hc:TextBox
                     x:Name="OkAddressTextBox"
                     Grid.Column="0"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K199}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_OKCountAddressEGD100}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="{x:Static resources:Strings.K200}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_OKCountPLCAddress}"
                     Style="{StaticResource TextBoxExtend}"
                     IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}">
                     <hc:TextBox.Text>
@@ -144,13 +144,13 @@
                 <Button
                     Grid.Column="2"
                     Margin="0,16,0,0"
-                    AutomationProperties.Name="{x:Static resources:Strings.K201}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ReadOKCountAddress}"
                     Command="{Binding DataContext.PlcCommands.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding OkCountAddress}"
-                    Content="{x:Static resources:Strings.K031}"
+                    Content="{x:Static resources:Strings.Lbl_Read}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.Eye}"
-                    ToolTip="{x:Static resources:Strings.K032}"
+                    ToolTip="{x:Static resources:Strings.Lbl_ReadCurrentPLCValuesDisabledPLC}"
                     ToolTipService.ShowOnDisabled="True" />
             </Grid>
             <Grid Margin="0,0,0,16">
@@ -162,9 +162,9 @@
                 <hc:TextBox
                     x:Name="NgAddressTextBox"
                     Grid.Column="0"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K202}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_NGCountAddressEGD102}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="{x:Static resources:Strings.K203}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_NGCountPLCAddress}"
                     Style="{StaticResource TextBoxExtend}"
                     IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}">
                     <hc:TextBox.Text>
@@ -178,13 +178,13 @@
                 <Button
                     Grid.Column="2"
                     Margin="0,16,0,0"
-                    AutomationProperties.Name="{x:Static resources:Strings.K204}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ReadNGCountAddress}"
                     Command="{Binding DataContext.PlcCommands.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding NgCountAddress}"
-                    Content="{x:Static resources:Strings.K031}"
+                    Content="{x:Static resources:Strings.Lbl_Read}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.Eye}"
-                    ToolTip="{x:Static resources:Strings.K032}"
+                    ToolTip="{x:Static resources:Strings.Lbl_ReadCurrentPLCValuesDisabledPLC}"
                     ToolTipService.ShowOnDisabled="True" />
             </Grid>
             <Grid Margin="0,0,0,16">
@@ -196,9 +196,9 @@
                 <hc:TextBox
                     x:Name="StatusAddressTextBox"
                     Grid.Column="0"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K205}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_StatusAddressEGD104}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="{x:Static resources:Strings.K206}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_StatusPLCAddress}"
                     Style="{StaticResource TextBoxExtend}"
                     IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}">
                     <hc:TextBox.Text>
@@ -212,13 +212,13 @@
                 <Button
                     Grid.Column="2"
                     Margin="0,16,0,0"
-                    AutomationProperties.Name="{x:Static resources:Strings.K207}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ReadStatusAddress}"
                     Command="{Binding DataContext.PlcCommands.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding StatusCountAddress}"
-                    Content="{x:Static resources:Strings.K031}"
+                    Content="{x:Static resources:Strings.Lbl_Read}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.Eye}"
-                    ToolTip="{x:Static resources:Strings.K032}"
+                    ToolTip="{x:Static resources:Strings.Lbl_ReadCurrentPLCValuesDisabledPLC}"
                     ToolTipService.ShowOnDisabled="True" />
             </Grid>
             <Grid Margin="0,0,0,16">
@@ -230,12 +230,12 @@
                 <hc:TextBox
                     x:Name="ResetAddressTextBox"
                     Grid.Column="0"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K208}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_OEEResetAddressEGD106}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="{x:Static resources:Strings.K209}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_OEEResetPLCAddress}"
                     Style="{StaticResource TextBoxExtend}"
                     IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    ToolTip="{x:Static resources:Strings.K210}">
+                    ToolTip="{x:Static resources:Strings.Lbl_Writes1ShiftChangeManualReset}">
                     <hc:TextBox.Text>
                         <Binding Path="ProductionResetAddress" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
@@ -247,42 +247,42 @@
                 <Button
                     Grid.Column="2"
                     Margin="0,16,0,0"
-                    AutomationProperties.Name="{x:Static resources:Strings.K211}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ManualOEEReset}"
                     Command="{Binding DataContext.PlcCommands.ResetProductionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="{x:Static resources:Strings.K212}"
+                    Content="{x:Static resources:Strings.Lbl_Reset}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.DeleteSweep}"
-                    ToolTip="{x:Static resources:Strings.K213}"
+                    ToolTip="{x:Static resources:Strings.Lbl_SendsResetCommandPLCIrreversibleUnavailable}"
                     ToolTipService.ShowOnDisabled="True" />
             </Grid>
 
             <TextBlock
                 Margin="0,8,0,0"
                 Style="{StaticResource SectionTitleText}"
-                Text="{x:Static resources:Strings.K214}" />
+                Text="{x:Static resources:Strings.Lbl_RecipeParameters}" />
             <hc:Divider Margin="0,8" />
 
             <hc:TextBox
                 Margin="0,8,0,16"
-                hc:InfoElement.Title="{x:Static resources:Strings.K063}"
+                hc:InfoElement.Title="{x:Static resources:Strings.Lbl_RecipeName}"
                 hc:InfoElement.TitlePlacement="Top"
-                AutomationProperties.Name="{x:Static resources:Strings.K063}"
+                AutomationProperties.Name="{x:Static resources:Strings.Lbl_RecipeName}"
                 Style="{StaticResource TextBoxExtend}"
                 IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 Text="{Binding RecipeName, UpdateSourceTrigger=PropertyChanged}" />
             <hc:TextBox
                 Margin="0,0,0,16"
-                hc:InfoElement.Title="{x:Static resources:Strings.K215}"
+                hc:InfoElement.Title="{x:Static resources:Strings.Lbl_RecipeValueIntegerDWord}"
                 hc:InfoElement.TitlePlacement="Top"
-                AutomationProperties.Name="{x:Static resources:Strings.K216}"
+                AutomationProperties.Name="{x:Static resources:Strings.Lbl_RecipeValue}"
                 Style="{StaticResource TextBoxExtend}"
                 IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 Text="{Binding RecipeValue, UpdateSourceTrigger=PropertyChanged}" />
             <hc:TextBox
                 Margin="0,0,0,16"
-                hc:InfoElement.Title="{x:Static resources:Strings.K217}"
+                hc:InfoElement.Title="{x:Static resources:Strings.Lbl_RecipeAddressEGD500}"
                 hc:InfoElement.TitlePlacement="Top"
-                AutomationProperties.Name="{x:Static resources:Strings.K218}"
+                AutomationProperties.Name="{x:Static resources:Strings.Lbl_RecipePLCAddress}"
                 Style="{StaticResource TextBoxExtend}"
                 IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 Text="{Binding RecipeAddress, UpdateSourceTrigger=PropertyChanged}" />
@@ -294,12 +294,12 @@
                     Text="{Binding DataContext.PlcCommands.RecipeStatus, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 <Button
                     HorizontalAlignment="Right"
-                    AutomationProperties.Name="{x:Static resources:Strings.K219}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_WriteRecipePLC}"
                     Command="{Binding DataContext.PlcCommands.WriteRecipeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="{x:Static resources:Strings.K220}"
+                    Content="{x:Static resources:Strings.Lbl_WritePLC}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.Upload}"
-                    ToolTip="{x:Static resources:Strings.K221}"
+                    ToolTip="{x:Static resources:Strings.Lbl_WritesRecipePLCVerifyDeviceAddress}"
                     ToolTipService.ShowOnDisabled="True" />
             </DockPanel>
         </StackPanel>

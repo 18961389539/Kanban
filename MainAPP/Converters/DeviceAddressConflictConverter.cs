@@ -21,7 +21,7 @@ public sealed class DeviceAddressConflictConverter : IMultiValueConverter
 
         var hasConflict = summaries.TryGetValue(device.Id, out var summary);
         if (parameter is "Text")
-            return hasConflict ? string.Format(Strings.F081, summary) : string.Empty;
+            return hasConflict ? string.Format(Strings.Prompt_AddressConflict, summary) : string.Empty;
         return hasConflict ? Visibility.Visible : Visibility.Collapsed;
     }
 

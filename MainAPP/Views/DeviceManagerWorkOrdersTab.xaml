@@ -10,7 +10,7 @@
     xmlns:entities="clr-namespace:Kanban.Collector.Core.Entities;assembly=Kanban.Collector.Core"
     mc:Ignorable="d"
     d:DesignHeight="600"
-    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources">
+    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <!--
         设备管理 Tab 5：工单管理（设备维度，左右布局）。
         DataContext 由父级 DeviceManagerView 传入 DeviceManagerViewModel。
@@ -32,32 +32,32 @@
         <DockPanel Grid.Column="0" LastChildFill="True">
             <!--  顶部操作按钮：新增（高频留文字）+ 更多（编辑/删除收进下拉，左列 220px 放不下三按钮）  -->
             <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10" Orientation="Horizontal">
-                <Button Command="{Binding AddWorkOrderCommand}" Content="{x:Static resources:Strings.K033}" Style="{StaticResource IconButtonPrimary}"
+                <Button Command="{Binding AddWorkOrderCommand}" Content="{x:Static resources:Strings.Lbl_Add}" Style="{StaticResource IconButtonPrimary}"
                         Tag="{x:Static mi:MaterialIconKind.Plus}" />
                 <Button
                     Margin="8,0,0,0"
                     x:Name="WorkOrderMoreButton"
-                    AutomationProperties.Name="{x:Static resources:Strings.K234}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_MoreDeviceActions}"
                     Click="OnWorkOrderMoreClick"
-                    Content="{x:Static resources:Strings.K235}"
+                    Content="{x:Static resources:Strings.Lbl_More}"
                     Style="{StaticResource IconButtonDefault}"
                     Tag="{x:Static mi:MaterialIconKind.DotsHorizontal}"
-                    ToolTip="{x:Static resources:Strings.K236}">
+                    ToolTip="{x:Static resources:Strings.Lbl_CopyImportExportRestoreVirtual}">
                     <Button.ContextMenu>
                         <ContextMenu>
                             <MenuItem
-                                AutomationProperties.Name="{x:Static resources:Strings.K072}"
+                                AutomationProperties.Name="{x:Static resources:Strings.Lbl_Edit}"
                                 Command="{Binding EditWorkOrderCommand}"
-                                Header="{x:Static resources:Strings.K072}">
+                                Header="{x:Static resources:Strings.Lbl_Edit}">
                                 <MenuItem.Icon>
                                     <materialIcons:MaterialIcon Kind="PencilOutline" />
                                 </MenuItem.Icon>
                             </MenuItem>
                             <Separator />
                             <MenuItem
-                                AutomationProperties.Name="{x:Static resources:Strings.K034}"
+                                AutomationProperties.Name="{x:Static resources:Strings.Lbl_Delete}"
                                 Command="{Binding DeleteWorkOrderCommand}"
-                                Header="{x:Static resources:Strings.K034}">
+                                Header="{x:Static resources:Strings.Lbl_Delete}">
                                 <MenuItem.Icon>
                                     <materialIcons:MaterialIcon Kind="Delete" />
                                 </MenuItem.Icon>
@@ -120,7 +120,7 @@
                 <!--  标题  -->
                 <DockPanel Grid.Row="0" Margin="0,0,0,16">
                     <materialIcons:MaterialIcon Kind="ClipboardTextOutline" Style="{StaticResource SectionTitleIcon}" />
-                    <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K073}" />
+                    <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_WorkOrderDetail}" />
                 </DockPanel>
 
                 <!--  详情内容  -->
@@ -130,7 +130,7 @@
                         <TextBlock HorizontalAlignment="Center" Margin="0,80,0,0"
                                    FontSize="{DynamicResource FontSizeSubtitle}"
                                    Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="{x:Static resources:Strings.K074}"
+                                   Text="{x:Static resources:Strings.Lbl_SelectWorkOrderLeftViewDetails}"
                                    Visibility="{Binding SelectedWorkOrder, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Invert}" />
 
                         <!--  详情字段（仅在 SelectedWorkOrder 非 null 时显示）  -->
@@ -138,28 +138,28 @@
                             <!--  工单号  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K008}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_WorkOrderNo}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                            Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.OrderNo}" />
                             </DockPanel>
                             <!--  产品编码  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K019}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_ProductCode}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
                                            Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.ProductCode}" />
                             </DockPanel>
                             <!--  产品名称  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K020}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_ProductName}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
                                            Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.ProductName}" />
                             </DockPanel>
                             <!--  当前配方 / 模具  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K356}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_CurrentRecipe}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
                                            Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedRecipeName}" />
                             </DockPanel>
@@ -172,7 +172,7 @@
                             <!--  计划产量  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K035}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_PlannedOutput}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                            Foreground="{StaticResource PrimaryTextBrush}"
                                            Text="{Binding SelectedWorkOrder.TargetQuantity, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
@@ -200,14 +200,14 @@
                             <!--  不良率  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K085}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_DefectRate}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                            Foreground="{StaticResource DangerBrush}" Text="{Binding SelectedDefectRateText}" />
                             </DockPanel>
                             <!--  计划时间  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K075}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_PlannedTime}" />
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock FontSize="{DynamicResource FontSizeCaption}"
                                                Foreground="{StaticResource PrimaryTextBrush}"
@@ -233,26 +233,26 @@
                             <!--  运行 / 报警 / 待机时长  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K007}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_RunTime}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                            Foreground="{StaticResource SuccessBrush}" Text="{Binding WorkOrderRunTimeFull}" />
                             </DockPanel>
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K038}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_AlarmDuration}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                            Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding WorkOrderAlarmTimeFull}" />
                             </DockPanel>
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K289}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_StandbyDuration}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                            Foreground="{StaticResource StatusPauseBrush}" Text="{Binding WorkOrderPausedTimeFull}" />
                             </DockPanel>
                             <!--  状态  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K003}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Status}" />
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <Ellipse Style="{StaticResource StatusDot}" DataContext="{Binding SelectedWorkOrder}" />
                                     <TextBlock Margin="6,0,0,0" Style="{StaticResource StatusText}" DataContext="{Binding SelectedWorkOrder}" />
@@ -268,7 +268,7 @@
                             <!--  备注  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Top"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K021}" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Remark}" />
                                 <TextBlock VerticalAlignment="Top" FontSize="{DynamicResource FontSizeCaption}"
                                            Foreground="{StaticResource PrimaryTextBrush}" TextWrapping="Wrap"
                                            Text="{Binding SelectedWorkOrder.Remark, TargetNullValue=—}" />
@@ -293,11 +293,11 @@
                 <!--  底部状态操作按钮  -->
                 <StackPanel Grid.Row="2" Margin="0,12,0,0" Orientation="Horizontal"
                             Visibility="{Binding SelectedWorkOrder, Converter={StaticResource NullToVisibilityConverter}}">
-                    <Button Command="{Binding StartWorkOrderCommand}" Content="{x:Static resources:Strings.K036}" Style="{StaticResource IconButtonPrimary}"
+                    <Button Command="{Binding StartWorkOrderCommand}" Content="{x:Static resources:Strings.Lbl_Start}" Style="{StaticResource IconButtonPrimary}"
                             Tag="{x:Static mi:MaterialIconKind.Play}" />
-                    <Button Margin="8,0,0,0" Command="{Binding CompleteWorkOrderCommand}" Content="{x:Static resources:Strings.K076}" Style="{StaticResource IconButtonSuccess}"
+                    <Button Margin="8,0,0,0" Command="{Binding CompleteWorkOrderCommand}" Content="{x:Static resources:Strings.Lbl_Complete}" Style="{StaticResource IconButtonSuccess}"
                             Tag="{x:Static mi:MaterialIconKind.Check}" />
-                    <Button Margin="8,0,0,0" Command="{Binding AbortWorkOrderCommand}" Content="{x:Static resources:Strings.K077}" Style="{StaticResource IconButtonWarning}"
+                    <Button Margin="8,0,0,0" Command="{Binding AbortWorkOrderCommand}" Content="{x:Static resources:Strings.Lbl_Abort}" Style="{StaticResource IconButtonWarning}"
                             Tag="{x:Static mi:MaterialIconKind.Stop}" />
                 </StackPanel>
             </Grid>

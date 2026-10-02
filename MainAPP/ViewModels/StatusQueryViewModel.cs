@@ -168,7 +168,7 @@ public partial class StatusQueryViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Error(ex, "状态查询失败");
-            QueryError = string.Format(Strings.F165, ex.Message);
+            QueryError = string.Format(Strings.Prompt_FailedQueryStatusHistory, ex.Message);
             return (0, 0);
         }
     }
@@ -222,8 +222,8 @@ public partial class StatusQueryViewModel : ObservableObject
         }).ToList();
 
         return HistoryQueryHelper.BuildCsv(rows,
-            string.Format(Strings.M354, RunTimeSeconds / 3600, AlarmTimeSeconds / 3600, PausedTimeSeconds / 3600),
-            $"# {StatusInsight ?? Strings.M176}");
+            string.Format(Strings.Msg_RuntimeHAlarmHIdleH, RunTimeSeconds / 3600, AlarmTimeSeconds / 3600, PausedTimeSeconds / 3600),
+            $"# {StatusInsight ?? Strings.Msg_NoInsights}");
     }
 
     private static string? BuildStatusInsight(List<StatusTransitionRecord> transitions,
@@ -246,7 +246,7 @@ public partial class StatusQueryViewModel : ObservableObject
             var longestRun = runSegments.MaxBy(s => s.End - s.Start);
             var minutes = (longestRun.End - longestRun.Start).TotalMinutes;
             if (minutes > 0)
-                parts.Add(string.Format(Strings.F140, minutes, longestRun.Start, longestRun.End));
+                parts.Add(string.Format(Strings.Prompt_LongestRunMin, minutes, longestRun.Start, longestRun.End));
         }
 
         // 最长报警段（含长报警阈值检测）
@@ -257,8 +257,8 @@ public partial class StatusQueryViewModel : ObservableObject
             var minutes = (longestAlarm.End - longestAlarm.Start).TotalMinutes;
             if (minutes > 0)
             {
-                var prefix = minutes > LongAlarmThresholdMin ? Strings.M177 : Strings.M178;
-                parts.Add(string.Format(Strings.F035, prefix, minutes, longestAlarm.Start, longestAlarm.End));
+                var prefix = minutes > LongAlarmThresholdMin ? Strings.Msg_LongAlarm : Strings.Msg_LongestAlarm;
+                parts.Add(string.Format(Strings.Prompt_Min, prefix, minutes, longestAlarm.Start, longestAlarm.End));
             }
         }
 
@@ -269,7 +269,7 @@ public partial class StatusQueryViewModel : ObservableObject
             var longestPause = pauseSegments.MaxBy(s => s.End - s.Start);
             var minutes = (longestPause.End - longestPause.Start).TotalMinutes;
             if (minutes > 0)
-                parts.Add(string.Format(Strings.F139, minutes, longestPause.Start, longestPause.End));
+                parts.Add(string.Format(Strings.Prompt_LongestPauseMin, minutes, longestPause.Start, longestPause.End));
         }
 
         // 占比异常检测：总报警/暂停时长 / 窗口时长 > 阈值时主动提示
@@ -279,9 +279,9 @@ public partial class StatusQueryViewModel : ObservableObject
             var alarmRatio = alarmSegments.Sum(s => (s.End - s.Start).TotalSeconds) / totalSpan;
             var pauseRatio = pauseSegments.Sum(s => (s.End - s.Start).TotalSeconds) / totalSpan;
             if (pauseRatio > HighPauseRatioThreshold)
-                parts.Add(string.Format(Strings.F045, pauseRatio, HighPauseRatioThreshold));
+                parts.Add(string.Format(Strings.Prompt_PausedRatioAboveThreshold, pauseRatio, HighPauseRatioThreshold));
             if (alarmRatio > HighPauseRatioThreshold)
-                parts.Add(string.Format(Strings.F049, alarmRatio, HighPauseRatioThreshold));
+                parts.Add(string.Format(Strings.Prompt_AlarmRatioAboveThreshold, alarmRatio, HighPauseRatioThreshold));
         }
 
         return parts.Count > 0 ? string.Join("，", parts) : null;

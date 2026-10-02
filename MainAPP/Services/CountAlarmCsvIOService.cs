@@ -95,12 +95,12 @@ public class CounterAlarmCsvIOService(
         try
         {
             var count = ExportCounterAlarmsToPath(device, path);
-            _dialog.NotifySuccess(string.Format(Strings.F304, count, Path.GetFileName(path)));
+            _dialog.NotifySuccess(string.Format(Strings.Prompt_ExportedCounterAlarms, count, Path.GetFileName(path)));
             return true;
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
             return false;
         }
     }
@@ -113,7 +113,7 @@ public class CounterAlarmCsvIOService(
             Strings.Csv_CounterAlarm_FileName,
             device.Name,
             System.DateTime.Now);
-        return _dialog.ShowSaveFileDialog(Strings.M313, defaultFileName, Strings.M310);
+        return _dialog.ShowSaveFileDialog(Strings.Msg_ExportCounterAlarmsConfiguration, defaultFileName, Strings.Msg_CSVFilesCsvAllFiles);
     }
 
     /// <summary>将计数报警写入指定路径；只执行数据转换和文件 IO，可在线程池执行。</summary>
@@ -143,7 +143,7 @@ public class CounterAlarmCsvIOService(
 
     /// <summary>仅弹出文件选择对话框，返回用户选择的路径（UI 线程调用）。</summary>
     public string? PickImportPath()
-        => _dialog.ShowOpenFileDialog(Strings.M314, Strings.M310);
+        => _dialog.ShowOpenFileDialog(Strings.Msg_ImportCounterAlarmsConfiguration, Strings.Msg_CSVFilesCsvAllFiles);
 
     /// <summary>
     /// 读取并校验指定路径的 CSV 文件，返回校验通过的计数报警列表与失败行错误。
@@ -161,7 +161,7 @@ public class CounterAlarmCsvIOService(
 
             if (records.Count == 0)
             {
-                result.Errors.Add(Strings.F314);
+                result.Errors.Add(Strings.Prompt_NoCounterAlarmDataCSVFile);
                 return result;
             }
 
@@ -172,12 +172,12 @@ public class CounterAlarmCsvIOService(
 
                 if (string.IsNullOrWhiteSpace(rec.Name))
                 {
-                    result.Errors.Add(string.Format(Strings.F310, rowNum));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowCounterAlarmNameEmpty, rowNum));
                     continue;
                 }
                 if (string.IsNullOrWhiteSpace(rec.PlcAddress))
                 {
-                    result.Errors.Add(string.Format(Strings.F183, rowNum));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowPLCAddressEmpty, rowNum));
                     continue;
                 }
 
@@ -185,19 +185,19 @@ public class CounterAlarmCsvIOService(
                 var parseResult = CurrentCodec.Parse(rec.PlcAddress.Trim());
                 if (!parseResult.IsValid)
                 {
-                    result.Errors.Add(string.Format(Strings.F182, rowNum, rec.PlcAddress, parseResult.ErrorMessage));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowPLCAddressInvalid, rowNum, rec.PlcAddress, parseResult.ErrorMessage));
                     continue;
                 }
                 if (parseResult.Type != PlcAddressType.DWord)
                 {
-                    result.Errors.Add(string.Format(Strings.F313, rowNum, rec.PlcAddress, parseResult.Type));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowPLCAddressShouldDWordType2, rowNum, rec.PlcAddress, parseResult.Type));
                     continue;
                 }
 
                 // 接受当前语言、其它内置语言，以及旧版 True/False 文本。
                 if (!CsvLocalization.TryParseBoolean(rec.Enabled, defaultValue: false, out var enabled))
                 {
-                    result.Errors.Add(string.Format(Strings.F312, rowNum, rec.Enabled));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowEnabledInvalidExpectedTrueFalse, rowNum, rec.Enabled));
                     continue;
                 }
 
@@ -217,7 +217,7 @@ public class CounterAlarmCsvIOService(
         }
         catch (Exception ex)
         {
-            result.Errors.Add(string.Format(Strings.F134, ex.Message));
+            result.Errors.Add(string.Format(Strings.Prompt_FileReadParseFailed, ex.Message));
         }
 
         return result;

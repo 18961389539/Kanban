@@ -9,7 +9,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
-    xmlns:resources="clr-namespace:MainAPP.Resources"
+    xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization"
     d:DesignHeight="560"
     d:DesignWidth="1100"
     mc:Ignorable="d">
@@ -34,13 +34,13 @@
                 <!-- 标题 + 计数 + 风险徽章 -->
                 <DockPanel Grid.Row="0" Margin="18,18,18,12">
                     <materialIcons:MaterialIcon Kind="AccountGroup" Style="{StaticResource SectionTitleIcon}" />
-                    <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.M320}" />
+                    <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Msg_UserManagement}" />
                     <controls:PageHelpButton Margin="8,0,0,0" PageKey="users" />
                     <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
                                Foreground="{StaticResource ThirdlyTextBrush}"
                                Text="{Binding Users.Count, StringFormat={}({0})}" />
                     <Border DockPanel.Dock="Right" Padding="8,2" CornerRadius="10" VerticalAlignment="Center"
-                            ToolTip="{x:Static resources:Strings.M372}">
+                            ToolTip="{x:Static resources:Strings.Msg_SecurityReminders}">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -53,7 +53,7 @@
                         </Border.Style>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
-                                       Foreground="{StaticResource WarningBrush}" Text="{x:Static resources:Strings.M372}" />
+                                       Foreground="{StaticResource WarningBrush}" Text="{x:Static resources:Strings.Msg_SecurityReminders}" />
                             <TextBlock Margin="4,0,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
                                        Foreground="{StaticResource DangerBrush}"
                                        Text="{Binding SecurityRisks.Count, StringFormat={}({0})}" />
@@ -104,7 +104,7 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <hc:TextBox Grid.Row="0"
-                                hc:InfoElement.Placeholder="{x:Static resources:Strings.M379}"
+                                hc:InfoElement.Placeholder="{x:Static resources:Strings.Msg_SearchUsernameDisplayName}"
                                 Style="{StaticResource TextBoxExtend}"
                                 Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
                     <ItemsControl Grid.Row="1" Margin="0,8,0,8" ItemsSource="{Binding RoleFilters}">
@@ -248,7 +248,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14" VerticalAlignment="Center"
                                                                     Foreground="{StaticResource SecondaryTextBrush}" />
-                                        <TextBlock Margin="6,0,0,0" Text="{x:Static resources:Strings.K003}" VerticalAlignment="Center" />
+                                        <TextBlock Margin="6,0,0,0" Text="{x:Static resources:Strings.Lbl_Status}" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </DataGridTemplateColumn.Header>
                                 <DataGridTemplateColumn.CellTemplate>
@@ -317,15 +317,15 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                                             <Button Padding="8,6" Margin="0,0,4,0" Cursor="Hand"
-                                            AutomationProperties.Name="{x:Static resources:Strings.M324}"
-                                            ToolTip="{x:Static resources:Strings.M324}"
+                                            AutomationProperties.Name="{x:Static resources:Strings.Msg_ResetPassword}"
+                                            ToolTip="{x:Static resources:Strings.Msg_ResetPassword}"
                                             Command="{Binding DataContext.ResetPasswordForCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
                                         <materialIcons:MaterialIcon Width="16" Height="16" Kind="Key" />
                                     </Button>
                                     <Button Padding="8,6" Cursor="Hand"
-                                                    AutomationProperties.Name="{x:Static resources:Strings.M323}"
-                                                    ToolTip="{x:Static resources:Strings.M323}"
+                                                    AutomationProperties.Name="{x:Static resources:Strings.Msg_DeleteUser}"
+                                                    ToolTip="{x:Static resources:Strings.Msg_DeleteUser}"
                                                     Command="{Binding DataContext.DeleteUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}">
                                                 <materialIcons:MaterialIcon Width="16" Height="16" Foreground="{StaticResource DangerBrush}" Kind="DeleteOutline" />
@@ -342,8 +342,8 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         IconKind="AccountGroup"
-                        Message="{x:Static resources:Strings.M380}"
-                        Hint="{x:Static resources:Strings.M322}">
+                        Message="{x:Static resources:Strings.Msg_NoMatchingUsers}"
+                        Hint="{x:Static resources:Strings.Msg_AddUser}">
                         <controls:EmptyState.Style>
                             <Style TargetType="controls:EmptyState">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -428,7 +428,7 @@
                             </Style>
                         </Button.Style>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="✎ " /><TextBlock Text="{x:Static resources:Strings.M320}" />
+                            <TextBlock Text="✎ " /><TextBlock Text="{x:Static resources:Strings.Msg_UserManagement}" />
                         </StackPanel>
                     </Button>
                     <Button Margin="2,0,0,0" Padding="14,6" BorderThickness="1,1,1,0" Cursor="Hand"
@@ -469,7 +469,7 @@
                             </Style>
                         </Button.Style>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="＋ " /><TextBlock Text="{x:Static resources:Strings.M322}" />
+                            <TextBlock Text="＋ " /><TextBlock Text="{x:Static resources:Strings.Msg_AddUser}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -501,7 +501,7 @@
                             Margin="0,0,0,12"
                             FontSize="{DynamicResource FontSizeHint}"
                             Foreground="{StaticResource WarningBrush}"
-                            Text="{x:Static resources:Strings.M362}">
+                            Text="{x:Static resources:Strings.Msg_UnsavedChanges3}">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -516,14 +516,14 @@
 
                         <hc:TextBox
                             Margin="0,0,0,12"
-                            hc:InfoElement.Title="{x:Static resources:Strings.M330}"
+                            hc:InfoElement.Title="{x:Static resources:Strings.Msg_DisplayName}"
                             hc:InfoElement.TitlePlacement="Top"
                             Style="{StaticResource TextBoxExtend}"
                             Text="{Binding EditDisplayName, UpdateSourceTrigger=PropertyChanged}" />
 
                         <hc:ComboBox
                             Margin="0,0,0,12"
-                            hc:InfoElement.Title="{x:Static resources:Strings.M321}"
+                            hc:InfoElement.Title="{x:Static resources:Strings.Msg_Role}"
                             hc:InfoElement.TitlePlacement="Top"
                             ItemsSource="{Binding Source={x:Static vm:UserManagerViewModel.AvailableRoles}}"
                             SelectedItem="{Binding EditRole, UpdateSourceTrigger=PropertyChanged}"
@@ -531,7 +531,7 @@
 
                         <CheckBox
                             Margin="0,0,0,12"
-                            Content="{x:Static resources:Strings.M331}"
+                            Content="{x:Static resources:Strings.Msg_Active}"
                             IsChecked="{Binding EditIsActive, UpdateSourceTrigger=PropertyChanged}" />
 
                         <Button
@@ -546,14 +546,14 @@
                             HorizontalAlignment="Stretch"
                             Command="{Binding ResetPasswordForCommand}"
                             CommandParameter="{Binding SelectedUser}"
-                            Content="{x:Static resources:Strings.M324}"
+                            Content="{x:Static resources:Strings.Msg_ResetPassword}"
                             Style="{StaticResource ButtonDefault}" />
 
                         <Button
                             HorizontalAlignment="Stretch"
                             Command="{Binding DeleteUserCommand}"
                             CommandParameter="{Binding SelectedUser}"
-                            Content="{x:Static resources:Strings.M323}"
+                            Content="{x:Static resources:Strings.Msg_DeleteUser}"
                             Style="{StaticResource ButtonDanger}" />
                     </StackPanel>
                     </ScrollViewer>
@@ -578,21 +578,21 @@
                         <hc:TextBox
                             x:Name="NewUsernameBox"
                             Margin="0,0,0,12"
-                            hc:InfoElement.Title="{x:Static resources:Strings.M316}"
+                            hc:InfoElement.Title="{x:Static resources:Strings.Msg_Username}"
                             hc:InfoElement.TitlePlacement="Top"
                             Style="{StaticResource TextBoxExtend}"
                             Text="{Binding NewUsername, UpdateSourceTrigger=PropertyChanged}" />
 
                         <hc:TextBox
                             Margin="0,0,0,12"
-                            hc:InfoElement.Title="{x:Static resources:Strings.M330}"
+                            hc:InfoElement.Title="{x:Static resources:Strings.Msg_DisplayName}"
                             hc:InfoElement.TitlePlacement="Top"
                             Style="{StaticResource TextBoxExtend}"
                             Text="{Binding NewDisplayName, UpdateSourceTrigger=PropertyChanged}" />
 
                         <hc:ComboBox
                             Margin="0,0,0,12"
-                            hc:InfoElement.Title="{x:Static resources:Strings.M321}"
+                            hc:InfoElement.Title="{x:Static resources:Strings.Msg_Role}"
                             hc:InfoElement.TitlePlacement="Top"
                             ItemsSource="{Binding Source={x:Static vm:UserManagerViewModel.AvailableRoles}}"
                             SelectedItem="{Binding NewUserRole, UpdateSourceTrigger=PropertyChanged}"
@@ -601,9 +601,9 @@
                         <PasswordBox
                             x:Name="NewPasswordBox"
                             Margin="0,0,0,4"
-                            hc:InfoElement.Title="{x:Static resources:Strings.M317}"
+                            hc:InfoElement.Title="{x:Static resources:Strings.Msg_Password}"
                             hc:InfoElement.TitlePlacement="Top"
-                            AutomationProperties.Name="{x:Static resources:Strings.M317}"
+                            AutomationProperties.Name="{x:Static resources:Strings.Msg_Password}"
                             PasswordChanged="OnNewPasswordChanged">
                             <PasswordBox.Style>
                                 <Style TargetType="PasswordBox" BasedOn="{StaticResource {x:Type PasswordBox}}">
@@ -634,9 +634,9 @@
                         <PasswordBox
                             x:Name="ConfirmPasswordBox"
                             Margin="0,12,0,12"
-                            hc:InfoElement.Title="{x:Static resources:Strings.M365}"
+                            hc:InfoElement.Title="{x:Static resources:Strings.Msg_TwoPasswordsDoMatch}"
                             hc:InfoElement.TitlePlacement="Top"
-                            AutomationProperties.Name="{x:Static resources:Strings.M365}"
+                            AutomationProperties.Name="{x:Static resources:Strings.Msg_TwoPasswordsDoMatch}"
                             PasswordChanged="OnNewPasswordChanged">
                             <PasswordBox.Style>
                                 <Style TargetType="PasswordBox" BasedOn="{StaticResource {x:Type PasswordBox}}">
@@ -652,13 +652,13 @@
 
                         <CheckBox
                             Margin="0,0,0,12"
-                            Content="{x:Static resources:Strings.M368}"
+                            Content="{x:Static resources:Strings.Msg_MustChangePasswordFirstLogin}"
                             IsChecked="{Binding NewMustChangePassword, UpdateSourceTrigger=PropertyChanged}" />
 
                         <Button
                             HorizontalAlignment="Stretch"
                             Click="OnAddUserClick"
-                            Content="{x:Static resources:Strings.M322}"
+                            Content="{x:Static resources:Strings.Msg_AddUser}"
                             Style="{StaticResource ButtonPrimary}" />
                     </StackPanel>
                     </ScrollViewer>

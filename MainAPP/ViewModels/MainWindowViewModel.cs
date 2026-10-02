@@ -138,15 +138,15 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         {
             if (IsDataStale && !IsPlcDisconnected)
                 return IsRemoteDataMode
-                    ? string.Format(Strings.F132, DataStaleSeconds)
-                    : string.Format(Strings.F131, DataStaleSeconds);
+                    ? string.Format(Strings.Prompt_DataStalledSCollectionServiceMay, DataStaleSeconds)
+                    : string.Format(Strings.Prompt_DataStalledSPLCAcquisitionMay, DataStaleSeconds);
             return IsPlcConnecting
                 ? IsRemoteDataMode
-                    ? string.Format(Strings.F159, ConnectionManager.ConnectionStatus)
-                    : string.Format(Strings.F015, ConnectionManager.ConnectionStatus)
+                    ? string.Format(Strings.Prompt_ConnectingCollectionService, ConnectionManager.ConnectionStatus)
+                    : string.Format(Strings.Prompt_PLCConnecting, ConnectionManager.ConnectionStatus)
                 : IsRemoteDataMode
-                    ? string.Format(Strings.F232, ConnectionManager.ConnectionStatus)
-                    : string.Format(Strings.F010, ConnectionManager.ConnectionStatus);
+                    ? string.Format(Strings.Prompt_CollectionServiceDisconnected, ConnectionManager.ConnectionStatus)
+                    : string.Format(Strings.Prompt_PLCDisconnected, ConnectionManager.ConnectionStatus);
         }
     }
 
@@ -170,14 +170,14 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
             return status switch
             {
                 LicenseStatus.Active when LicenseGate.CurrentLicense?.IsPermanent == false
-                    => string.Format(Strings.F112, LicenseGate.CurrentLicense.ExpireDate),
-                LicenseStatus.Active => Strings.M135,
-                LicenseStatus.Trial => string.Format(Strings.F211, RemainingTrialDays ?? 0),
-                LicenseStatus.TrialExpired => Strings.M136,
-                LicenseStatus.TrialManipulated => Strings.M137,
-                LicenseStatus.Expired => Strings.M138,
-                LicenseStatus.MachineMismatch => Strings.M139,
-                _ => Strings.M140,
+                    => string.Format(Strings.Prompt_Activated, LicenseGate.CurrentLicense.ExpireDate),
+                LicenseStatus.Active => Strings.Msg_ActivatedPermanentLicense,
+                LicenseStatus.Trial => string.Format(Strings.Prompt_TrialDaysLeft, RemainingTrialDays ?? 0),
+                LicenseStatus.TrialExpired => Strings.Msg_TrialExpired,
+                LicenseStatus.TrialManipulated => Strings.Msg_TrialAnomaly,
+                LicenseStatus.Expired => Strings.Msg_LicenseExpired,
+                LicenseStatus.MachineMismatch => Strings.Msg_LicenseMachineMismatch,
+                _ => Strings.Msg_Activated,
             };
         }
     }
@@ -192,14 +192,14 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
             return status switch
             {
                 LicenseStatus.Active when LicenseGate.CurrentLicense?.IsPermanent == false
-                    => string.Format(Strings.F150, machineCode, LicenseGate.CurrentLicense!.ProductKey, LicenseGate.CurrentLicense.ExpireDate),
-                LicenseStatus.Active => string.Format(Strings.F149, machineCode),
-                LicenseStatus.Trial => string.Format(Strings.F151, machineCode, RemainingTrialDays ?? 0),
-                LicenseStatus.TrialExpired => string.Format(Strings.F152, machineCode),
-                LicenseStatus.TrialManipulated => string.Format(Strings.F148, machineCode),
-                LicenseStatus.Expired => string.Format(Strings.F147, machineCode),
-                LicenseStatus.MachineMismatch => string.Format(Strings.F146, machineCode),
-                _ => string.Format(Strings.F145, machineCode),
+                    => string.Format(Strings.Prompt_MachineCodeProductKeyExpires, machineCode, LicenseGate.CurrentLicense!.ProductKey, LicenseGate.CurrentLicense.ExpireDate),
+                LicenseStatus.Active => string.Format(Strings.Prompt_MachineCodePermanentLicense, machineCode),
+                LicenseStatus.Trial => string.Format(Strings.Prompt_MachineCodeTrialDaysRemaining, machineCode, RemainingTrialDays ?? 0),
+                LicenseStatus.TrialExpired => string.Format(Strings.Prompt_MachineCodeTrialExpiredPleaseActivate, machineCode),
+                LicenseStatus.TrialManipulated => string.Format(Strings.Prompt_MachineCodeSystemTimeAnomalyDetected, machineCode),
+                LicenseStatus.Expired => string.Format(Strings.Prompt_MachineCodeLicenseExpiredPleaseActivate, machineCode),
+                LicenseStatus.MachineMismatch => string.Format(Strings.Prompt_MachineCodeLicenseDoesMatchMachine, machineCode),
+                _ => string.Format(Strings.Prompt_MachineCode, machineCode),
             };
         }
     }
@@ -229,9 +229,9 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     /// <summary>当前用户角色的本地化名称。</summary>
     public string CurrentRoleText => UserSession.CurrentRole switch
     {
-        UserRole.Admin => Strings.M334,
-        UserRole.Engineer => Strings.M333,
-        _ => Strings.M332,
+        UserRole.Admin => Strings.Msg_Administrator,
+        UserRole.Engineer => Strings.Msg_Engineer,
+        _ => Strings.Msg_OperatorText,
     };
 
     /// <summary>
@@ -733,7 +733,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
                 if (!e.IsConnected)
                     Growl.Error(new GrowlInfo
                     {
-                        Message = string.Format(Strings.F233, e.IpAddress, e.DisconnectCount),
+                        Message = string.Format(Strings.Prompt_CollectionServiceDisconnectedRetry, e.IpAddress, e.DisconnectCount),
                         ShowDateTime = false,
                     });
                 else
@@ -743,7 +743,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
                         : "—";
                     Growl.Success(new GrowlInfo
                     {
-                        Message = string.Format(Strings.F234, dur),
+                        Message = string.Format(Strings.Prompt_CollectionServiceReconnectedDowntime, dur),
                         ShowDateTime = false,
                     });
                 }
@@ -754,7 +754,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
             {
                 Growl.Error(new GrowlInfo
                 {
-                    Message = string.Format(Strings.F011, e.IpAddress, e.DisconnectCount),
+                    Message = string.Format(Strings.Prompt_PLCDisconnectedIPRetry, e.IpAddress, e.DisconnectCount),
                     ShowDateTime = false,
                 });
             }
@@ -765,7 +765,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
                     : "—";
                 Growl.Success(new GrowlInfo
                 {
-                    Message = string.Format(Strings.F012, dur),
+                    Message = string.Format(Strings.Prompt_PLCReconnectedDowntime, dur),
                     ShowDateTime = false,
                 });
             }

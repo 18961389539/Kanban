@@ -132,7 +132,7 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
         }
         var yAxis = new LinearAxis
         {
-            Title = Strings.M190,
+            Title = Strings.Msg_OutputPcs,
             Position = AxisPosition.Left,
             TicklineColor = palette.Grid,
             MajorGridlineColor = palette.Grid,
@@ -152,7 +152,7 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
         var qualityAxis = new LinearAxis
         {
             Key = QualityAxisKey,
-            Title = Strings.K001,
+            Title = Strings.Lbl_QualityRate,
             Position = AxisPosition.Right,
             Minimum = 0,
             Maximum = 1,
@@ -226,7 +226,7 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
 
         var okSeries = new RectangleBarSeries
         {
-            Title = Strings.M191,
+            Title = Strings.Msg_OKOutput,
             FillColor = palette.Ok,
             StrokeColor = OxyColors.Transparent,
             // {7}=item.Title 多行（时间[班次]/OK/NG/良率）。Format 参数：values=[Title,X轴,X0,X1,Y轴,Y0,Y1,item.Title]，
@@ -236,7 +236,7 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
         };
         var ngSeries = new RectangleBarSeries
         {
-            Title = Strings.M192,
+            Title = Strings.Msg_NGOutput,
             FillColor = palette.Ng,
             StrokeColor = OxyColors.Transparent,
             TrackerFormatString = "{7}",
@@ -245,7 +245,7 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
         // 方案 D：良品率折线（右轴）；空桶 y=NaN 断线不连通
         var qualitySeries = new LineSeries
         {
-            Title = Strings.K001,
+            Title = Strings.Lbl_QualityRate,
             Color = QualityLineColor,
             StrokeThickness = 2.4,
             YAxisKey = QualityAxisKey,
@@ -263,8 +263,8 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
                 s => buckets[index] >= s.Start && buckets[index] < s.End).Shift?.Name;
             // 多行 Title：悬停一次性读出 桶时间[班次] / OK+NG / 良率（P0-2）
             var title = $"{buckets[index]:MM-dd HH:mm}{(shiftName is null ? "" : $"  [{shiftName}]")}\n"
-                + $"{Strings.M191}: {ok:N0}  {Strings.M192}: {ng:N0}\n"
-                + $"{Strings.K001}: {quality:P1}";
+                + $"{Strings.Msg_OKOutput}: {ok:N0}  {Strings.Msg_NGOutput}: {ng:N0}\n"
+                + $"{Strings.Lbl_QualityRate}: {quality:P1}";
             okSeries.Items.Add(new RectangleBarItem(x0, 0, x1, ok)
             {
                 Color = palette.Ok,
@@ -423,9 +423,9 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
         };
         valueAxis.Key = "value";
         categoryAxis.Key = "category";
-        categoryAxis.Labels.Add(Strings.M236);
-        categoryAxis.Labels.Add(Strings.M237);
-        categoryAxis.Labels.Add(Strings.M238);
+        categoryAxis.Labels.Add(Strings.Msg_Performance);
+        categoryAxis.Labels.Add(Strings.Msg_Availability);
+        categoryAxis.Labels.Add(Strings.Msg_QualityRate);
         categoryAxis.Labels.Add("OEE");
         series.Items.Add(new BarItem { Value = performance, Color = palette.Base });
         series.Items.Add(new BarItem { Value = availability, Color = palette.Pause });
@@ -522,7 +522,7 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
             MarkerFill = ChartPalette.Oee,
             MarkerStroke = ChartPalette.Oee,
             TrackerFormatString = "{0}: {2:P1}",
-            Title = Strings.K655, // 累计占比（resx，本地化守卫要求）
+            Title = Strings.Lbl_CumulativeShare, // 累计占比（resx，本地化守卫要求）
         };
         for (var i = 0; i < defects.Count; i++)
             cumulativeSeries.Points.Add(new DataPoint(i, defects[i].CumulativePercent / 100.0));
@@ -590,7 +590,7 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
             LowColor = ChartPalette.HeatmapZero,
             Minimum = 0,
             Maximum = maxOk,
-            Title = Strings.M190,
+            Title = Strings.Msg_OutputPcs,
             TextColor = palette.Text,
             TitleColor = palette.Text,
             TicklineColor = palette.Grid,
@@ -637,7 +637,7 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
                     deviceIndex + 0.4)
                 {
                     Color = color,
-                    Title = $"{deviceName}  {timeLabel}  {Strings.M190}: {value:N0}",
+                    Title = $"{deviceName}  {timeLabel}  {Strings.Msg_OutputPcs}: {value:N0}",
                 });
             }
         }

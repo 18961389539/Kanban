@@ -23,7 +23,7 @@ public partial class HistoryQuery
         var sn = SnInput.Trim();
         if (string.IsNullOrEmpty(sn))
         {
-            ValidationMessage = L.T("K921");
+            ValidationMessage = L.T("Lbl_PleaseEnterSNTrace");
             return;
         }
 
@@ -39,7 +39,7 @@ public partial class HistoryQuery
             });
             SnRows = [.. response.Items];
             if (SnRows.Count == 0)
-                SnError = L.T("K922", sn);
+                SnError = L.T("Lbl_NoTraceRecordsFoundSN", sn);
         }
         catch (Exception)
         {
@@ -63,7 +63,7 @@ public partial class HistoryQuery
         var sb = new StringBuilder();
         sb.AppendLine(string.Join(',',
             C(L.T("Hq_SnCol")), C(L.T("Hq_Time")), C(L.T("Csv_DeviceId")), C(L.T("Csv_DeviceName")),
-            C(L.T("Hq_SnWorkOrder")), C(L.T("Hq_Shift")), C(L.T("K924")), C(L.T("Hq_SnSource"))));
+            C(L.T("Hq_SnWorkOrder")), C(L.T("Hq_Shift")), C(L.T("Lbl_Result2")), C(L.T("Hq_SnSource"))));
         foreach (var r in SnRows)
         {
             sb.AppendLine(string.Join(',',

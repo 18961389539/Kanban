@@ -77,10 +77,10 @@ public partial class DevicePlcCommandViewModel : DeviceChildManagerViewModel
             var result = await _plcCommands.WriteRecipeAsync(SelectedDevice);
             RecipeStatus = result.Status switch
             {
-                PlcOpStatus.Success => string.Format(Strings.F072, System.DateTime.Now),
+                PlcOpStatus.Success => string.Format(Strings.Prompt_WriteOK, System.DateTime.Now),
                 PlcOpStatus.Info => result.Message,
-                PlcOpStatus.Warning => string.Format(Strings.F197, result.Message),
-                PlcOpStatus.Error => string.Format(Strings.F237, result.Message),
+                PlcOpStatus.Warning => string.Format(Strings.Prompt_Warning, result.Message),
+                PlcOpStatus.Error => string.Format(Strings.Prompt_Error, result.Message),
                 _ => result.Message,
             };
             SetPlcOperationStatus(result);
@@ -91,9 +91,9 @@ public partial class DevicePlcCommandViewModel : DeviceChildManagerViewModel
         catch (Exception ex)
         {
             Log.Error(ex, "写配方命令异常");
-            PlcOperationStatus = string.Format(Strings.F237, ex.Message);
+            PlcOperationStatus = string.Format(Strings.Prompt_Error, ex.Message);
             PlcOperationStatusType = "Error";
-            _dialog.NotifyError(string.Format(Strings.F237, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_Error, ex.Message));
         }
         finally
         {
@@ -117,8 +117,8 @@ public partial class DevicePlcCommandViewModel : DeviceChildManagerViewModel
             var result = await _plcCommands.ResetProductionAsync(
                 SelectedDevice,
                 device => _dialog.Show(
-                    string.Format(Strings.F176, device.Name),
-                    Strings.M171, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes);
+                    string.Format(Strings.Prompt_ManuallyResetOEEOKNGOutput, device.Name),
+                    Strings.Msg_ConfirmOEEReset, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes);
 
             if (result.Status != PlcOpStatus.Cancelled)
             {
@@ -129,9 +129,9 @@ public partial class DevicePlcCommandViewModel : DeviceChildManagerViewModel
         catch (Exception ex)
         {
             Log.Error(ex, "OEE 清零命令异常");
-            PlcOperationStatus = string.Format(Strings.F237, ex.Message);
+            PlcOperationStatus = string.Format(Strings.Prompt_Error, ex.Message);
             PlcOperationStatusType = "Error";
-            _dialog.NotifyError(string.Format(Strings.F237, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_Error, ex.Message));
         }
         finally
         {
@@ -158,9 +158,9 @@ public partial class DevicePlcCommandViewModel : DeviceChildManagerViewModel
         catch (Exception ex)
         {
             Log.Error(ex, "读 PLC 值命令异常");
-            PlcOperationStatus = string.Format(Strings.F237, ex.Message);
+            PlcOperationStatus = string.Format(Strings.Prompt_Error, ex.Message);
             PlcOperationStatusType = "Error";
-            _dialog.NotifyError(string.Format(Strings.F237, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_Error, ex.Message));
         }
         finally
         {
@@ -171,7 +171,7 @@ public partial class DevicePlcCommandViewModel : DeviceChildManagerViewModel
     /// <summary>标记 PLC 操作开始：状态栏显示"正在执行 PLC 操作..."（仅真实 PLC 操作调用，保存等非 PLC 流程不触发）。</summary>
     public void ReportPlcOperationStarted()
     {
-        PlcOperationStatus = Strings.M170;
+        PlcOperationStatus = Strings.Msg_ExecutingPLCOperation;
         PlcOperationStatusType = "Progress";
     }
 
@@ -203,11 +203,11 @@ public partial class DevicePlcCommandViewModel : DeviceChildManagerViewModel
     {
         PlcOperationStatus = result.Status switch
         {
-            PlcOpStatus.Success => string.Format(Strings.F125, result.Message),
+            PlcOpStatus.Success => string.Format(Strings.Prompt_Success, result.Message),
             PlcOpStatus.Info => result.Message,
-            PlcOpStatus.Warning => string.Format(Strings.F197, result.Message),
-            PlcOpStatus.Error => string.Format(Strings.F087, result.Message),
-            PlcOpStatus.Cancelled => Strings.M172,
+            PlcOpStatus.Warning => string.Format(Strings.Prompt_Warning, result.Message),
+            PlcOpStatus.Error => string.Format(Strings.Prompt_Failed, result.Message),
+            PlcOpStatus.Cancelled => Strings.Msg_Cancelled,
             _ => result.Message,
         };
         PlcOperationStatusType = result.Status switch

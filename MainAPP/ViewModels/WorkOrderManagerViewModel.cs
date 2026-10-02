@@ -113,7 +113,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     private IReadOnlyList<WorkOrder>? _pendingGanttInput;
 
     /// <summary>可选设备筛选项（"全部设备" + 各设备，按 DeviceId 匹配）。</summary>
-    public ObservableCollection<DeviceFilterOption> DeviceOptions { get; } = [new("", Strings.M044)];
+    public ObservableCollection<DeviceFilterOption> DeviceOptions { get; } = [new("", Strings.Msg_AllDevices)];
 
     /// <summary>选中工单的产量聚合（详情页绑定）。null 表示尚未加载完成。</summary>
     [ObservableProperty]
@@ -213,7 +213,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     private string FormatProductionCount(int? count)
         => IsProductionLoadFailed || (IsProductionLoading && SelectedProduction == null) || count == null
             ? "—"
-            : string.Format(Strings.F244, count.Value);
+            : string.Format(Strings.Prompt_Pcs6, count.Value);
 
     private string FormatProductionRate(double? rate)
         => IsProductionLoadFailed || (IsProductionLoading && SelectedProduction == null) || rate == null
@@ -371,31 +371,31 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
 
     public IReadOnlyList<WorkOrderSortOption> SortOptions { get; } =
     [
-        new(WorkOrderSortMode.ScheduleStart, Strings.M080),
-        new(WorkOrderSortMode.ScheduleEnd, Strings.M081),
-        new(WorkOrderSortMode.StatusThenSchedule, Strings.M082),
-        new(WorkOrderSortMode.CreatedAt, Strings.M083),
+        new(WorkOrderSortMode.ScheduleStart, Strings.Msg_PlannedStart),
+        new(WorkOrderSortMode.ScheduleEnd, Strings.Msg_PlannedEnd),
+        new(WorkOrderSortMode.StatusThenSchedule, Strings.Msg_StatusTime),
+        new(WorkOrderSortMode.CreatedAt, Strings.Msg_Created),
     ];
 
     public string StartActionReason => SelectedWorkOrder == null
-        ? Strings.M084
+        ? Strings.Msg_SelectWorkOrder
         : SelectedWorkOrder.Status != WorkOrderStatus.Pending
-            ? Strings.M085
+            ? Strings.Msg_OnlyPendingOrdersCanStart
             : HasRunningWorkOrderOnDevice(SelectedWorkOrder)
-                ? Strings.M086
-                : Strings.M087;
+                ? Strings.Msg_DeviceHasActiveOrder
+                : Strings.Msg_StartOrder;
 
     public string CompleteActionReason => SelectedWorkOrder == null
-        ? Strings.M084
+        ? Strings.Msg_SelectWorkOrder
         : SelectedWorkOrder.Status != WorkOrderStatus.Running
-            ? Strings.M088
-            : Strings.M089;
+            ? Strings.Msg_OnlyActiveOrdersCanComplete
+            : Strings.Msg_CompleteSaveSnapshotPickNextOrder;
 
     public string AbortActionReason => SelectedWorkOrder == null
-        ? Strings.M084
+        ? Strings.Msg_SelectWorkOrder
         : SelectedWorkOrder.Status is not (WorkOrderStatus.Pending or WorkOrderStatus.Running)
-            ? Strings.M090
-            : Strings.M091;
+            ? Strings.Msg_CannotAbortCompletedOrder
+            : Strings.Msg_CannotResumeAbortedOrder;
 
     public WorkOrderManagerViewModel(
         WorkOrderRepository workOrderRepo,
@@ -584,7 +584,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             : overdue.TotalDays < 1
                 ? (int)overdue.TotalHours + "h"
                 : (int)overdue.TotalDays + "d";
-        return string.Format(Strings.K799, duration);
+        return string.Format(Strings.Lbl_Overdue2, duration);
     }
 
     /// <summary>低频定时器：每分钟全量重算时间相关计数，覆盖"工单跨过 PlannedEnd 变逾期"的无事件转变。
@@ -643,7 +643,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         var devices = _deviceRepo.GetDevicesSnapshot();
         var current = DeviceFilter;
         DeviceOptions.Clear();
-        DeviceOptions.Add(new DeviceFilterOption("", Strings.M044));
+        DeviceOptions.Add(new DeviceFilterOption("", Strings.Msg_AllDevices));
         foreach (var d in devices)
             DeviceOptions.Add(new DeviceFilterOption(d.Id, d.Name));
         // 尝试恢复之前选中的设备筛选（若仍存在）
@@ -1037,7 +1037,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             _lastProductionOrderId = SelectedWorkOrder.Id;
             _lastProductionQueryAt = DateTime.Now;
         }
-        _dialog.NotifyInfo(string.Format(Strings.F098, WorkOrders.Count));
+        _dialog.NotifyInfo(string.Format(Strings.Prompt_RefreshedOutputDataWorkOrders, WorkOrders.Count));
     }
 
     private static string GetScheduleStatusText(WorkOrder workOrder, double achievementRate)
@@ -1050,13 +1050,13 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             DateTime.Now);
         return kind switch
         {
-            WorkOrderScheduleKind.CompletedMet => Strings.M092,
-            WorkOrderScheduleKind.CompletedShort => Strings.M093,
-            WorkOrderScheduleKind.Aborted => Strings.M031,
-            WorkOrderScheduleKind.MetPendingComplete => Strings.M032,
-            WorkOrderScheduleKind.OverdueIncomplete => Strings.M033,
-            WorkOrderScheduleKind.Behind => Strings.M094,
-            _ => Strings.M095,
+            WorkOrderScheduleKind.CompletedMet => Strings.Msg_TargetMet,
+            WorkOrderScheduleKind.CompletedShort => Strings.Msg_BelowTarget,
+            WorkOrderScheduleKind.Aborted => Strings.Msg_Aborted,
+            WorkOrderScheduleKind.MetPendingComplete => Strings.Msg_MetPending,
+            WorkOrderScheduleKind.OverdueIncomplete => Strings.Msg_OverdueIncomplete,
+            WorkOrderScheduleKind.Behind => Strings.Msg_BehindSchedule,
+            _ => Strings.Msg_Track,
         };
     }
 
@@ -1178,12 +1178,12 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         var filtered = FilteredView.OfType<WorkOrder>().ToList();
         if (filtered.Count == 0)
         {
-            _dialog.NotifyWarning(Strings.M034);
+            _dialog.NotifyWarning(Strings.Msg_NoWorkOrdersMatchCurrentFilter);
             return;
         }
 
         var defaultFileName = string.Format(Strings.Csv_WorkOrder_FileName, DateTime.Now);
-        var path = _dialog.ShowSaveFileDialog(Strings.M_ExportWorkOrders, defaultFileName, Strings.M310);
+        var path = _dialog.ShowSaveFileDialog(Strings.M_ExportWorkOrders, defaultFileName, Strings.Msg_CSVFilesCsvAllFiles);
         if (string.IsNullOrEmpty(path)) return;
 
         try
@@ -1195,15 +1195,15 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
                 // UTF-8 with BOM：Excel 打开中文不乱码
                 using var writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(true));
                 // 表头（多语言资源；文件名模板有意保留中文，跨语言归档稳定）
-                writer.WriteLine(Strings.M346);
+                writer.WriteLine(Strings.Msg_WorkOrderNoProductCodeProductNameDeviceNameTarge);
                 foreach (var w in filtered)
                 {
                     var statusText = w.Status switch
                     {
-                        WorkOrderStatus.Pending => Strings.M041,
-                        WorkOrderStatus.Running => Strings.M042,
-                        WorkOrderStatus.Completed => Strings.M043,
-                        WorkOrderStatus.Aborted => Strings.M031,
+                        WorkOrderStatus.Pending => Strings.Msg_Pending,
+                        WorkOrderStatus.Running => Strings.Msg_Progress,
+                        WorkOrderStatus.Completed => Strings.Msg_Completed,
+                        WorkOrderStatus.Aborted => Strings.Msg_Aborted,
                         _ => w.Status.ToString(),
                     };
                     // CSV 字段含逗号需双引号包裹
@@ -1223,11 +1223,11 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
                 }
             });
 
-            _dialog.NotifySuccess(string.Format(Strings.F106, filtered.Count, Path.GetFileName(path)));
+            _dialog.NotifySuccess(string.Format(Strings.Prompt_ExportedWorkOrders, filtered.Count, Path.GetFileName(path)));
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
         }
     }
 
@@ -1239,7 +1239,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     [RelayCommand]
     private async Task ImportCsv()
     {
-        var path = _dialog.ShowOpenFileDialog(Strings.K751, Strings.M310);
+        var path = _dialog.ShowOpenFileDialog(Strings.Lbl_SelectWorkOrderCSVFile, Strings.Msg_CSVFilesCsvAllFiles);
         if (string.IsNullOrEmpty(path)) return;
 
         List<WorkOrder> candidates;
@@ -1250,20 +1250,20 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.K755, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Lbl_FailedReadWorkOrderCSV, ex.Message));
             return;
         }
 
         if (candidates.Count == 0)
         {
-            _dialog.NotifyWarning(string.Format(Strings.K756, Path.GetFileName(path)));
+            _dialog.NotifyWarning(string.Format(Strings.Lbl_NoImportableWorkOrdersFound, Path.GetFileName(path)));
             return;
         }
 
         // 二次确认：避免误选文件批量写库
         var confirm = _dialog.Show(
-            string.Format(Strings.K752, candidates.Count),
-            Strings.K750, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            string.Format(Strings.Lbl_AboutImportWorkOrdersContinue, candidates.Count),
+            Strings.Lbl_ImportWorkOrders, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
 
         var result = await _workOrderService.ImportWorkOrdersAsync(candidates);
@@ -1275,11 +1275,11 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             var detail = string.Join("\n", errors);
             if (hiddenCount > 0)
                 detail += string.Format(Strings.M_MoreNotShown, hiddenCount);
-            _dialog.NotifyWarning(string.Format(Strings.K754, result.Imported.Count, errors.Count, detail));
+            _dialog.NotifyWarning(string.Format(Strings.Lbl_ImportedSkipped, result.Imported.Count, errors.Count, detail));
         }
         else
         {
-            _dialog.NotifySuccess(string.Format(Strings.K753, result.Imported.Count));
+            _dialog.NotifySuccess(string.Format(Strings.Lbl_ImportedWorkOrdersSuccessfully, result.Imported.Count));
         }
         RefreshStatusCounts();
     }
@@ -1306,7 +1306,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             var fields = ParseCsvLine(line);
             if (fields.Length < 7)
             {
-                skipErrors.Add(string.Format(Strings.K790, lineNo, fields.Length));
+                skipErrors.Add(string.Format(Strings.Lbl_RowTooFewColumns7Skipped, lineNo, fields.Length));
                 continue;
             }
 
@@ -1315,7 +1315,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
                 || !DateTime.TryParseExact(fields[6], "yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.None, out var end))
             {
-                skipErrors.Add(string.Format(Strings.K791, lineNo, fields[0]));
+                skipErrors.Add(string.Format(Strings.Lbl_RowPlannedTimeMustYyyyMM, lineNo, fields[0]));
                 continue;
             }
 
@@ -1366,7 +1366,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     {
         if (SelectedWorkOrder == null) return;
         System.Windows.Clipboard.SetText(SelectedWorkOrder.OrderNo);
-        _dialog.NotifyInfo(string.Format(Strings.K757, SelectedWorkOrder.OrderNo));
+        _dialog.NotifyInfo(string.Format(Strings.Lbl_Copied, SelectedWorkOrder.OrderNo));
     }
 
     /// <summary>复制选中工单产品编码到剪贴板。</summary>
@@ -1375,7 +1375,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     {
         if (SelectedWorkOrder == null) return;
         System.Windows.Clipboard.SetText(SelectedWorkOrder.ProductCode);
-        _dialog.NotifyInfo(string.Format(Strings.K757, SelectedWorkOrder.ProductCode));
+        _dialog.NotifyInfo(string.Format(Strings.Lbl_Copied, SelectedWorkOrder.ProductCode));
     }
 
     private bool CanCopySelected() => SelectedWorkOrder != null;
@@ -1398,22 +1398,22 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         var devices = _deviceRepo.GetDevicesSnapshot();
         if (devices.Count == 0)
         {
-            _dialog.NotifyWarning(Strings.M035);
+            _dialog.NotifyWarning(Strings.Msg_AddDevicesDeviceManagementFirst);
             return;
         }
 
         // 权限验证：生成虚拟数据需工程师或以上角色
         if (!_userSession.IsEngineerOrAbove)
         {
-            _dialog.NotifyWarning(Strings.M336);
+            _dialog.NotifyWarning(Strings.Msg_InsufficientPermissionEngineerAboveRequired);
             return;
         }
 
         if (WorkOrders.Count > 0)
         {
             var confirm = _dialog.Show(
-                string.Format(Strings.F121, WorkOrders.Count, devices.Count * 3),
-                Strings.M345, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                string.Format(Strings.Prompt_WorkOrdersAlreadyExistSampleWork, WorkOrders.Count, devices.Count * 3),
+                Strings.Msg_GenerateSampleWorkOrders, MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (confirm != MessageBoxResult.Yes) return;
         }
 
@@ -1421,6 +1421,6 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         foreach (var wo in samples)
             await _workOrderRepo.UpsertAsync(wo);
 
-        _dialog.NotifySuccess(string.Format(Strings.F115, samples.Count));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_SampleWorkOrdersGenerated, samples.Count));
     }
 }

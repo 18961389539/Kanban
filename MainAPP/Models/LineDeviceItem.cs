@@ -160,12 +160,12 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
     public string PerformanceTooltip => FormatHelper.Tip(
         Strings.Home_Tip_Performance,
         Runtime.TargetCycle > 0 && Runtime.RunTime > 0
-            ? string.Format(Strings.F037, Runtime.TotalOkProduction, Runtime.TotalNgProduction, Runtime.TargetCycle * (Runtime.RunTime / 3600.0))
+            ? string.Format(Strings.Prompt_Pcs5, Runtime.TotalOkProduction, Runtime.TotalNgProduction, Runtime.TargetCycle * (Runtime.RunTime / 3600.0))
             : "— / —",
         $"{Runtime.PerformanceRate:P0}");
     public string QualityTooltip => FormatHelper.Tip(
         Strings.Home_Tip_Quality,
-        TotalOutput > 0 ? string.Format(Strings.F036, Runtime.TotalOkProduction, TotalOutput) : "— / —",
+        TotalOutput > 0 ? string.Format(Strings.Prompt_Pcs4, Runtime.TotalOkProduction, TotalOutput) : "— / —",
         $"{Runtime.QualityRate:P0}");
     public string ShiftPaceTooltip => string.IsNullOrEmpty(ShiftProgressFullText)
         ? ""
@@ -349,10 +349,10 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
                 .GroupBy(d => d.Severity)
                 .ToDictionary(g => g.Key, g => g.Count());
             List<string> parts = [];
-            if (counts.TryGetValue(DefectSeverity.Critical, out var c) && c > 0) parts.Add(string.Format(Strings.F058, c));
-            if (counts.TryGetValue(DefectSeverity.Major, out var m) && m > 0) parts.Add(string.Format(Strings.F054, m));
-            if (counts.TryGetValue(DefectSeverity.Minor, out var n) && n > 0) parts.Add(string.Format(Strings.F219, n));
-            return parts.Count == 0 ? string.Empty : Strings.M262 + string.Join(" ", parts);
+            if (counts.TryGetValue(DefectSeverity.Critical, out var c) && c > 0) parts.Add(string.Format(Strings.Prompt_Critical, c));
+            if (counts.TryGetValue(DefectSeverity.Major, out var m) && m > 0) parts.Add(string.Format(Strings.Prompt_Major, m));
+            if (counts.TryGetValue(DefectSeverity.Minor, out var n) && n > 0) parts.Add(string.Format(Strings.Prompt_Minor, n));
+            return parts.Count == 0 ? string.Empty : Strings.Msg_Defect + string.Join(" ", parts);
         }
     }
 

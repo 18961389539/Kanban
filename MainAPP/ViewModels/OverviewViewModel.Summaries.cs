@@ -127,7 +127,7 @@ public sealed class ReviewStatusSegment
     public string DurationText => DurationMinutes >= 60
         ? $"{DurationMinutes / 60:F1} h"
         : $"{DurationMinutes:F0} min";
-    public string OutputText => string.Format(Strings.F061, OutputDelta, AlarmCount);
+    public string OutputText => string.Format(Strings.Prompt_OutputAlarmTimes, OutputDelta, AlarmCount);
 }
 
 /// <summary>

@@ -100,7 +100,7 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
     {
         if (!CanEditSelected()) return;
         if (SelectedDevice == null) return;
-        var baseName = string.Format(Strings.F198, SelectedDevice.CounterAlarms.Count + 1);
+        var baseName = string.Format(Strings.Prompt_CountAlarm, SelectedDevice.CounterAlarms.Count + 1);
         var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.CounterAlarms.Select(c => c.Name));
         var alarm = new CounterAlarm { DeviceId = SelectedDevice.Id, Name = newName };
         SelectedDevice.CounterAlarms.Add(alarm);
@@ -114,8 +114,8 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
         if (!CanEditSelected()) return;
         if (alarm == null) return;
         var confirm = _dialog.Show(
-            string.Format(Strings.F503, alarm.Name),
-            Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            string.Format(Strings.Prompt_DeleteCounterAlarmActionCannotUndone, alarm.Name),
+            Strings.Msg_ConfirmDelete, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
 
         if (SelectedCounterAlarm == alarm) SelectedCounterAlarm = null;
@@ -134,8 +134,8 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
         if (!CanExecutePlcWrite()) return;
         if (!_host.IsPlcConnected) return;
         var confirm = _dialog.Show(
-            string.Format(Strings.F177, alarm.Name),
-            Strings.M175, System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning);
+            string.Format(Strings.Prompt_ClearCurrentValueCounterAlarmReset, alarm.Name),
+            Strings.Msg_ConfirmClearCounterAlarm, System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning);
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
 
         _host.IsLoading = true;
@@ -196,11 +196,11 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
             if (string.IsNullOrEmpty(path)) return;
 
             var count = await Task.Run(() => _counterAlarmCsvIO.ExportCounterAlarmsToPath(device, path)).ConfigureAwait(true);
-            _dialog.NotifySuccess(string.Format(Strings.F304, count, Path.GetFileName(path)));
+            _dialog.NotifySuccess(string.Format(Strings.Prompt_ExportedCounterAlarms, count, Path.GetFileName(path)));
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
         }
         finally
         {
@@ -236,20 +236,20 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
 
             if (result.Imported.Count == 0)
             {
-                _dialog.NotifyError(string.Format(Strings.F307, string.Join("\n  · ", result.Errors)));
+                _dialog.NotifyError(string.Format(Strings.Prompt_NoCounterAlarmsImported, string.Join("\n  · ", result.Errors)));
                 return;
             }
 
             // 阶段 3：UI 线程二次确认
             var existingCount = device.CounterAlarms.Count;
             var msg = result.HasErrors
-                ? string.Format(Strings.F001, result.Imported.Count + result.Errors.Count, result.Errors.Count) +
-                  string.Format(Strings.F306, result.Imported.Count, existingCount) +
-                  Strings.F228
-                : string.Format(Strings.F305, result.Imported.Count, existingCount) +
-                  Strings.F228;
+                ? string.Format(Strings.Prompt_CSVHasRowsTotalRowsFailed, result.Imported.Count + result.Errors.Count, result.Errors.Count) +
+                  string.Format(Strings.Prompt_ValidCounterAlarmsImportedCurrentDevice, result.Imported.Count, existingCount) +
+                  Strings.Prompt_ChooseImportModeYesReplaceClear
+                : string.Format(Strings.Prompt_CounterAlarmsImportedCurrentDeviceExisting, result.Imported.Count, existingCount) +
+                  Strings.Prompt_ChooseImportModeYesReplaceClear;
 
-            var choice = _dialog.Show(msg, Strings.M120, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+            var choice = _dialog.Show(msg, Strings.Msg_ConfirmImportAlarms, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
             if (choice == MessageBoxResult.Cancel) return;
 
             var replace = choice == MessageBoxResult.Yes;
@@ -262,13 +262,13 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
             if (result.HasErrors)
             {
                 _dialog.NotifyWarning(
-                    string.Format(Strings.F308, result.Imported.Count, result.Errors.Count) +
-                    string.Format(Strings.F086, string.Join("\n  · ", result.Errors.Take(5))) +
-                    (result.Errors.Count > 5 ? string.Format(Strings.F020, result.Errors.Count) : ""));
+                    string.Format(Strings.Prompt_ImportedCounterAlarmsRowsSkipped, result.Imported.Count, result.Errors.Count) +
+                    string.Format(Strings.Prompt_FailedDetails, string.Join("\n  · ", result.Errors.Take(5))) +
+                    (result.Errors.Count > 5 ? string.Format(Strings.Prompt_Total, result.Errors.Count) : ""));
             }
             else
             {
-                _dialog.NotifySuccess(string.Format(Strings.F309, result.Imported.Count));
+                _dialog.NotifySuccess(string.Format(Strings.Prompt_ImportedCounterAlarmsClickSavePersist, result.Imported.Count));
             }
         }
         finally

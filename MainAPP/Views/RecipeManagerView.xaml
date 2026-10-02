@@ -10,7 +10,7 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:controls="clr-namespace:MainAPP.Controls"
     d:DataContext="{d:DesignInstance Type=vm:RecipeManagerViewModel}"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -31,7 +31,7 @@
                         <materialIcons:MaterialIcon Width="16" Height="16" VerticalAlignment="Center"
                                                     Foreground="{StaticResource SecondaryTextBrush}" Kind="Factory" />
                         <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
-                                   Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K683}" />
+                                   Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_TargetDevice}" />
                         <ComboBox Margin="8,0,0,0" MinWidth="200" VerticalContentAlignment="Center"
                                   ItemsSource="{Binding TargetDevices}" SelectedItem="{Binding SelectedTargetDevice}">
                             <ComboBox.ItemTemplate>
@@ -67,13 +67,13 @@
                                 <materialIcons:MaterialIcon Width="15" Height="15" VerticalAlignment="Center"
                                                             Foreground="White" Kind="Send" />
                                 <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontWeight="Bold"
-                                           Text="{x:Static resources:Strings.K661}" />
+                                           Text="{x:Static resources:Strings.Lbl_ApplyDevice}" />
                             </StackPanel>
                         </Button>
                         <!-- 取消下发：仅 Local 模式下发进行中显示（Remote 为 SignalR 请求-响应无法中途取消） -->
                         <Button Margin="8,0,0,0" Padding="14,6" Cursor="Hand" Command="{Binding CancelApplyCommand}"
                                 BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
-                                Content="{x:Static resources:Strings.K696}">
+                                Content="{x:Static resources:Strings.Lbl_CancelApply}">
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -144,7 +144,7 @@
                           HorizontalAlignment="Center" VerticalAlignment="Stretch"
                           Background="Transparent" Cursor="SizeWE"
                           ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"
-                          AutomationProperties.Name="{x:Static resources:Strings.K705}">
+                          AutomationProperties.Name="{x:Static resources:Strings.Lbl_AdjustWidthRecipeListEditor}">
                 <GridSplitter.Template>
                     <ControlTemplate TargetType="GridSplitter">
                         <Grid Background="Transparent">
@@ -176,7 +176,7 @@
                     <!-- 标题 + 计数 -->
                     <DockPanel Grid.Row="0" Margin="18,18,18,12">
                         <materialIcons:MaterialIcon Kind="PackageVariant" Style="{StaticResource SectionTitleIcon}" />
-                        <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K660}" />
+                        <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_Recipe2}" />
                         <controls:PageHelpButton Margin="8,0,0,0" PageKey="recipes" />
                         <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
                                    Foreground="{StaticResource ThirdlyTextBrush}"
@@ -185,7 +185,7 @@
 
                     <!-- 搜索框（占满，与工单页一致） -->
                     <hc:TextBox Grid.Row="1" Margin="18,0,18,12"
-                                hc:InfoElement.Placeholder="{x:Static resources:Strings.K697}"
+                                hc:InfoElement.Placeholder="{x:Static resources:Strings.Lbl_SearchRecipeNameParameter}"
                                 Style="{StaticResource TextBoxExtend}"
                                 Text="{Binding RecipeSearchText, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -296,7 +296,7 @@
                                                         <Setter Property="Text" Value="{Binding MachineType}" />
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding MachineType}" Value="">
-                                                                <Setter Property="Text" Value="{x:Static resources:Strings.K698}" />
+                                                                <Setter Property="Text" Value="{x:Static resources:Strings.Lbl_General}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -327,7 +327,7 @@
                     </ListBox>
 
                     <!-- 空态：筛选/搜索无结果时显示 -->
-                    <controls:EmptyState IconKind="PackageVariant" Message="{x:Static resources:Strings.K700}"
+                    <controls:EmptyState IconKind="PackageVariant" Message="{x:Static resources:Strings.Lbl_NoMatchingRecipesAdjustKeywordsMachine}"
                                          HorizontalAlignment="Center" VerticalAlignment="Center">
                         <controls:EmptyState.Style>
                             <Style TargetType="controls:EmptyState">
@@ -345,16 +345,16 @@
                 <!-- 底部操作按钮（图标按钮，参照工单页） -->
                 <DockPanel Grid.Row="4" Margin="18,12,18,18" LastChildFill="False">
                     <StackPanel Orientation="Horizontal">
-                        <Button Command="{Binding NewRecipeCommand}" Content="{x:Static resources:Strings.K662}" Style="{StaticResource IconButtonPrimary}"
-                                Tag="{x:Static mi:MaterialIconKind.Plus}" ToolTip="{x:Static resources:Strings.K662}" />
-                        <Button Margin="8,0,0,0" Command="{Binding CloneRecipeCommand}" Content="{x:Static resources:Strings.K689}" Style="{StaticResource IconButtonDefault}"
-                                Tag="{x:Static mi:MaterialIconKind.ContentCopy}" ToolTip="{x:Static resources:Strings.K689}" />
-                        <Button Margin="8,0,0,0" Command="{Binding DeleteRecipeCommand}" Content="{x:Static resources:Strings.K664}" Style="{StaticResource IconButtonDanger}"
-                                Tag="{x:Static mi:MaterialIconKind.Delete}" ToolTip="{x:Static resources:Strings.K664}" />
-                        <Button Margin="8,0,0,0" Command="{Binding ExportRecipesCommand}" Content="{x:Static resources:Strings.K690}" Style="{StaticResource IconButtonDefault}"
-                                Tag="{x:Static mi:MaterialIconKind.FileExportOutline}" ToolTip="{x:Static resources:Strings.K690}" />
-                        <Button Margin="8,0,0,0" Command="{Binding ImportRecipesCommand}" Content="{x:Static resources:Strings.K691}" Style="{StaticResource IconButtonDefault}"
-                                Tag="{x:Static mi:MaterialIconKind.FileImportOutline}" ToolTip="{x:Static resources:Strings.K691}" />
+                        <Button Command="{Binding NewRecipeCommand}" Content="{x:Static resources:Strings.Lbl_NewRecipe}" Style="{StaticResource IconButtonPrimary}"
+                                Tag="{x:Static mi:MaterialIconKind.Plus}" ToolTip="{x:Static resources:Strings.Lbl_NewRecipe}" />
+                        <Button Margin="8,0,0,0" Command="{Binding CloneRecipeCommand}" Content="{x:Static resources:Strings.Lbl_CopyRecipe}" Style="{StaticResource IconButtonDefault}"
+                                Tag="{x:Static mi:MaterialIconKind.ContentCopy}" ToolTip="{x:Static resources:Strings.Lbl_CopyRecipe}" />
+                        <Button Margin="8,0,0,0" Command="{Binding DeleteRecipeCommand}" Content="{x:Static resources:Strings.Lbl_DeleteRecipe}" Style="{StaticResource IconButtonDanger}"
+                                Tag="{x:Static mi:MaterialIconKind.Delete}" ToolTip="{x:Static resources:Strings.Lbl_DeleteRecipe}" />
+                        <Button Margin="8,0,0,0" Command="{Binding ExportRecipesCommand}" Content="{x:Static resources:Strings.Lbl_ExportRecipes}" Style="{StaticResource IconButtonDefault}"
+                                Tag="{x:Static mi:MaterialIconKind.FileExportOutline}" ToolTip="{x:Static resources:Strings.Lbl_ExportRecipes}" />
+                        <Button Margin="8,0,0,0" Command="{Binding ImportRecipesCommand}" Content="{x:Static resources:Strings.Lbl_ImportRecipes}" Style="{StaticResource IconButtonDefault}"
+                                Tag="{x:Static mi:MaterialIconKind.FileImportOutline}" ToolTip="{x:Static resources:Strings.Lbl_ImportRecipes}" />
                     </StackPanel>
                 </DockPanel>
             </Grid>
@@ -375,7 +375,7 @@
                     <!-- 标题 -->
                     <DockPanel Grid.Row="0" Margin="18,18,18,12">
                         <materialIcons:MaterialIcon Kind="PencilOutline" Style="{StaticResource SectionTitleIcon}" />
-                        <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K706}" />
+                        <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_RecipeEditor}" />
                     </DockPanel>
 
                 <!-- 基本信息 -->
@@ -388,12 +388,12 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0"
                                FontSize="{DynamicResource FontSizeCaption}"
-                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K678}" />
+                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_RecipeName2}" />
                     <TextBox Grid.Column="1" Margin="0,0,16,0" VerticalContentAlignment="Center"
                              Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}" />
                     <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="0,0,8,0"
                                FontSize="{DynamicResource FontSizeCaption}"
-                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K679}" />
+                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_MachineTypeBlankGeneral}" />
                     <TextBox Grid.Column="3" VerticalContentAlignment="Center"
                              Text="{Binding EditMachineType, UpdateSourceTrigger=PropertyChanged}" />
                 </Grid>
@@ -405,7 +405,7 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0"
                                FontSize="{DynamicResource FontSizeCaption}"
-                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K680}" />
+                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Remark2}" />
                     <TextBox Grid.Column="1" VerticalContentAlignment="Center"
                              Text="{Binding EditRemark, UpdateSourceTrigger=PropertyChanged}" />
                 </Grid>
@@ -424,21 +424,21 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" FontSize="{DynamicResource FontSizeHint}"
-                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K665}" />
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_ParameterName}" />
                     <TextBlock Grid.Column="1" FontSize="{DynamicResource FontSizeHint}"
-                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K666}" />
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_PLCAddress2}" />
                     <TextBlock Grid.Column="2" FontSize="{DynamicResource FontSizeHint}"
-                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K667}" />
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_Type}" />
                     <TextBlock Grid.Column="3" FontSize="{DynamicResource FontSizeHint}"
-                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K668}" />
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_Value}" />
                     <TextBlock Grid.Column="4" FontSize="{DynamicResource FontSizeHint}"
-                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K669}" />
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_Min}" />
                     <TextBlock Grid.Column="5" FontSize="{DynamicResource FontSizeHint}"
-                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K670}" />
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_Max}" />
                     <TextBlock Grid.Column="6" FontSize="{DynamicResource FontSizeHint}"
-                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K671}" />
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_Unit2}" />
                     <TextBlock Grid.Column="7" FontSize="{DynamicResource FontSizeHint}"
-                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K704}" />
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_Validation}" />
                 </Grid>
 
                 <!-- 参数项表格（ItemsControl 行式编辑 + 行内实时校验） -->
@@ -502,8 +502,8 @@
                                           （约 26×22，触摸目标不足）。改 32×32 红边 ghost。  -->
                                     <Button Grid.Column="8" Margin="4,0,0,0" Cursor="Hand"
                                             Style="{StaticResource GhostDangerIconButton}"
-                                            AutomationProperties.Name="{x:Static resources:Strings.K664}"
-                                            ToolTip="{x:Static resources:Strings.K664}"
+                                            AutomationProperties.Name="{x:Static resources:Strings.Lbl_DeleteRecipe}"
+                                            ToolTip="{x:Static resources:Strings.Lbl_DeleteRecipe}"
                                             Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                             CommandParameter="{Binding}">
                                         <materialIcons:MaterialIcon Width="16" Height="16"
@@ -518,10 +518,10 @@
                 <!-- 操作按钮（图标按钮，参照工单页） -->
                 <DockPanel Grid.Row="5" Margin="18,12,18,18" LastChildFill="False">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
-                        <Button Margin="0,0,8,0" Command="{Binding AddItemCommand}" Content="{x:Static resources:Strings.K672}" Style="{StaticResource IconButtonDefault}"
-                                Tag="{x:Static mi:MaterialIconKind.PlusBoxOutline}" ToolTip="{x:Static resources:Strings.K672}" />
-                        <Button Command="{Binding SaveRecipeCommand}" Content="{x:Static resources:Strings.K663}" Style="{StaticResource IconButtonPrimary}"
-                                Tag="{x:Static mi:MaterialIconKind.ContentSaveOutline}" ToolTip="{x:Static resources:Strings.K663}" />
+                        <Button Margin="0,0,8,0" Command="{Binding AddItemCommand}" Content="{x:Static resources:Strings.Lbl_AddParameter}" Style="{StaticResource IconButtonDefault}"
+                                Tag="{x:Static mi:MaterialIconKind.PlusBoxOutline}" ToolTip="{x:Static resources:Strings.Lbl_AddParameter}" />
+                        <Button Command="{Binding SaveRecipeCommand}" Content="{x:Static resources:Strings.Lbl_SaveRecipe}" Style="{StaticResource IconButtonPrimary}"
+                                Tag="{x:Static mi:MaterialIconKind.ContentSaveOutline}" ToolTip="{x:Static resources:Strings.Lbl_SaveRecipe}" />
                     </StackPanel>
                 </DockPanel>
             </Grid>

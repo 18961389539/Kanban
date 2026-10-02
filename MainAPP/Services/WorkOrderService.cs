@@ -283,7 +283,7 @@ public class WorkOrderService(
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
         var saved = _workOrderRepo.Upsert(result);
-        _dialog.NotifySuccess(string.Format(Strings.F109, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderAdded, saved.OrderNo));
         return saved;
     }
 
@@ -297,7 +297,7 @@ public class WorkOrderService(
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
         var saved = await _workOrderRepo.UpsertAsync(result);
-        _dialog.NotifySuccess(string.Format(Strings.F109, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderAdded, saved.OrderNo));
         return saved;
     }
 
@@ -322,7 +322,7 @@ public class WorkOrderService(
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
         var saved = _workOrderRepo.Upsert(result);
-        _dialog.NotifySuccess(string.Format(Strings.F099, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderCopied, saved.OrderNo));
         return saved;
     }
 
@@ -348,7 +348,7 @@ public class WorkOrderService(
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
         var saved = await _workOrderRepo.UpsertAsync(result);
-        _dialog.NotifySuccess(string.Format(Strings.F099, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderCopied, saved.OrderNo));
         return saved;
     }
 
@@ -362,7 +362,7 @@ public class WorkOrderService(
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
         var saved = _workOrderRepo.Upsert(result);
-        _dialog.NotifySuccess(string.Format(Strings.F110, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderUpdated, saved.OrderNo));
         return saved;
     }
 
@@ -377,7 +377,7 @@ public class WorkOrderService(
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
         var saved = await _workOrderRepo.UpsertAsync(result);
-        _dialog.NotifySuccess(string.Format(Strings.F110, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderUpdated, saved.OrderNo));
         return saved;
     }
 
@@ -387,11 +387,11 @@ public class WorkOrderService(
         EnsureSyncApiAllowed();
         // 同步变体：与 DeleteWorkOrderCore 同流程，仅落库走同步 Delete。
         var r = _dialog.Show(
-            string.Format(Strings.F174, target.OrderNo, target.ProductName),
+            string.Format(Strings.Prompt_DeleteWorkOrderCannotUndone, target.OrderNo, target.ProductName),
             Strings.M_ConfirmDelete, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return false;
         _workOrderRepo.Delete(target.Id);
-        _dialog.NotifySuccess(Strings.M006);
+        _dialog.NotifySuccess(Strings.Msg_WorkOrderDeleted);
         return true;
     }
 
@@ -402,11 +402,11 @@ public class WorkOrderService(
     private async Task<bool> DeleteWorkOrderCore(WorkOrder target)
     {
         var r = _dialog.Show(
-            string.Format(Strings.F174, target.OrderNo, target.ProductName),
+            string.Format(Strings.Prompt_DeleteWorkOrderCannotUndone, target.OrderNo, target.ProductName),
             Strings.M_ConfirmDelete, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return false;
         await _workOrderRepo.DeleteAsync(target.Id);
-        _dialog.NotifySuccess(Strings.M006);
+        _dialog.NotifySuccess(Strings.Msg_WorkOrderDeleted);
         return true;
     }
 
@@ -417,7 +417,7 @@ public class WorkOrderService(
             && string.Equals(w.OrderNo.Trim(), candidate.OrderNo.Trim(), StringComparison.OrdinalIgnoreCase));
         if (duplicate != null)
         {
-            _dialog.NotifyWarning(string.Format(Strings.F097, candidate.OrderNo, duplicate.Id));
+            _dialog.NotifyWarning(string.Format(Strings.Prompt_OrderNumberAlreadyExistsOrderId, candidate.OrderNo, duplicate.Id));
             return false;
         }
 
@@ -431,7 +431,7 @@ public class WorkOrderService(
             .FirstOrDefault(w => candidate.PlannedStart < w.PlannedEnd && w.PlannedStart < candidate.PlannedEnd);
         if (conflict != null)
         {
-            _dialog.NotifyWarning(string.Format(Strings.F200, candidate.DeviceName, conflict.OrderNo, conflict.PlannedStart, conflict.PlannedEnd));
+            _dialog.NotifyWarning(string.Format(Strings.Prompt_DeviceScheduledTimeOverlapsWorkOrder, candidate.DeviceName, conflict.OrderNo, conflict.PlannedStart, conflict.PlannedEnd));
             return false;
         }
         return true;
@@ -445,7 +445,7 @@ public class WorkOrderService(
         var running = _workOrderRepo.GetRunningByDevice(target.DeviceId);
         if (running != null && running.Id != target.Id)
         {
-            _dialog.NotifyWarning(string.Format(Strings.F208, target.DeviceName, running.OrderNo));
+            _dialog.NotifyWarning(string.Format(Strings.Prompt_DeviceAlreadyHasProgressWorkOrder, target.DeviceName, running.OrderNo));
             return null;
         }
         var updated = Clone(target);
@@ -459,7 +459,7 @@ public class WorkOrderService(
             return null;
         }
         var saved = _workOrderRepo.Upsert(updated);
-        _dialog.NotifySuccess(string.Format(Strings.F096, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderStarted, saved.OrderNo));
         return saved;
     }
 
@@ -473,7 +473,7 @@ public class WorkOrderService(
         var running = _workOrderRepo.GetRunningByDevice(target.DeviceId);
         if (running != null && running.Id != target.Id)
         {
-            _dialog.NotifyWarning(string.Format(Strings.F208, target.DeviceName, running.OrderNo));
+            _dialog.NotifyWarning(string.Format(Strings.Prompt_DeviceAlreadyHasProgressWorkOrder, target.DeviceName, running.OrderNo));
             return null;
         }
         var updated = Clone(target);
@@ -488,7 +488,7 @@ public class WorkOrderService(
             return null;
         }
         var saved = await _workOrderRepo.UpsertAsync(updated);
-        _dialog.NotifySuccess(string.Format(Strings.F096, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderStarted, saved.OrderNo));
         return saved;
     }
 
@@ -511,7 +511,7 @@ public class WorkOrderService(
         updated.CompletedOkCount = summary.OkCount;
         updated.CompletedNgCount = summary.NgCount;
         var saved = _workOrderRepo.Upsert(updated);
-        _dialog.NotifySuccess(string.Format(Strings.F095, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderCompleted, saved.OrderNo));
         return ContinueAfterComplete(saved) ?? saved;
     }
 
@@ -538,7 +538,7 @@ public class WorkOrderService(
         updated.CompletedOkCount = summary.OkCount;
         updated.CompletedNgCount = summary.NgCount;
         var saved = await _workOrderRepo.UpsertAsync(updated);
-        _dialog.NotifySuccess(string.Format(Strings.F095, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderCompleted, saved.OrderNo));
         return await ContinueAfterCompleteAsync(saved) ?? saved;
     }
 
@@ -626,7 +626,7 @@ public class WorkOrderService(
             return null;
         }
         var r = _dialog.Show(
-            string.Format(Strings.F173, target.OrderNo),
+            string.Format(Strings.Prompt_AbortWorkOrderCannotRestoredRunning, target.OrderNo),
             Strings.M_ConfirmAbort, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return null;
         if (target.Status == WorkOrderStatus.Running)
@@ -636,7 +636,7 @@ public class WorkOrderService(
             updated.CompletedNgCount = summary.NgCount;
         }
         var saved = _workOrderRepo.Upsert(updated);
-        _dialog.NotifySuccess(string.Format(Strings.F094, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderAborted, saved.OrderNo));
         return saved;
     }
 
@@ -658,7 +658,7 @@ public class WorkOrderService(
             return null;
         }
         var r = _dialog.Show(
-            string.Format(Strings.F173, target.OrderNo),
+            string.Format(Strings.Prompt_AbortWorkOrderCannotRestoredRunning, target.OrderNo),
             Strings.M_ConfirmAbort, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return null;
         // 中止也写入产量快照（Running 中止时已有部分产量，需保留）
@@ -670,7 +670,7 @@ public class WorkOrderService(
             updated.CompletedNgCount = summary.NgCount;
         }
         var saved = await _workOrderRepo.UpsertAsync(updated);
-        _dialog.NotifySuccess(string.Format(Strings.F094, saved.OrderNo));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_WorkOrderAborted, saved.OrderNo));
         return saved;
     }
 
@@ -771,14 +771,14 @@ public class WorkOrderService(
                     var failure = ValidateImportCandidate(candidate, deviceByName, existingOrderNos);
                     if (failure != null)
                     {
-                        result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, failure));
+                        result.Errors.Add(string.Format(Strings.Lbl_Row, lineNo, candidate.OrderNo, failure));
                         continue;
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "导入工单第 {Line} 行校验异常 OrderNo={OrderNo}", lineNo, candidate.OrderNo);
-                    result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, ex.Message));
+                    result.Errors.Add(string.Format(Strings.Lbl_Row, lineNo, candidate.OrderNo, ex.Message));
                     continue;
                 }
 
@@ -792,7 +792,7 @@ public class WorkOrderService(
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "导入工单第 {Line} 行落库失败 OrderNo={OrderNo}", lineNo, candidate.OrderNo);
-                    result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, ex.Message));
+                    result.Errors.Add(string.Format(Strings.Lbl_Row, lineNo, candidate.OrderNo, ex.Message));
                 }
             }
         }
@@ -806,27 +806,27 @@ public class WorkOrderService(
         ISet<string> existingOrderNos)
     {
         if (string.IsNullOrWhiteSpace(candidate.OrderNo))
-            return Strings.K599;
+            return Strings.Lbl_PleaseEnterWorkOrderNumber;
         if (string.IsNullOrWhiteSpace(candidate.ProductCode))
-            return Strings.K600;
+            return Strings.Lbl_PleaseEnterProductCode;
         if (string.IsNullOrWhiteSpace(candidate.ProductName))
-            return Strings.K601;
+            return Strings.Lbl_PleaseEnterProductName;
         if (candidate.TargetQuantity <= 0)
-            return Strings.K603;
+            return Strings.Lbl_PlannedQuantityMustPositiveInteger;
 
         var orderNoKey = candidate.OrderNo.Trim();
         if (existingOrderNos.Contains(orderNoKey))
-            return Strings.K794;
+            return Strings.Lbl_OrderNumberAlreadyExists;
 
         // 设备名匹配（CSV 仅设备名；找不到或重名都拒绝，避免落库悬空 DeviceId）
         if (!deviceByName.TryGetValue(candidate.DeviceName ?? string.Empty, out var device))
-            return string.Format(Strings.K795, candidate.DeviceName);
+            return string.Format(Strings.Lbl_DeviceFound, candidate.DeviceName);
         candidate.DeviceId = device.Id;
         candidate.DeviceName = device.Name;
 
         if (candidate.PlannedStart == default || candidate.PlannedEnd == default
             || candidate.PlannedEnd <= candidate.PlannedStart)
-            return Strings.K604;
+            return Strings.Lbl_PlannedEndTimeMustLaterStart;
 
         // 状态统一为 Pending（导入即待排产）；清空运行时产量与旧快照
         candidate.Status = WorkOrderStatus.Pending;

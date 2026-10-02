@@ -5,14 +5,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
-    Title="{x:Static resources:Strings.M315}"
+    Title="{x:Static resources:Strings.Msg_Login}"
     Width="{Binding WindowWidth}"
     Height="{Binding WindowHeight}"
     ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
     Background="{StaticResource RegionBrush}"
     FocusManager.FocusedElement="{Binding ElementName=UsernameBox}"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources" xmlns:controls="clr-namespace:MainAPP.Controls">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization" xmlns:controls="clr-namespace:MainAPP.Controls">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -63,7 +63,7 @@
                 FontSize="{DynamicResource FontSizeKpiLabel}"
                 FontWeight="Bold"
                 Foreground="{StaticResource PrimaryTextBrush}"
-                Text="{x:Static resources:Strings.M315}" />
+                Text="{x:Static resources:Strings.Msg_Login}" />
         </DockPanel>
 
         <!--  用户名（下拉选择已有账号；不可手输——账号均在用户管理中登记，手输无匹配账号无意义）  -->
@@ -72,7 +72,7 @@
                 Margin="0,0,0,4"
                 FontSize="{DynamicResource FontSizeHint}"
                 Foreground="{StaticResource SecondaryTextBrush}"
-                Text="{x:Static resources:Strings.M316}" />
+                Text="{x:Static resources:Strings.Msg_Username}" />
             <ComboBox
                 x:Name="UsernameBox"
                 Padding="8,6"
@@ -88,7 +88,7 @@
                 Margin="0,0,0,4"
                 FontSize="{DynamicResource FontSizeHint}"
                 Foreground="{StaticResource SecondaryTextBrush}"
-                Text="{x:Static resources:Strings.M317}" />
+                Text="{x:Static resources:Strings.Msg_Password}" />
             <PasswordBox
                 x:Name="PasswordBox"
                 Padding="8,6"
@@ -124,14 +124,14 @@
             <Button
                 Width="90"
                 Click="OnCancelClick"
-                Content="{x:Static resources:Strings.K092}"
+                Content="{x:Static resources:Strings.Lbl_Cancel}"
                 IsCancel="True"
                 Style="{StaticResource ButtonDefault}" />
             <Button
                 Width="90"
                 Margin="8,0,0,0"
                 Click="OnLoginClick"
-                Content="{x:Static resources:Strings.M318}"
+                Content="{x:Static resources:Strings.Msg_Log}"
                 IsDefault="True"
                 Style="{StaticResource ButtonPrimary}" />
         </StackPanel>
@@ -155,11 +155,11 @@
                         Padding="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center"
-                        AutomationProperties.Name="{x:Static resources:Strings.K143}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_Close}"
                         Command="{Binding CloseHelpCommand}"
                         Cursor="Hand"
                         FocusVisualStyle="{StaticResource TouchFocusVisual}"
-                        ToolTip="{x:Static resources:Strings.K143}">
+                        ToolTip="{x:Static resources:Strings.Lbl_Close}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
                                 <Setter Property="Background" Value="Transparent" />

@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
@@ -61,60 +61,110 @@ public enum DefectCategory
 /// </summary>
 public partial class Defect : ObservableObject
 {
+    private string _id = Guid.NewGuid().ToString("N");
+
     /// <summary>
     /// 缺陷唯一标识（用作业务主键）
     /// </summary>
-    [ObservableProperty]
-    private string _id = Guid.NewGuid().ToString("N");
+    public string Id
+    {
+        get => _id;
+    set => SetProperty(ref _id, value);
+    }
+
+    private string _deviceId = string.Empty;
 
     /// <summary>
     /// 所属设备 Id（外键，EF Core 关联 Device.Defects）
     /// </summary>
-    [ObservableProperty]
-    private string _deviceId = string.Empty;
+    public string DeviceId
+    {
+        get => _deviceId;
+    set => SetProperty(ref _deviceId, value);
+    }
+
+    private string _name = string.Empty;
 
     /// <summary>
     /// 缺陷名称
     /// </summary>
-    [ObservableProperty]
-    private string _name = string.Empty;
+    public string Name
+    {
+        get => _name;
+    set => SetProperty(ref _name, value);
+    }
 
-    /// <summary>缺陷名称（英文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
-    [ObservableProperty]
     private string? _nameEn;
 
-    /// <summary>缺陷名称（日文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
-    [ObservableProperty]
+    /// <summary>缺陷名称（英文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    public string? NameEn
+    {
+        get => _nameEn;
+    set => SetProperty(ref _nameEn, value);
+    }
+
     private string? _nameJa;
 
-    /// <summary>缺陷名称（葡萄牙文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
-    [ObservableProperty]
+    /// <summary>缺陷名称（日文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    public string? NameJa
+    {
+        get => _nameJa;
+    set => SetProperty(ref _nameJa, value);
+    }
+
     private string? _namePt;
+
+    /// <summary>缺陷名称（葡萄牙文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    public string? NamePt
+    {
+        get => _namePt;
+    set => SetProperty(ref _namePt, value);
+    }
+
+    private int _count;
 
     /// <summary>
     /// 缺陷数量（运行时状态，不持久化）。
     /// 使用 [property: ...] 语法确保特性应用到源生成器生成的属性而非字段。
     /// </summary>
-    [ObservableProperty]
-    [property: JsonIgnore]
-    [property: NotMapped]
-    private int _count;
+    [JsonIgnore]
+    [NotMapped]
+    public int Count
+    {
+        get => _count;
+    set => SetProperty(ref _count, value);
+    }
+
+    private string _plcAddress = string.Empty;
 
     /// <summary>
     /// 数量地址（如 D200）
     /// </summary>
-    [ObservableProperty]
-    private string _plcAddress = string.Empty;
+    public string PlcAddress
+    {
+        get => _plcAddress;
+    set => SetProperty(ref _plcAddress, value);
+    }
+
+    private DefectSeverity _severity;
 
     /// <summary>
     /// 严重等级
     /// </summary>
-    [ObservableProperty]
-    private DefectSeverity _severity;
+    public DefectSeverity Severity
+    {
+        get => _severity;
+    set => SetProperty(ref _severity, value);
+    }
+
+    private DefectCategory _category;
 
     /// <summary>
     /// 缺陷类别
     /// </summary>
-    [ObservableProperty]
-    private DefectCategory _category;
+    public DefectCategory Category
+    {
+        get => _category;
+    set => SetProperty(ref _category, value);
+    }
 }

@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:resources="clr-namespace:MainAPP.Resources"
+    xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization"
     Title="{x:Static resources:Strings.Ux_DeviceWizardTitle}"
     Width="720"
     Height="560"
@@ -112,14 +112,14 @@
                 <StackPanel>
                     <TextBlock Margin="0,0,0,18" Foreground="{StaticResource SecondaryTextBrush}"
                                Text="{x:Static resources:Strings.Ux_DeviceWizardIntro}" TextWrapping="Wrap" />
-                    <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.K062}" />
+                    <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.Lbl_DeviceName}" />
                     <TextBox x:Name="NameBox" Style="{StaticResource WizardInput}"
                              Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                             AutomationProperties.Name="{x:Static resources:Strings.K062}" />
-                    <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.K196}" />
+                             AutomationProperties.Name="{x:Static resources:Strings.Lbl_DeviceName}" />
+                    <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.Lbl_TargetOutputPcsHour}" />
                     <TextBox Style="{StaticResource WizardInput}"
                              Text="{Binding TargetCycle, UpdateSourceTrigger=PropertyChanged}"
-                             AutomationProperties.Name="{x:Static resources:Strings.K196}" />
+                             AutomationProperties.Name="{x:Static resources:Strings.Lbl_TargetOutputPcsHour}" />
                     <TextBlock Foreground="{StaticResource ThirdlyTextBrush}"
                                Text="{x:Static resources:Strings.Ux_DeviceWizardTargetCycleHint}" TextWrapping="Wrap" />
                 </StackPanel>
@@ -136,12 +136,12 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.K199}" />
+                            <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.Lbl_OKCountAddressEGD100}" />
                             <TextBox Style="{StaticResource WizardAddressInput}"
                                      Text="{Binding OkCountAddress, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
                         <StackPanel Grid.Column="2">
-                            <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.K202}" />
+                            <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.Lbl_NGCountAddressEGD102}" />
                             <TextBox Style="{StaticResource WizardAddressInput}"
                                      Text="{Binding NgCountAddress, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
@@ -153,12 +153,12 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.K205}" />
+                            <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.Lbl_StatusAddressEGD104}" />
                             <TextBox Style="{StaticResource WizardAddressInput}"
                                      Text="{Binding StatusCountAddress, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
                         <StackPanel Grid.Column="2">
-                            <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.K208}" />
+                            <TextBlock Style="{StaticResource WizardLabel}" Text="{x:Static resources:Strings.Lbl_OEEResetAddressEGD106}" />
                             <TextBox Style="{StaticResource WizardAddressInput}"
                                      Text="{Binding ProductionResetAddress, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
@@ -189,7 +189,7 @@
 
         <DockPanel Grid.Row="4" Margin="0,18,0,0">
             <Button DockPanel.Dock="Left" Width="90" Command="{Binding CancelCommand}"
-                    Content="{x:Static resources:Strings.K092}" IsCancel="True" Style="{StaticResource ButtonDefault}" />
+                    Content="{x:Static resources:Strings.Lbl_Cancel}" IsCancel="True" Style="{StaticResource ButtonDefault}" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button Width="100" Margin="0,0,8,0" Command="{Binding BackCommand}"
                         Content="{x:Static resources:Strings.Ux_DeviceWizardBack}"

@@ -28,8 +28,8 @@ public static class PasswordPolicy
     /// <summary>强度文案键（M369/M370/M371）。</summary>
     public static string StrengthText(int level) => level switch
     {
-        1 => Strings.M370,
-        2 => Strings.M371,
-        _ => Strings.M369,
+        1 => Strings.Msg_PasswordStrengthMedium,
+        2 => Strings.Msg_PasswordStrengthStrong,
+        _ => Strings.Msg_PasswordStrengthWeak,
     };
 }

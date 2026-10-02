@@ -17,7 +17,7 @@ namespace Kanban.Collector.Core.Services;
 ///   仅用于「本会话首次读取某 key」时的恢复判定（班次一致才恢复，否则以当前 PLC 值为新基线）。
 ///   一旦该 key 在活动缓存中建立，后续读取不再参考此快照，避免跨班次误恢复。
 ///
-/// 持久化复用 AppSettings.WriteFileAtomically（临时文件 + 重命名 + .bak 备份），
+/// 持久化复用 AtomicFileWriter（临时文件 + 重命名 + .bak 备份），
 /// 与 devices.json / settings.json 同一套原子写入机制，避免断电/崩溃导致 baselines.json 损坏。
 ///
 /// 线程安全：GetOrCreate/ClearDevice/ClearAll/SaveBaselines 在锁内更新字典与 BaselineShiftId，
@@ -300,7 +300,7 @@ public class ProductionBaselineStore(AppSettings appSettings)
     }
 
     /// <summary>
-    /// 原子写入 baselines.json（复用 AppSettings.WriteFileAtomically：临时文件 + 重命名 + .bak 备份）。
+    /// 原子写入 baselines.json（复用 AtomicFileWriter：临时文件 + 重命名 + .bak 备份）。
     /// 在锁外调用：调用方需在锁内捕获快照副本后释放锁再调用本方法。
     /// internal virtual：供测试子类注入写盘延迟，构造确定性的乱序写场景（回归测试用）。
     /// </summary>
@@ -308,7 +308,7 @@ public class ProductionBaselineStore(AppSettings appSettings)
     {
         var file = new BaselineFile { ShiftId = shiftId, Baselines = baselines };
         var json = JsonSerializer.Serialize(file, AppSettings.JsonOptions);
-        AppSettings.WriteFileAtomically(_filePath, json);
+        AtomicFileWriter.Write(_filePath, json);
     }
 
     /// <summary>

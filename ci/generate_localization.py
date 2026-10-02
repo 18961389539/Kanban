@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Generate all application localization artifacts from one CSV source.
+"""Generate the localization catalog from Localization.csv.
 
 The source format is Localization.csv with columns:
 Resource,Key,<language-code>...
 
-Resource is either Wpf or Core. The build invokes this script before compiling
-those projects. Existing RESX files are runtime artifacts and must not be edited
-manually after the CSV migration.
+Resource is either Wpf or Core. The only generated artifact is
+Kanban.Localization/LocalizationCatalog.cs. Do not hand-edit that file.
 """
 
 from __future__ import annotations
@@ -76,7 +75,7 @@ SHARED_WEB_KEYS = {
     "Status_Offline_AcquisitionStopped", "Status_Offline_GapFilled",
     "Status_Paused", "Status_Running", "Val_DynAddr", "Val_NoAlarms", "Val_NoWorkOrder",
     "Val_WaitData", "Wo_Aborted", "Wo_Completed", "Wo_Pending", "Wo_Progress",
-    "Wo_ProgressPending", "Wo_Running", "K326", "K327", "K328",
+    "Wo_ProgressPending", "Wo_Running", "Lbl_OrderTarget", "Lbl_OrderCompletion", "Lbl_CurrentShiftQuality",
     "Hp_DefectSubtitle", "Hp_DefectSummary", "Hp_DefectShareNg", "Hp_DefectCumulative",
     "Hp_DefectOthers", "Hp_DefectEmptyZero", "Hp_DefectEmptyZeroHint",
     "Hp_DefectEmptyUnconfigured", "Hp_DefectEmptyUnconfiguredHint",
@@ -101,7 +100,7 @@ SHARED_WEB_KEYS = {
     "Home_Tip_TrendWindow", "Home_Tip_StatusWord", "Home_Tip_Recipe",
     "Ln_Tip_SessionOk", "Ln_Tip_SessionNg", "Ln_Tip_CycleCompare", "Ln_Tip_ShiftPace", "Ln_Tip_StatusCount",
     "Ln_ShiftPace", "Ln_ShiftPaceExceeded",
-    "K587", "K588", "K589", "K590", "K593",
+    "Lbl_OEE", "Lbl_OK2", "Lbl_NG", "Lbl_Total", "Lbl_Run",
     "Hq_Tip_WindowOutput", "Hq_Tip_WindowOk", "Hq_Tip_WindowNg", "Hq_Tip_WindowQuality",
     "Hq_Tip_WindowNgRate", "Hq_Tip_WindowOee",
     "Hq_Tip_WindowTriggered", "Hq_Tip_WindowRecovered", "Hq_Tip_WindowPending", "Hq_Tip_WindowMttr",
@@ -111,13 +110,13 @@ SHARED_WEB_KEYS = {
     "Mo_Tip_ConnStatus", "Mo_Tip_AcqStatus", "Mo_Tip_Health", "Mo_Tip_DisconnectDuration",
     "Mo_Tip_CompletedCycles", "Mo_Tip_FailedCycles", "Mo_Tip_LastCycleMs", "Mo_Tip_AvgCycleMs",
     "Mo_Tip_MaxCycleMs", "Mo_Tip_DevicesRead", "Mo_Tip_LastSuccessAt", "Mo_Tip_LastFailureAt",
-    "K086", "K087", "K088", "K930",
-    "K143", "K757",
-    "K330", "K331", "K914", "K915", "K916", "K917", "K919", "K920", "K921", "K922", "K924",
-    "M031", "M032", "M033", "M092", "M093", "M094", "M095",
+    "Lbl_FilterHighLevelAlarms", "Lbl_FilterMediumLevelAlarms", "Lbl_FilterLowLevelAlarms", "Lbl_WritesOEEResetCommandEveryDevice",
+    "Lbl_Close", "Lbl_Copied",
+    "Lbl_MuteNewAlarms", "Lbl_ToggleSoundFlashingNewAlarmsSame", "Lbl_SNTraceability", "Lbl_EnterSNTraceEGSN20260830", "Lbl_EnterSNLookUpProductionTrace", "Lbl_ShowsDeviceWorkOrderShiftTime", "Lbl_Total2", "Lbl_NoSNRecordsWorkOrder", "Lbl_PleaseEnterSNTrace", "Lbl_NoTraceRecordsFoundSN", "Lbl_Result2",
+    "Msg_Aborted", "Msg_MetPending", "Msg_OverdueIncomplete", "Msg_TargetMet", "Msg_BelowTarget", "Msg_BehindSchedule", "Msg_Track",
     "Rv_Tip_Health", "Dd_Tip_TodayAlarms", "Dd_Tip_PlcRaw", "Dd_Tip_Theoretical",
     "Dd_Tip_CycleGap", "Dd_Tip_ActualCapacity",
-    "K709", "K710", "K711", "K712", "K713", "K714",
+    "Lbl_CountAlarmsYetRecoveredLiveSnapshot", "Lbl_TotalTriggerEventsSinceMidnightToday", "Lbl_TotalRecoveryEventsSinceMidnightToday", "Lbl_EarliestStartedAlarmYetRecoveredLive", "Lbl_NumberDevicesUnrecoveredAlarmsLiveSnapshot", "Lbl_TopAlarmTriggerCountSelectedTime",
     "Severity_Critical", "Severity_Major", "Severity_Minor",
     "Defect_Appearance", "Defect_Dimension", "Defect_Function", "Defect_Packaging", "Defect_Other",
 }
@@ -503,8 +502,10 @@ def generate_core_localization_catalog(rows: list[dict[str, str]]) -> str:
         f"        {csharp_literal(language)}" for language in LANGUAGES
     )
     return f'''using System.Collections.Generic;
+using System.Globalization;
 
-namespace Kanban.Collector.Core.Localization;
+namespace Kanban.Localization
+{{
 
 /// <summary>
 /// 从 Localization.csv 生成的共享本地化目录。语言代码、资源 Key 和占位符签名均来自 CSV。
@@ -553,6 +554,16 @@ public static class LocalizationCatalog
     public static bool IsKnownKey(string resource, string key)
         => Values.ContainsKey(resource + "|" + key);
 
+    public static IEnumerable<string> Keys(string resource)
+    {{
+        var prefix = resource + "|";
+        foreach (var entry in Values.Keys)
+        {{
+            if (entry.StartsWith(prefix, StringComparison.Ordinal))
+                yield return entry[prefix.Length..];
+        }}
+    }}
+
     public static string? Get(string resource, string key, string language)
         => Values.TryGetValue(resource + "|" + key, out var translations)
             && translations.TryGetValue(language, out var value)
@@ -565,53 +576,52 @@ public static class LocalizationCatalog
             ? value
             : language;
 }}
+}}
 '''
 
 
 def generate_wpf_strings_cs(rows: list[dict[str, str]]) -> str:
     keys = sorted(row["Key"] for row in rows if row["Resource"] == "Wpf")
     properties = "\n".join(
-        f'        public static string {key} => S("{key}", "{key}");' for key in keys
+        f'    public static string {key} => S("{key}", "{key}");' for key in keys
     )
-    return f'''using System.Globalization;
-using Kanban.Collector.Core.Localization;
-
-namespace MainAPP.Resources;
+    return f'''namespace MainAPP.Resources
+{{
 
 /// <summary>
-/// 多语言资源强类型访问；语言代码和翻译来自 Localization.csv。
+/// 多语言资源强类型访问。译文在 <see cref="Kanban.Localization.LocalizationCatalog"/>，
+/// 本类只保留当前文化和启动覆盖回调。
 /// WARNING: AUTO-GENERATED by ci/generate_localization.py. DO NOT EDIT MANUALLY.
 /// All {len(keys)} Wpf keys come from MainAPP/Resources/Localization.csv.
 /// </summary>
 public static class Strings
 {{
-    /// <summary>
-    /// 启动时由 Localization.Apply 捕获的 UI 文化。
-    /// </summary>
     private static CultureInfo s_capturedCulture = CultureInfo.GetCultureInfo("zh-CN");
+
+    /// <summary>由 MainAPP 启动时注入。返回 null 表示没有覆盖，继续读内置目录。</summary>
+    public static Func<string, CultureInfo, string?>? TryGetOverride {{ get; set; }}
 
     public static void CaptureCulture(CultureInfo culture)
     {{
         s_capturedCulture = culture;
     }}
 
-    /// <summary>按启动期文化取资源；启动覆盖文件优先，缺失时回退 key 名本身。</summary>
+    /// <summary>按启动期文化取资源；启动覆盖优先，缺失时回退 key 名本身。</summary>
     public static string S(string key, string fallback)
     {{
-        if (LocalizationOverrideStore.TryGet("Wpf", key, s_capturedCulture, out var overrideValue))
+        if (TryGetOverride?.Invoke(key, s_capturedCulture) is string overrideValue)
             return overrideValue;
-        return LocalizationCatalog.Get("Wpf", key, s_capturedCulture.Name) ?? fallback;
+        return Kanban.Localization.LocalizationCatalog.Get("Wpf", key, s_capturedCulture.Name) ?? fallback;
     }}
 
-    /// <summary>查询内置资源是否包含指定 WPF Key，供启动覆盖文件拒绝新增 Key。</summary>
     public static bool IsKnownKey(string key)
-        => LocalizationCatalog.IsKnownKey("Wpf", key);
+        => Kanban.Localization.LocalizationCatalog.IsKnownKey("Wpf", key);
 
-    /// <summary>读取内置 WPF 资源，供启动覆盖文件校验格式占位符。</summary>
     public static string? GetEmbeddedValue(string key, string cultureName)
-        => LocalizationCatalog.Get("Wpf", key, cultureName);
+        => Kanban.Localization.LocalizationCatalog.Get("Wpf", key, cultureName);
 
 {properties}
+}}
 }}
 '''
 
@@ -857,19 +867,22 @@ public static class L
 
 
 def rendered_outputs(rows: list[dict[str, str]], scope: str) -> dict[Path, str]:
-    outputs: dict[Path, str] = {}
-    # The catalog is shared by MainAPP, Collector and the override validator.
-    # Generate it for every build scope so a CSV edit cannot leave it stale.
-    outputs[PROJECT_ROOT / "Kanban.Collector.Core" / "Localization" / "LocalizationCatalog.cs"] = \
-        generate_core_localization_catalog(rows)
-    if scope in ("all", "wpf"):
-        outputs.update(generate_resx(rows, "Wpf"))
-        outputs[PROJECT_ROOT / "MainAPP" / "Resources" / "Strings.cs"] = generate_wpf_strings_cs(rows)
-    if scope in ("all", "core"):
-        outputs.update(generate_resx(rows, "Core"))
-    if scope in ("all", "web"):
-        outputs[PROJECT_ROOT / "Kanban.Web" / "Localization.cs"] = generate_web_loc(rows)
-    return outputs
+    # One generated artifact for every scope. --wpf/--core/--web stay as aliases so
+    # older build scripts keep working, but they all write the same file.
+    del scope
+    catalog = generate_core_localization_catalog(rows).rstrip() + "\n\n" + generate_wpf_strings_cs(rows)
+    return {PROJECT_ROOT / "Kanban.Localization" / "LocalizationCatalog.cs": catalog}
+
+
+def obsolete_generated_paths() -> list[Path]:
+    """Previous generator outputs. They must not remain beside the single catalog."""
+    paths = [
+        PROJECT_ROOT / "Kanban.Collector.Core" / "Localization" / "LocalizationCatalog.cs",
+        PROJECT_ROOT / "MainAPP" / "Resources" / "Strings.cs",
+    ]
+    paths += list((PROJECT_ROOT / "MainAPP" / "Resources").glob("Strings*.resx"))
+    paths += list((PROJECT_ROOT / "Kanban.Collector.Core" / "Resources").glob("Messages*.resx"))
+    return paths
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -918,12 +931,7 @@ def main(argv: list[str] | None = None) -> int:
 
         outputs = rendered_outputs(rows, scope)
         mismatches: list[Path] = []
-        expected_paths = set(outputs)
-        stale_paths: set[Path] = set()
-        if scope in ("all", "wpf"):
-            stale_paths.update(generated_resx_paths("Wpf") - expected_paths)
-        if scope in ("all", "core"):
-            stale_paths.update(generated_resx_paths("Core") - expected_paths)
+        stale_paths = {path for path in obsolete_generated_paths() if path.exists()}
         for path, content in outputs.items():
             if args.check:
                 current = path.read_text(encoding="utf-8") if path.exists() else None

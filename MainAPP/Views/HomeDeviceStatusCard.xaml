@@ -9,7 +9,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     mc:Ignorable="d"
     d:DesignHeight="400"
-    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources">
+    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.Resources>
         <Style x:Key="RecessedProgressBar" TargetType="ProgressBar">
             <Setter Property="Height" Value="7" />
@@ -89,10 +89,10 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Harddisk" />
-                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K028}" />
+                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.Lbl_DeviceStatus}" />
                     <!-- 当前状态放到标题旁，避免与环形图「时长占比」中心文案抢语义 -->
                     <Border Margin="10,0,0,0" Style="{StaticResource HeaderChip}"
-                            ToolTip="{x:Static resources:Strings.K083}">
+                            ToolTip="{x:Static resources:Strings.Lbl_CurrentStatus}">
                         <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
                                    FontWeight="Bold"
                                    Foreground="{Binding RealtimeStatus, Converter={StaticResource StateToBrushConverter}}"
@@ -161,7 +161,7 @@
                             <TextBlock VerticalAlignment="Center"
                                        FontSize="{DynamicResource FontSizeCaption}"
                                        Foreground="{StaticResource ThirdlyTextBrush}"
-                                       Text="{x:Static resources:Strings.K324}" />
+                                       Text="{x:Static resources:Strings.Lbl_CurrentSpeed}" />
                             <controls:KpiScopeChip Kind="Realtime" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
@@ -172,7 +172,7 @@
                             <TextBlock Margin="6,0,0,0" VerticalAlignment="Bottom"
                                        FontSize="{DynamicResource FontSizeCaption}"
                                        Foreground="{StaticResource ThirdlyTextBrush}"
-                                       Text="{x:Static resources:Strings.K325}" />
+                                       Text="{x:Static resources:Strings.Lbl_PcsH}" />
                             <TextBlock Margin="10,0,0,0" VerticalAlignment="Bottom"
                                        FontSize="{DynamicResource FontSizeCaption}"
                                        Foreground="{StaticResource ThirdlyTextBrush}"
@@ -215,7 +215,7 @@
                                            Text="{Binding StatusDurationTotalFormatted}" />
                             </StackPanel>
                         </Grid>
-                        <controls:EmptyState IconKind="ChartDonut" Message="{x:Static resources:Strings.K318}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <controls:EmptyState IconKind="ChartDonut" Message="{x:Static resources:Strings.Lbl_NoStatusData}" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <controls:EmptyState.Style>
                                 <Style TargetType="controls:EmptyState">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -252,7 +252,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
                                                  Fill="{StaticResource SuccessBrush}" />
-                                        <TextBlock Style="{StaticResource LegendLabel}" Text="{x:Static resources:Strings.K005}" />
+                                        <TextBlock Style="{StaticResource LegendLabel}" Text="{x:Static resources:Strings.Lbl_Running}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                                         <TextBlock Style="{StaticResource LegendDuration}"
@@ -275,7 +275,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
                                                  Fill="{StaticResource StatusAlarmBrush}" />
-                                        <TextBlock Style="{StaticResource LegendLabel}" Text="{x:Static resources:Strings.K016}" />
+                                        <TextBlock Style="{StaticResource LegendLabel}" Text="{x:Static resources:Strings.Lbl_Alarm}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                                         <TextBlock Style="{StaticResource LegendDuration}"
@@ -298,7 +298,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
                                                  Fill="{StaticResource StatusPauseBrush}" />
-                                        <TextBlock Style="{StaticResource LegendLabel}" Text="{x:Static resources:Strings.K006}" />
+                                        <TextBlock Style="{StaticResource LegendLabel}" Text="{x:Static resources:Strings.Lbl_Standby}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                                         <TextBlock Style="{StaticResource LegendDuration}"
@@ -352,7 +352,7 @@
                                                 ToolTip="{Binding ActualCycleTooltip}">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Style="{StaticResource CycleRowLabel}" VerticalAlignment="Center"
-                                                       Text="{x:Static resources:Strings.K050}" />
+                                                       Text="{x:Static resources:Strings.Lbl_ActualCycleTime}" />
                                             <controls:KpiScopeChip Kind="Realtime" />
                                         </StackPanel>
                                         <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
@@ -369,7 +369,7 @@
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock FontSize="{DynamicResource FontSizeMicro}" VerticalAlignment="Center"
                                                        Foreground="{StaticResource ThirdlyTextBrush}"
-                                                       Text="{x:Static resources:Strings.K017}" />
+                                                       Text="{x:Static resources:Strings.Lbl_TargetCycleTime}" />
                                             <controls:KpiScopeChip Kind="Realtime" />
                                         </StackPanel>
                                         <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"

@@ -9,7 +9,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     mc:Ignorable="d"
     d:DesignHeight="400"
-    d:DesignWidth="500" xmlns:resources="clr-namespace:MainAPP.Resources">
+    d:DesignWidth="500" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <!--
         主页仪表板卡片 5：当前班次良率（当班总产量 + 累计良率，下为小时良品柱与累计良率折线）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
@@ -28,7 +28,7 @@
             <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="False">
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="CheckCircle" />
-                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K328}" />
+                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.Lbl_CurrentShiftQuality}" />
                     <controls:KpiScopeChip Kind="Shift" />
                 </StackPanel>
             </DockPanel>
@@ -55,7 +55,7 @@
                         <TextBlock Margin="6,0,0,0" VerticalAlignment="Bottom"
                                    FontSize="{DynamicResource FontSizeKpiLabel}"
                                    Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="{x:Static resources:Strings.K014}" />
+                                   Text="{x:Static resources:Strings.Lbl_Pcs}" />
                     </StackPanel>
                 </StackPanel>
 
@@ -112,7 +112,7 @@
                         </Style>
                     </oxy:PlotView.Style>
                 </oxy:PlotView>
-                <controls:EmptyState IconKind="ChartLineVariant" Message="{x:Static resources:Strings.K051}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <controls:EmptyState IconKind="ChartLineVariant" Message="{x:Static resources:Strings.Lbl_NoOutputData}" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <controls:EmptyState.Style>
                         <Style TargetType="controls:EmptyState">
                             <Setter Property="Visibility" Value="Collapsed" />

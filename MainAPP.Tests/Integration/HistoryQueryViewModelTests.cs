@@ -1394,7 +1394,7 @@ public class HistoryQueryViewModelTests : IDisposable
 
         _vm.SearchCommand.Execute(null);
 
-        Assert.Equal(Strings.M101, _vm.QueryValidationMessage);
+        Assert.Equal(Strings.Msg_StartCannotEnd, _vm.QueryValidationMessage);
         Assert.True(_vm.HasQueryValidationError);
         Assert.False(_vm.HasQueried, "区间非法时应提前返回，不标记已查询");
         Assert.Equal(0, _vm.TotalCount);
@@ -1421,7 +1421,7 @@ public class HistoryQueryViewModelTests : IDisposable
     public void QuerySummaryText_NotQueried_ShowsIdleText()
     {
         Assert.False(_vm.HasQueried);
-        Assert.Equal(Strings.M096, _vm.QuerySummaryText);
+        Assert.Equal(Strings.Msg_Queried, _vm.QuerySummaryText);
     }
 
     [Fact]
@@ -1435,7 +1435,7 @@ public class HistoryQueryViewModelTests : IDisposable
         _vm.SearchCommand.Execute(null);
 
         Assert.True(_vm.IsEmptyResult);
-        Assert.Equal(Strings.M098, _vm.QuerySummaryText);
+        Assert.Equal(Strings.Msg_NoDataFound, _vm.QuerySummaryText);
     }
 
     [Fact]
@@ -1451,7 +1451,7 @@ public class HistoryQueryViewModelTests : IDisposable
 
         _vm.SearchCommand.Execute(null);
 
-        Assert.Equal(string.Format(Strings.F069, 1, 1, 1), _vm.QuerySummaryText);
+        Assert.Equal(string.Format(Strings.Prompt_TotalsUseAllRowsPage, 1, 1, 1), _vm.QuerySummaryText);
     }
 
     [Fact]

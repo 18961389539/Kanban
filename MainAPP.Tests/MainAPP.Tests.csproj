@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Kanban.Localization\Kanban.Localization.csproj" />
     <ProjectReference Include="..\MainAPP\MainAPP.csproj" />
     <!-- Collector 服务进程（Exe 可作库引用）：补服务端零测试盲区——ConfigSyncHandler/SnapshotPublisher -->
     <ProjectReference Include="..\Kanban.Collector\Kanban.Collector.csproj" />

@@ -114,7 +114,7 @@
                     </div>
                     @* 工单四槽位（固定，不做成可配置）：工单目标 / 当班良品 / 工单累计良品 / 工单达成率 *@
                     <div class="metric-grid wo-kpi-grid">
-                        <div title="@WorkOrderTargetTooltip"><span class="kpi-label">@L.T("K326") <KpiScopeChip Kind="WorkOrder" /></span><span class="kpi-value">@CurrentWorkOrder.TargetQuantity.ToString("N0")</span></div>
+                        <div title="@WorkOrderTargetTooltip"><span class="kpi-label">@L.T("Lbl_OrderTarget") <KpiScopeChip Kind="WorkOrder" /></span><span class="kpi-value">@CurrentWorkOrder.TargetQuantity.ToString("N0")</span></div>
                         <div title="@ShiftOkTooltip"><span class="kpi-label">@L.T("Home_ShiftOk") <KpiScopeChip Kind="Shift" /></span><span class="kpi-value">@ShiftOkText</span></div>
                         <div title="@WorkOrderCumulativeOkTooltip"><span class="kpi-label">@L.T("Home_WorkOrderCumulativeOk") <KpiScopeChip Kind="WorkOrder" /></span><span class="kpi-value">@WorkOrderOkText</span></div>
                         <div title="@WorkOrderAchievementTooltip"><span class="kpi-label">@L.T("Home_WorkOrderAchievement") <KpiScopeChip Kind="WorkOrder" /></span><span class="@WorkOrderAchievementCssClass">@WorkOrderAchievementText</span></div>
@@ -226,7 +226,7 @@
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("K328") <KpiScopeChip Kind="Shift" /></div>
+                <div class="card-title">@L.T("Lbl_CurrentShiftQuality") <KpiScopeChip Kind="Shift" /></div>
                 <div class="metric-grid quality-kpi-grid">
                     <div title="@TotalOutputTooltip">
                         <span class="kpi-label">@L.T("Home_ShiftTotalOutput") <KpiScopeChip Kind="Shift" /></span>

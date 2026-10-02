@@ -11,20 +11,20 @@
     @* ──────────── KPI 汇总 ──────────── *@
     <section class="kpi-row">
         @* 计数颜色状态联动：0 时中性色，非 0 才用红/绿（原恒红/恒绿，无报警也红误导） *@
-        <div class="kpi-card" title="@($"{L.T("K709")}\n{ActiveCountText}")"><span class="kpi-label">@L.T("Ac_ActiveCount")</span><span class="kpi-value @(ActiveCount > 0 ? "kpi-ng" : "")">@ActiveCountText</span></div>
-        <div class="kpi-card" title="@($"{L.T("K713")}\n{AffectedDeviceCountText}")"><span class="kpi-label">@L.T("Ac_AffectedDevices")</span><span class="kpi-value">@AffectedDeviceCountText</span></div>
-        <div class="kpi-card" title="@($"{L.T("K710")}\n{TodayTriggerText}")"><span class="kpi-label">@L.T("Ac_TodayTrigger")</span><span class="kpi-value @(TodayTrigger > 0 ? "kpi-ng" : "")">@TodayTriggerText</span><span class="kpi-sub dim">@L.T("Ac_VsYesterday", YesterdayDiffText)</span></div>
-        <div class="kpi-card" title="@($"{L.T("K711")}\n{TodayRecoverText}")"><span class="kpi-label">@L.T("Ac_TodayRecover")</span><span class="kpi-value @(TodayRecover > 0 ? "kpi-ok" : "")">@TodayRecoverText</span></div>
-        <div class="kpi-card" title="@($"{L.T("K712")}\n{LongestText}")"><span class="kpi-label">@L.T("Ac_Longest")</span><span class="kpi-value">@LongestText</span></div>
+        <div class="kpi-card" title="@($"{L.T("Lbl_CountAlarmsYetRecoveredLiveSnapshot")}\n{ActiveCountText}")"><span class="kpi-label">@L.T("Ac_ActiveCount")</span><span class="kpi-value @(ActiveCount > 0 ? "kpi-ng" : "")">@ActiveCountText</span></div>
+        <div class="kpi-card" title="@($"{L.T("Lbl_NumberDevicesUnrecoveredAlarmsLiveSnapshot")}\n{AffectedDeviceCountText}")"><span class="kpi-label">@L.T("Ac_AffectedDevices")</span><span class="kpi-value">@AffectedDeviceCountText</span></div>
+        <div class="kpi-card" title="@($"{L.T("Lbl_TotalTriggerEventsSinceMidnightToday")}\n{TodayTriggerText}")"><span class="kpi-label">@L.T("Ac_TodayTrigger")</span><span class="kpi-value @(TodayTrigger > 0 ? "kpi-ng" : "")">@TodayTriggerText</span><span class="kpi-sub dim">@L.T("Ac_VsYesterday", YesterdayDiffText)</span></div>
+        <div class="kpi-card" title="@($"{L.T("Lbl_TotalRecoveryEventsSinceMidnightToday")}\n{TodayRecoverText}")"><span class="kpi-label">@L.T("Ac_TodayRecover")</span><span class="kpi-value @(TodayRecover > 0 ? "kpi-ok" : "")">@TodayRecoverText</span></div>
+        <div class="kpi-card" title="@($"{L.T("Lbl_EarliestStartedAlarmYetRecoveredLive")}\n{LongestText}")"><span class="kpi-label">@L.T("Ac_Longest")</span><span class="kpi-value">@LongestText</span></div>
     </section>
 
     @* ──────────── 实时活跃报警 ──────────── *@
     <section class="card">
         <div class="card-title">@L.T("Ac_ActiveTitle") <span class="badge-count @(ActiveCount == 0 ? "zero" : "")">@ActiveCount</span></div>
         <div class="filter-bar compact">
-            <button class="chip-btn @(ShowHigh ? "active" : "")" title="@L.T("K086")" @onclick="() => ShowHigh = !ShowHigh">@L.T("Ac_LevelHigh")</button>
-            <button class="chip-btn @(ShowMedium ? "active" : "")" title="@L.T("K087")" @onclick="() => ShowMedium = !ShowMedium">@L.T("Ac_LevelMedium")</button>
-            <button class="chip-btn @(ShowLow ? "active" : "")" title="@L.T("K088")" @onclick="() => ShowLow = !ShowLow">@L.T("Ac_LevelLow")</button>
+            <button class="chip-btn @(ShowHigh ? "active" : "")" title="@L.T("Lbl_FilterHighLevelAlarms")" @onclick="() => ShowHigh = !ShowHigh">@L.T("Ac_LevelHigh")</button>
+            <button class="chip-btn @(ShowMedium ? "active" : "")" title="@L.T("Lbl_FilterMediumLevelAlarms")" @onclick="() => ShowMedium = !ShowMedium">@L.T("Ac_LevelMedium")</button>
+            <button class="chip-btn @(ShowLow ? "active" : "")" title="@L.T("Lbl_FilterLowLevelAlarms")" @onclick="() => ShowLow = !ShowLow">@L.T("Ac_LevelLow")</button>
             <select class="filter-input device-filter" @bind="SelectedDeviceId">
                 <option value="">@L.T("Hq_AllDevices")</option>
                 @foreach (var d in Dashboard.Snapshots)
@@ -34,14 +34,14 @@
             </select>
             @if (MutedCount > 0)
             {
-                <button class="chip-btn active" title="@L.T("K331")" @onclick="ClearMute">@L.T("Ac_MutedCount", MutedCount)</button>
+                <button class="chip-btn active" title="@L.T("Lbl_ToggleSoundFlashingNewAlarmsSame")" @onclick="ClearMute">@L.T("Ac_MutedCount", MutedCount)</button>
             }
         </div>
         @if (!string.IsNullOrEmpty(_copyNotice))
         {
             <div class="msg-banner @(_copyOk ? "msg-ok" : "msg-error")">
                 <span>@_copyNotice</span>
-                <button class="msg-close" title="@L.T("K143")" @onclick="() => _copyNotice = null">✕</button>
+                <button class="msg-close" title="@L.T("Lbl_Close")" @onclick="() => _copyNotice = null">✕</button>
             </div>
         }
         @if (VisibleGroupedAlarms.Count == 0)
@@ -62,7 +62,7 @@
                                 <span class="alarm-name">@a.AlarmName</span>
                                 <span class="alarm-dur" title="@L.Tip("Home_Tip_ActiveAlarmDuration", FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds))">@FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds)</span>
                                 <button class="icon-btn" title="@L.T("Ac_Copy")" @onclick="() => CopyAlarmAsync(a)" @onclick:stopPropagation="true">⧉</button>
-                                <button class="icon-btn" title="@L.T("K330")" @onclick="() => MuteAlarm(a)" @onclick:stopPropagation="true">🔇</button>
+                                <button class="icon-btn" title="@L.T("Lbl_MuteNewAlarms")" @onclick="() => MuteAlarm(a)" @onclick:stopPropagation="true">🔇</button>
                             </div>
                         }
                     </div>
@@ -443,7 +443,7 @@ private void OnRenderTick()
         {
             await JS.InvokeVoidAsync("KanbanShell.copy", text);
             _copyOk = true;
-            _copyNotice = L.T("K757", a.AlarmName);
+            _copyNotice = L.T("Lbl_Copied", a.AlarmName);
         }
         catch (Exception)
         {

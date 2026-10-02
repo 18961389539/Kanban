@@ -160,7 +160,7 @@ public class RecipeManagerViewModelTests : IDisposable
         vm.CloneRecipeCommand.Execute(null);
 
         Assert.Null(vm.SelectedRecipe);
-        Assert.Equal("配方A" + Strings.K692, vm.EditName);
+        Assert.Equal("配方A" + Strings.Lbl_Copy2, vm.EditName);
         Assert.Single(vm.EditItems);
         Assert.Single(_recipeStore.Recipes); // 尚未保存，不落库
     }

@@ -458,9 +458,9 @@ public sealed class OverviewDashboardService : IOverviewDashboardService
             LongestDowntimeDevice: longestDowntimeDevice,
             LongestDowntimeAlarm: longestDowntimeAlarm,
             LongestDowntimeHours: maxDowntimeSec / 3600.0,
-            AvailabilityLossText: string.Format(Strings.F079, availability, (1 - availability)),
-            PerformanceLossText: string.Format(Strings.F124, performance, (1 - performance)),
-            QualityLossText: string.Format(Strings.F193, quality, (1 - quality)),
+            AvailabilityLossText: string.Format(Strings.Prompt_AvailabilityLoss, availability, (1 - availability)),
+            PerformanceLossText: string.Format(Strings.Prompt_PerformanceLoss, performance, (1 - performance)),
+            QualityLossText: string.Format(Strings.Prompt_QualityRateLoss, quality, (1 - quality)),
             HealthScore: healthScore,
             CurrentWorkOrderText: workOrderText,
             CurrentProductText: productText,
@@ -481,12 +481,12 @@ public sealed class OverviewDashboardService : IOverviewDashboardService
         {
             OverviewTimeRange.CurrentShift => GetPreviousShiftComparison(shifts, now),
             OverviewTimeRange.PreviousShift => (from - duration, from, Strings.M_EarlierShift),
-            OverviewTimeRange.Today => (from.AddDays(-1), from, Strings.K257),
-            OverviewTimeRange.Hour1 => (from.AddHours(-1), from, Strings.M301),
-            OverviewTimeRange.Hours8 => (from.AddHours(-8), from, Strings.M302),
-            OverviewTimeRange.Hours24 => (from.AddDays(-1), from, Strings.M300),
-            OverviewTimeRange.Days7 => (from.AddDays(-7), from, Strings.M303),
-            _ => (from - duration, from, Strings.M058),
+            OverviewTimeRange.Today => (from.AddDays(-1), from, Strings.Lbl_Yesterday),
+            OverviewTimeRange.Hour1 => (from.AddHours(-1), from, Strings.Msg_Previous1Hour),
+            OverviewTimeRange.Hours8 => (from.AddHours(-8), from, Strings.Msg_Previous8Hours),
+            OverviewTimeRange.Hours24 => (from.AddDays(-1), from, Strings.Msg_Previous24Hours),
+            OverviewTimeRange.Days7 => (from.AddDays(-7), from, Strings.Msg_Previous7Days),
+            _ => (from - duration, from, Strings.Msg_PreviousPeriod),
         };
     }
 
@@ -495,12 +495,12 @@ public sealed class OverviewDashboardService : IOverviewDashboardService
     {
         var (current, currentIndex) = HistoryQueryHelper.FindCurrentShift(shifts, now.TimeOfDay);
         if (current == null || shifts.Count == 0)
-            return (now.AddHours(-24), now, Strings.M300);
+            return (now.AddHours(-24), now, Strings.Msg_Previous24Hours);
         var currentRange = current.ResolveRange(now);
         var previousIndex = (currentIndex - 1 + shifts.Count) % shifts.Count;
         var previous = shifts[previousIndex];
         var range = previous.ResolveRange(currentRange.Start.AddMinutes(-1));
-        return (range.Start, range.End, string.Format(Strings.F055, previous.Name));
+        return (range.Start, range.End, string.Format(Strings.Prompt_PreviousShift, previous.Name));
     }
 
     private static (DateTime From, DateTime To) ResolveCurrentShiftRange(
@@ -691,13 +691,13 @@ public sealed class OverviewDashboardService : IOverviewDashboardService
         List<ReviewConclusion> result = [];
         var total = totalOk + totalNg;
         if (total == 0 && totalAlarmCount == 0)
-            return [new ReviewConclusion { Text = Strings.M114, Kind = ReviewConclusionKind.Info, Met = ReviewConclusionMetState.Neutral }];
+            return [new ReviewConclusion { Text = Strings.Msg_InsufficientDataReview, Kind = ReviewConclusionKind.Info, Met = ReviewConclusionMetState.Neutral }];
 
         if (total > 0)
         {
             result.Add(new ReviewConclusion
             {
-                Text = string.Format(Strings.F194, quality, (quality >= qualityTarget ? Strings.M112 : Strings.M113), qualityTarget),
+                Text = string.Format(Strings.Prompt_QualityRateTarget, quality, (quality >= qualityTarget ? Strings.Msg_Reached : Strings.Msg_Below), qualityTarget),
                 Kind = ReviewConclusionKind.Quality,
                 Met = quality >= qualityTarget ? ReviewConclusionMetState.Met : ReviewConclusionMetState.NotMet,
             });
@@ -707,7 +707,7 @@ public sealed class OverviewDashboardService : IOverviewDashboardService
         {
             result.Add(new ReviewConclusion
             {
-                Text = string.Format(Strings.F006, oee, (oee >= oeeTarget ? Strings.M112 : Strings.M113), oeeTarget),
+                Text = string.Format(Strings.Prompt_OEETarget, oee, (oee >= oeeTarget ? Strings.Msg_Reached : Strings.Msg_Below), oeeTarget),
                 Kind = ReviewConclusionKind.Oee,
                 Met = oee >= oeeTarget ? ReviewConclusionMetState.Met : ReviewConclusionMetState.NotMet,
             });
@@ -717,7 +717,7 @@ public sealed class OverviewDashboardService : IOverviewDashboardService
         {
             result.Add(new ReviewConclusion
             {
-                Text = string.Format(Strings.F138, longestDowntimeSec / 3600.0, longestDowntimeDevice, longestDowntimeAlarm),
+                Text = string.Format(Strings.Prompt_LongestDowntimeHoursDeviceAlarm, longestDowntimeSec / 3600.0, longestDowntimeDevice, longestDowntimeAlarm),
                 Kind = ReviewConclusionKind.Downtime,
                 Met = ReviewConclusionMetState.Neutral,
             });
@@ -728,7 +728,7 @@ public sealed class OverviewDashboardService : IOverviewDashboardService
         {
             result.Add(new ReviewConclusion
             {
-                Text = string.Format(Strings.F041, topShift.ShiftName, topShift.TotalCount, topShift.OkRatio),
+                Text = string.Format(Strings.Prompt_HasHighestOutputPcsTotalQuality, topShift.ShiftName, topShift.TotalCount, topShift.OkRatio),
                 Kind = ReviewConclusionKind.BestShift,
                 Met = ReviewConclusionMetState.Neutral,
             });
@@ -739,7 +739,7 @@ public sealed class OverviewDashboardService : IOverviewDashboardService
         {
             result.Add(new ReviewConclusion
             {
-                Text = string.Format(Strings.F059, topDefect.DefectName, topDefect.DeviceName, topDefect.Count, topDefect.CumulativePercent),
+                Text = string.Format(Strings.Prompt_MainDefectCumulativePcs, topDefect.DefectName, topDefect.DeviceName, topDefect.Count, topDefect.CumulativePercent),
                 Kind = ReviewConclusionKind.TopDefect,
                 Met = ReviewConclusionMetState.Neutral,
             });
@@ -749,7 +749,7 @@ public sealed class OverviewDashboardService : IOverviewDashboardService
         {
             result.Add(new ReviewConclusion
             {
-                Text = string.Format(Strings.F123, totalAlarmCount),
+                Text = string.Format(Strings.Prompt_AlarmsTriggeredCurrentRangeCheckTop, totalAlarmCount),
                 Kind = ReviewConclusionKind.AlarmCount,
                 Met = ReviewConclusionMetState.Neutral,
             });

@@ -15,7 +15,7 @@
     d:DesignWidth="1200"
     Loaded="OnLoaded"
     IsVisibleChanged="OnVisibleChanged"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.InputBindings>
         <KeyBinding Gesture="Ctrl+Enter" Command="{Binding SearchCommand}" />
         <KeyBinding Gesture="Ctrl+R" Command="{Binding ResetCommand}" />
@@ -39,7 +39,7 @@
                 <DockPanel Margin="0,0,0,16">
                     <StackPanel Orientation="Horizontal">
                         <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="DatabaseSearchOutline" />
-                        <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.K252}" />
+                        <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.Lbl_HistoryQuery}" />
                         <controls:PageHelpButton Margin="8,0,0,0" PageKey="{Binding PageHelpKey}" />
                     </StackPanel>
                     <TextBlock
@@ -101,9 +101,9 @@
                     <ComboBox
                         Grid.Column="0"
                         VerticalAlignment="Bottom"
-                        hc:InfoElement.Title="{x:Static resources:Strings.K002}"
+                        hc:InfoElement.Title="{x:Static resources:Strings.Lbl_Device}"
                         hc:InfoElement.TitlePlacement="Top"
-                        AutomationProperties.Name="{x:Static resources:Strings.K024}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_DeviceFilter}"
                         DisplayMemberPath="Name"
                         ItemsSource="{Binding DeviceFilterItems}"
                         SelectedValue="{Binding SelectedDeviceId}"
@@ -113,31 +113,31 @@
                     <ComboBox
                         Grid.Column="2"
                         VerticalAlignment="Bottom"
-                        hc:InfoElement.Title="{x:Static resources:Strings.K253}"
+                        hc:InfoElement.Title="{x:Static resources:Strings.Lbl_QuickTime}"
                         hc:InfoElement.TitlePlacement="Top"
-                        AutomationProperties.Name="{x:Static resources:Strings.K254}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_QuickTimeSelection}"
                         SelectedIndex="{Binding QuickTimeIndex}"
                         Style="{StaticResource ComboBoxExtend}">
-                        <ComboBoxItem Content="{x:Static resources:Strings.K255}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.K256}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.K257}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.K258}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.K259}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.K078}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.K260}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.K261}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.K262}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.K907}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.K908}" />
-                        <ComboBoxItem Content="{x:Static resources:Strings.K909}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Custom}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Today}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Yesterday}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Last7Days}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Last30Days}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Shift2}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_PreviousShift}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Week}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Month}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Last1Hour}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Last4Hours}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.Lbl_Last24Hours}" />
                     </ComboBox>
 
                     <hc:DateTimePicker
                         Grid.Column="4"
                         VerticalAlignment="Bottom"
-                        hc:InfoElement.Title="{x:Static resources:Strings.K263}"
+                        hc:InfoElement.Title="{x:Static resources:Strings.Lbl_From}"
                         hc:InfoElement.TitlePlacement="Top"
-                        AutomationProperties.Name="{x:Static resources:Strings.K264}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_QueryStartTime}"
                         SelectedDateTime="{Binding FromDate}"
                         DateTimeFormat="yyyy-MM-dd HH:mm:ss"
                         Style="{StaticResource DateTimePickerExtend}" />
@@ -152,9 +152,9 @@
                     <hc:DateTimePicker
                         Grid.Column="6"
                         VerticalAlignment="Bottom"
-                        hc:InfoElement.Title="{x:Static resources:Strings.K265}"
+                        hc:InfoElement.Title="{x:Static resources:Strings.Lbl_To}"
                         hc:InfoElement.TitlePlacement="Top"
-                        AutomationProperties.Name="{x:Static resources:Strings.K266}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_QueryEndTime}"
                         SelectedDateTime="{Binding ToDate}"
                         DateTimeFormat="yyyy-MM-dd HH:mm:ss"
                         Style="{StaticResource DateTimePickerExtend}" />
@@ -162,10 +162,10 @@
                     <Button
                         Grid.Column="8"
                         VerticalAlignment="Bottom"
-                        AutomationProperties.Name="{x:Static resources:Strings.K267}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_QueryHistoryData}"
                         Command="{Binding SearchCommand}"
                         Style="{StaticResource ButtonPrimary}"
-                        ToolTip="{x:Static resources:Strings.K268}">
+                        ToolTip="{x:Static resources:Strings.Lbl_QueryCtrlEnter}">
                         <StackPanel Orientation="Horizontal">
                             <materialIcons:MaterialIcon
                                 Width="14"
@@ -175,17 +175,17 @@
                             <TextBlock
                                 Margin="6,0,0,0"
                                 VerticalAlignment="Center"
-                                Text="{x:Static resources:Strings.K269}" />
+                                Text="{x:Static resources:Strings.Lbl_Query}" />
                         </StackPanel>
                     </Button>
 
                     <Button
                         Grid.Column="10"
                         VerticalAlignment="Bottom"
-                        AutomationProperties.Name="{x:Static resources:Strings.K270}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_ResetFilters}"
                         Command="{Binding ResetCommand}"
                         Style="{StaticResource ButtonDefault}"
-                        ToolTip="{x:Static resources:Strings.K271}">
+                        ToolTip="{x:Static resources:Strings.Lbl_ClearFiltersCtrlR}">
                         <StackPanel Orientation="Horizontal">
                             <materialIcons:MaterialIcon
                                 Width="14"
@@ -195,17 +195,17 @@
                             <TextBlock
                                 Margin="6,0,0,0"
                                 VerticalAlignment="Center"
-                                Text="{x:Static resources:Strings.K272}" />
+                                Text="{x:Static resources:Strings.Lbl_Reset2}" />
                         </StackPanel>
                     </Button>
 
                     <Button
                         Grid.Column="12"
                         VerticalAlignment="Bottom"
-                        AutomationProperties.Name="{x:Static resources:Strings.K273}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_ExportCurrentTabDataCSV}"
                         Command="{Binding ExportCommand}"
                         Style="{StaticResource ButtonDefault}"
-                        ToolTip="{x:Static resources:Strings.K274}">
+                        ToolTip="{x:Static resources:Strings.Lbl_ExportCSVCtrlE}">
                         <StackPanel Orientation="Horizontal">
                             <hc:LoadingCircle
                                 Width="14"
@@ -230,7 +230,7 @@
                             <TextBlock
                                 Margin="6,0,0,0"
                                 VerticalAlignment="Center"
-                                Text="{x:Static resources:Strings.K079}" />
+                                Text="{x:Static resources:Strings.Lbl_Export}" />
                         </StackPanel>
                     </Button>
                 </Grid>
@@ -246,9 +246,9 @@
                     <!-- 班次筛选：全部 Tab 显示（含状态页 Tab 1） -->
                     <ComboBox
                         Grid.Column="0"
-                        hc:InfoElement.Title="{x:Static resources:Strings.K022}"
+                        hc:InfoElement.Title="{x:Static resources:Strings.Lbl_Shift}"
                         hc:InfoElement.TitlePlacement="Top"
-                        AutomationProperties.Name="{x:Static resources:Strings.K275}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_ShiftFilter}"
                         DisplayMemberPath="DisplayText"
                         ItemsSource="{Binding ShiftFilterItems}"
                         SelectedValue="{Binding SelectedShiftName}"
@@ -261,14 +261,14 @@
                     <!-- 报警名称筛选：仅 Tab 2 显示 -->
                     <ComboBox
                         Grid.Column="2"
-                        hc:InfoElement.Title="{x:Static resources:Strings.K276}"
+                        hc:InfoElement.Title="{x:Static resources:Strings.Lbl_AlarmType}"
                         hc:InfoElement.TitlePlacement="Top"
-                        AutomationProperties.Name="{x:Static resources:Strings.K277}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_AlarmTypeFilter}"
                         DisplayMemberPath="DisplayText"
                         ItemsSource="{Binding AlarmNameFilterItems}"
                         SelectedValue="{Binding SelectedAlarmName}"
                         SelectedValuePath="Value"
-                        ToolTip="{x:Static resources:Strings.K278}">
+                        ToolTip="{x:Static resources:Strings.Lbl_GeneratedHistoricalAlarmEvents}">
                         <ComboBox.Style>
                             <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend}">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -294,11 +294,11 @@
                 Style="{StaticResource KanbanTabControl}">
 
             <!--  ============ Tab 0: 产量查询 ============  -->
-            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K279}">
+            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.Lbl_OutputQueryTab}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center" Kind="ChartBar" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.K280}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Lbl_OutputQuery}" />
                     </StackPanel>
                 </TabItem.Header>
                 <Grid>
@@ -315,31 +315,31 @@
                                  Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.TotalOutputTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K910}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_TotalOutput2}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource PrimaryBrush}" Text="{Binding ProductionQuery.TotalProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.OkTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K281}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_TotalOKOutput}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding ProductionQuery.TotalOk, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.NgTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K282}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_TotalNGOutput}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource DangerBrush}" Text="{Binding ProductionQuery.TotalNg, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.QualityTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K001}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_QualityRate}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding ProductionQuery.QualityRate, Converter={StaticResource QualityThreshold}}" Text="{Binding ProductionQuery.QualityRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.DefectRateTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K911}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_DefectRate2}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding ProductionQuery.DefectRate, Converter={StaticResource QualityComplementThreshold}}" Text="{Binding ProductionQuery.DefectRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
@@ -373,7 +373,7 @@
                                 AlternationCount="2"
                                 Background="Transparent"
                                 BorderThickness="0"
-                                AutomationProperties.Name="{x:Static resources:Strings.K283}"
+                                AutomationProperties.Name="{x:Static resources:Strings.Lbl_OutputLogTable}"
                                 CellStyle="{StaticResource KanbanDataGridCell}"
                                 ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
                                 ItemsSource="{Binding ProductionQuery.ProductionLogs}"
@@ -400,12 +400,12 @@
                                     </Style>
                                 </DataGrid.RowStyle>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K037}" Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K002}" Binding="{Binding DeviceName}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K022}" Binding="{Binding ShiftName}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K080}" Binding="{Binding OkProduction}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K284}" Binding="{Binding NgProduction}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K028}" Binding="{Binding StatusWord, Converter={StaticResource StateToTextConverter}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Time}" Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Device}" Binding="{Binding DeviceName}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Shift}" Binding="{Binding ShiftName}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_OKOutputPcs}" Binding="{Binding OkProduction}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_NGOutputPcs}" Binding="{Binding NgProduction}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_DeviceStatus}" Binding="{Binding StatusWord, Converter={StaticResource StateToTextConverter}}" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Border>
@@ -419,8 +419,8 @@
                             CornerRadius="8">
                             <controls:EmptyState
                                 IconKind="DatabaseSearchOutline"
-                                Message="{x:Static resources:Strings.K285}"
-                                Hint="{x:Static resources:Strings.K286}" />
+                                Message="{x:Static resources:Strings.Lbl_NoMatchingOutputData}"
+                                Hint="{x:Static resources:Strings.Lbl_HintSwitchDeviceWidenTimeRange}" />
                         </Border>
                     </Grid>
 
@@ -437,11 +437,11 @@
             </TabItem>
 
             <!--  ============ Tab 1: 状态时长 ============  -->
-            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K287}">
+            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.Lbl_StatusDurationTab}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center" Kind="ClockOutline" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.K288}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Lbl_StatusDuration}" />
                     </StackPanel>
                 </TabItem.Header>
                 <Grid>
@@ -457,19 +457,19 @@
                                  Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding StatusQuery.RunTimeTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K007}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_RunTime}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding StatusQuery.RunTimeFormatted}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding StatusQuery.AlarmTimeTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K038}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_AlarmDuration}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource WarningBrush}" Text="{Binding StatusQuery.AlarmTimeFormatted}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding StatusQuery.PausedTimeTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K289}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_StandbyDuration}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusPauseBrush}" Text="{Binding StatusQuery.PausedTimeFormatted}" />
                             </StackPanel>
                         </Border>
@@ -507,15 +507,15 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                                     <Border Style="{StaticResource ChartCardTitleBar}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K081}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.Lbl_StatusDistribution}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                                     <Border Style="{StaticResource ChartCardTitleBar}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K290}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.Lbl_DurationBarChart}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                                     <Border Style="{StaticResource ChartCardTitleBar}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K291}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.Lbl_StatusTransitionTimeline}" />
                                 </StackPanel>
                             </Grid>
                             <Grid Grid.Row="1">
@@ -537,7 +537,7 @@
                                 AlternationCount="2"
                                 Background="Transparent"
                                 BorderThickness="0"
-                                AutomationProperties.Name="{x:Static resources:Strings.K292}"
+                                AutomationProperties.Name="{x:Static resources:Strings.Lbl_StatusTransitionTable}"
                                 CellStyle="{StaticResource KanbanDataGridCell}"
                                 ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
                                 ItemsSource="{Binding StatusQuery.StatusTransitions}"
@@ -552,10 +552,10 @@
                                     </ItemsPanelTemplate>
                                 </DataGrid.ItemsPanel>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K037}" Binding="{Binding EventTime, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K002}" Binding="{Binding DeviceName}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K293}" Binding="{Binding PreviousState, Converter={StaticResource StateToTextConverter}}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K294}" Binding="{Binding Converter={StaticResource StateToTextConverter}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Time}" Binding="{Binding EventTime, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Device}" Binding="{Binding DeviceName}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_PreviousStatus}" Binding="{Binding PreviousState, Converter={StaticResource StateToTextConverter}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_NextStatus}" Binding="{Binding Converter={StaticResource StateToTextConverter}}" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Border>
@@ -567,8 +567,8 @@
                             CornerRadius="8">
                             <controls:EmptyState
                                 IconKind="DatabaseSearchOutline"
-                                Message="{x:Static resources:Strings.K295}"
-                                Hint="{x:Static resources:Strings.K296}" />
+                                Message="{x:Static resources:Strings.Lbl_NoMatchingStatusTransitions}"
+                                Hint="{x:Static resources:Strings.Lbl_HintStatusDurationRequiresSpecificDevice}" />
                         </Border>
                     </Grid>
 
@@ -584,11 +584,11 @@
             </TabItem>
 
             <!--  ============ Tab 2: 报警记录 ============  -->
-            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K297}">
+            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.Lbl_AlarmRecordsTab}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center" Kind="BellAlert" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.K298}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Lbl_AlarmRecords}" />
                     </StackPanel>
                 </TabItem.Header>
                 <Grid>
@@ -604,19 +604,19 @@
                          Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding AlarmQuery.TriggerTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K299}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_TriggeredCount}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource DangerBrush}" Text="{Binding AlarmQuery.AlarmTriggerCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding AlarmQuery.RecoverTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K300}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_RecoveredCount}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding AlarmQuery.AlarmRecoverCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding AlarmQuery.PendingTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K301}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_PendingRecovery}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusPauseBrush}" Text="{Binding AlarmQuery.AlarmPendingCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                             </StackPanel>
                         </Border>
@@ -624,7 +624,7 @@
                         <Border Style="{StaticResource KpiCard}" Visibility="{Binding AlarmQuery.AlarmMttrText, Converter={StaticResource NullToVisibilityConverter}}"
                                 ToolTip="{Binding AlarmQuery.MttrTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K912}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_AvgRecoveryTime}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Text="{Binding AlarmQuery.AlarmMttrText}" />
                             </StackPanel>
                         </Border>
@@ -652,7 +652,7 @@
                                 AlternationCount="2"
                                 Background="Transparent"
                                 BorderThickness="0"
-                                AutomationProperties.Name="{x:Static resources:Strings.K302}"
+                                AutomationProperties.Name="{x:Static resources:Strings.Lbl_AlarmEventTable}"
                                 CellStyle="{StaticResource KanbanDataGridCell}"
                                 ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
                                 ItemsSource="{Binding AlarmQuery.AlarmEvents}"
@@ -676,12 +676,12 @@
                                     </Style>
                                 </DataGrid.RowStyle>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K037}" Binding="{Binding EventTime, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K002}" Binding="{Binding DeviceName}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K018}" Binding="{Binding AlarmName}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K048}" Binding="{Binding PlcAddress}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K303}" Binding="{Binding EventType, Converter={StaticResource EventTypeToTextConverter}}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K913}" Binding="{Binding DurationText, TargetNullValue=—}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Time}" Binding="{Binding EventTime, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Device}" Binding="{Binding DeviceName}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_AlarmName}" Binding="{Binding AlarmName}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_PLCAddress}" Binding="{Binding PlcAddress}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_EventType}" Binding="{Binding EventType, Converter={StaticResource EventTypeToTextConverter}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Duration2}" Binding="{Binding DurationText, TargetNullValue=—}" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Border>
@@ -693,8 +693,8 @@
                             CornerRadius="8">
                             <controls:EmptyState
                                 IconKind="DatabaseSearchOutline"
-                                Message="{x:Static resources:Strings.K304}"
-                                Hint="{x:Static resources:Strings.K305}" />
+                                Message="{x:Static resources:Strings.Lbl_NoMatchingAlarmRecords}"
+                                Hint="{x:Static resources:Strings.Lbl_HintSwitchDeviceWidenTimeRange2}" />
                         </Border>
                     </Grid>
 
@@ -710,11 +710,11 @@
             </TabItem>
 
             <!--  ============ Tab 3: OEE 分析 ============  -->
-            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K306}">
+            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.Lbl_OEEAnalysisTab}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center" Kind="ChartPie" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.K307}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Lbl_OEEAnalysis}" />
                     </StackPanel>
                 </TabItem.Header>
                 <Grid>
@@ -731,26 +731,26 @@
                                  Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding OeeQuery.QualityTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K001}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_QualityRate}" />
                                 <!-- 合格率着色与首页质量卡同阈值（QualityThreshold），避免跨页同一数值颜色不同 -->
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding OeeQuery.OeeQualityRate, Converter={StaticResource QualityThreshold}}" Text="{Binding OeeQuery.OeeQualityRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding OeeQuery.PerformanceTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K029}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_PerformanceRate}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding OeeQuery.OeePerformanceRate, Converter={StaticResource OeeThreshold}}" Text="{Binding OeeQuery.OeePerformanceRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding OeeQuery.AvailabilityTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K009}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Lbl_TimeAvailability}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding OeeQuery.OeeAvailabilityRate, Converter={StaticResource OeeThreshold}}" Text="{Binding OeeQuery.OeeAvailabilityRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCardAccent}" ToolTip="{Binding OeeQuery.OeeTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Foreground="{StaticResource PrimaryBrush}" Text="{x:Static resources:Strings.K308}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Foreground="{StaticResource PrimaryBrush}" Text="{x:Static resources:Strings.Lbl_OverallOEE}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueLg}" Foreground="{Binding OeeQuery.OeeValue, Converter={StaticResource OeeThreshold}}" Text="{Binding OeeQuery.OeeValue, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
@@ -771,15 +771,15 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                                     <Border Style="{StaticResource ChartCardTitleBar}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K309}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.Lbl_OEEMetrics}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                                     <Border Style="{StaticResource ChartCardTitleBar}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K310}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.Lbl_TrendChange}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                                     <Border Style="{StaticResource ChartCardTitleBar}" />
-                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K082}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.Lbl_ShiftComparison}" />
                                 </StackPanel>
                             </Grid>
                             <Grid Grid.Row="1">
@@ -811,25 +811,25 @@
                     <UniformGrid Grid.Row="3" Margin="0,0,0,12" Columns="4">
                         <Border Style="{StaticResource KpiCardSecondary}" ToolTip="{Binding OeeQuery.OkTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K311}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.Lbl_OKOutput}" />
                                 <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeOkProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCardSecondary}" ToolTip="{Binding OeeQuery.NgTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K312}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.Lbl_NGOutput}" />
                                 <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeNgProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCardSecondary}" ToolTip="{Binding OeeQuery.RunTimeTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K007}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.Lbl_RunTime}" />
                                 <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeRunTimeHours, StringFormat={}{0:F1}h}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCardSecondary}" ToolTip="{Binding OeeQuery.TargetCycleTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.M352}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.Msg_TargetOutputPcsH}" />
                                 <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeTargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}" />
                             </StackPanel>
                         </Border>
@@ -846,7 +846,7 @@
                                 AlternationCount="2"
                                 Background="Transparent"
                                 BorderThickness="0"
-                                AutomationProperties.Name="{x:Static resources:Strings.K313}"
+                                AutomationProperties.Name="{x:Static resources:Strings.Lbl_OEEShiftDetailTable}"
                                 CellStyle="{StaticResource KanbanDataGridCell}"
                                 ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
                                 ItemsSource="{Binding OeeQuery.OeeShiftDetails}"
@@ -873,12 +873,12 @@
                                     </Style>
                                 </DataGrid.RowStyle>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K314}" Binding="{Binding ShiftTime, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K022}" Binding="{Binding ShiftName}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K001}" Binding="{Binding Quality, StringFormat={}{0:P1}}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K029}" Binding="{Binding Performance, StringFormat={}{0:P1}}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K009}" Binding="{Binding Availability, StringFormat={}{0:P1}}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K587}" Binding="{Binding Oee, StringFormat={}{0:P1}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_ShiftStart}" Binding="{Binding ShiftTime, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Shift}" Binding="{Binding ShiftName}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_QualityRate}" Binding="{Binding Quality, StringFormat={}{0:P1}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_PerformanceRate}" Binding="{Binding Performance, StringFormat={}{0:P1}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_TimeAvailability}" Binding="{Binding Availability, StringFormat={}{0:P1}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_OEE}" Binding="{Binding Oee, StringFormat={}{0:P1}}" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Border>
@@ -891,19 +891,19 @@
                             CornerRadius="8">
                             <controls:EmptyState
                                 IconKind="InformationCircleOutline"
-                                Message="{x:Static resources:Strings.K315}"
-                                Hint="{x:Static resources:Strings.K316}" />
+                                Message="{x:Static resources:Strings.Lbl_SelectDeviceTimeRangeClickQuery}"
+                                Hint="{x:Static resources:Strings.Lbl_OEEQualityRatePerformanceRateTime}" />
                         </Border>
                     </Grid>
                 </Grid>
             </TabItem>
 
             <!--  ============ Tab 4: SN 追溯 ============  -->
-            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K914}">
+            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.Lbl_SNTraceability}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center" Kind="QrcodeScan" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.K914}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Lbl_SNTraceability}" />
                     </StackPanel>
                 </TabItem.Header>
                 <Grid>
@@ -928,11 +928,11 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <hc:TextBox Grid.Column="0"
-                                            hc:InfoElement.Placeholder="{x:Static resources:Strings.K915}"
+                                            hc:InfoElement.Placeholder="{x:Static resources:Strings.Lbl_EnterSNTraceEGSN20260830}"
                                             FontSize="{DynamicResource FontSizeCaption}"
                                             Style="{StaticResource TextBoxExtend}"
                                             Text="{Binding SnQuery.SnInput, UpdateSourceTrigger=PropertyChanged}" />
-                                <Button Grid.Column="2" Command="{Binding SnQuery.SearchCommand}" Content="{x:Static resources:Strings.K269}"
+                                <Button Grid.Column="2" Command="{Binding SnQuery.SearchCommand}" Content="{x:Static resources:Strings.Lbl_Query}"
                                         Style="{StaticResource IconButtonPrimary}"
                                         Tag="{x:Static mi:MaterialIconKind.Magnify}" />
                             </Grid>
@@ -951,7 +951,7 @@
                                         AlternationCount="2"
                                         Background="Transparent"
                                         BorderThickness="0"
-                                        AutomationProperties.Name="{x:Static resources:Strings.K914}"
+                                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_SNTraceability}"
                                         CellStyle="{StaticResource KanbanDataGridCell}"
                                         ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
                                         ItemsSource="{Binding SnQuery.Results}"
@@ -967,11 +967,11 @@
                                         </DataGrid.ItemsPanel>
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="SN" Binding="{Binding Sn}" Width="*" />
-                                            <DataGridTextColumn Header="{x:Static resources:Strings.K002}" Binding="{Binding DeviceName}" Width="*" />
-                                            <DataGridTextColumn Header="{x:Static resources:Strings.K071}" Binding="{Binding WorkOrderId}" Width="80" />
-                                            <DataGridTextColumn Header="{x:Static resources:Strings.K022}" Binding="{Binding ShiftName}" Width="*" />
-                                            <DataGridTextColumn Header="{x:Static resources:Strings.K037}" Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="150" />
-                                            <DataGridTemplateColumn Header="{x:Static resources:Strings.K924}" Width="70">
+                                            <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Device}" Binding="{Binding DeviceName}" Width="*" />
+                                            <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_WorkOrder}" Binding="{Binding WorkOrderId}" Width="80" />
+                                            <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Shift}" Binding="{Binding ShiftName}" Width="*" />
+                                            <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Time}" Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="150" />
+                                            <DataGridTemplateColumn Header="{x:Static resources:Strings.Lbl_Result2}" Width="70">
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
                                                         <TextBlock>
@@ -1000,8 +1000,8 @@
                                         Visibility="{Binding SnQuery.IsEmptyResult, Converter={StaticResource BooleanToVisibilityConverter}}">
                                     <controls:EmptyState
                                         IconKind="QrcodeScan"
-                                        Message="{x:Static resources:Strings.K916}"
-                                        Hint="{x:Static resources:Strings.K917}" />
+                                        Message="{x:Static resources:Strings.Lbl_EnterSNLookUpProductionTrace}"
+                                        Hint="{x:Static resources:Strings.Lbl_ShowsDeviceWorkOrderShiftTime}" />
                                 </Border>
                             </Grid>
                         </StackPanel>

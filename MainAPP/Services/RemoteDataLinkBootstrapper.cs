@@ -1,4 +1,5 @@
 ﻿using Kanban.Collector.Core.Entities;
+using Kanban.Localization;
 using Kanban.Collector.Core.Models;
 using Kanban.Client;
 using Kanban.Collector.Core.Data;
@@ -46,7 +47,7 @@ public sealed class RemoteDataLinkBootstrapper(IServiceProvider services) : IAsy
         client.ConnectionStateChanged += (_, connected) =>
         {
             if (connected)
-                services.GetRequiredService<PlcConnectionManager>().SyncRemoteConnected(Strings.M134);
+                services.GetRequiredService<PlcConnectionManager>().SyncRemoteConnected(Strings.Msg_CollectorConnected2);
             else
                 services.GetRequiredService<PlcConnectionManager>().MarkDisconnected(DisconnectionReason.ReadFailure);
         };
@@ -64,7 +65,7 @@ public sealed class RemoteDataLinkBootstrapper(IServiceProvider services) : IAsy
         // 顶部横幅持续显示"采集服务已断开"（直到一次真实重连才恢复）。
         // 订阅完成后立即按当前真实连接状态补齐同步（SyncRemoteConnected 幂等，重复调用无副作用）。
         if (client.IsConnected)
-            services.GetRequiredService<PlcConnectionManager>().SyncRemoteConnected(Strings.M134);
+            services.GetRequiredService<PlcConnectionManager>().SyncRemoteConnected(Strings.Msg_CollectorConnected2);
 
         var sinkStarted = 0;
         void EnsureSinkStarted()

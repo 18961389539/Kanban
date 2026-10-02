@@ -8,7 +8,7 @@
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:oxy="http://oxyplot.org/wpf"
     xmlns:controls="clr-namespace:MainAPP.Controls"
-    xmlns:resources="clr-namespace:MainAPP.Resources"
+    xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
     d:DataContext="{d:DesignInstance Type=vm:DataSourceMonitoringViewModel}"
     d:DesignHeight="800"

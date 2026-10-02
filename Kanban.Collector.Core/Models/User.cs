@@ -1,11 +1,11 @@
 using System.Text.Json.Serialization;
-using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.ComponentModel;
 
 namespace Kanban.Collector.Core.Models;
 
 /// <summary>
 /// 系统用户账号。密码以 PBKDF2-SHA256 + 随机 salt 哈希存储，源码不含明文密码。
-/// 持久化到 users.json（与 settings.json 同目录，复用 AppSettings.WriteFileAtomically 原子写入）。
+/// 持久化到 users.json（与 settings.json 同目录，复用 AtomicFileWriter 原子写入）。
 /// </summary>
 public partial class User : ObservableObject
 {
@@ -15,9 +15,14 @@ public partial class User : ObservableObject
     /// <summary>显示名（用于界面展示，如"张工"）。可为空，回退为 Username。</summary>
     public string DisplayName { get; set; } = string.Empty;
 
-    /// <summary>角色（决定可访问页面与可执行操作）。</summary>
-    [ObservableProperty]
     private UserRole _role = UserRole.Operator;
+
+    /// <summary>角色（决定可访问页面与可执行操作）。</summary>
+    public UserRole Role
+    {
+        get => _role;
+    set => SetProperty(ref _role, value);
+    }
 
     /// <summary>
     /// 密码哈希（Base64）。新版格式：pbkdf2${iterations}${saltBase64}${hashBase64}（PBKDF2-SHA256）；

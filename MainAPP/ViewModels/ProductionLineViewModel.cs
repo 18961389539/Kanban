@@ -638,8 +638,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         {
             var result = await commands.ResetAllProductionAsync(() =>
                 dialog.Show(
-                    string.Format(Strings.F717, count),
-                    Strings.M385, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes);
+                    string.Format(Strings.Prompt_ResetOEEAllDevicesClearsOK, count),
+                    Strings.Msg_ConfirmResetOEEAll, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes);
 
             if (result.Status == PlcOpStatus.Cancelled) return;
 
@@ -662,7 +662,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         catch (Exception ex)
         {
             _log.Error(ex, "全部设备 OEE 清零命令异常");
-            dialog.NotifyError(string.Format(Strings.F719, ex.Message));
+            dialog.NotifyError(string.Format(Strings.Prompt_ResetOEEAllDevicesFailed, ex.Message));
         }
         finally
         {
@@ -686,10 +686,10 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     /// <summary>排序下拉选项（与 SetSortCommand / LineSortBy 同源）。</summary>
     public IReadOnlyList<LineSortOption> LineSortOptions { get; } =
     [
-        new() { Value = LineSortBy.Default, Label = Strings.K410 },
-        new() { Value = LineSortBy.AlarmFirst, Label = Strings.K409 },
+        new() { Value = LineSortBy.Default, Label = Strings.Lbl_DefaultText },
+        new() { Value = LineSortBy.AlarmFirst, Label = Strings.Lbl_AlarmFirst },
         new() { Value = LineSortBy.OeeDesc, Label = Strings.Web_Ln_SortOee },
-        new() { Value = LineSortBy.OutputDesc, Label = Strings.K411 },
+        new() { Value = LineSortBy.OutputDesc, Label = Strings.Lbl_Output2 },
     ];
 
     private LineStatusFilter _lineStatusFilter = LineStatusFilter.All;
@@ -738,7 +738,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         LineStatusFilter.Alarm => Strings.Status_Alarm,
         LineStatusFilter.Paused => Strings.Status_Paused,
         LineStatusFilter.Offline => Strings.Status_Offline,
-        _ => Strings.M040,
+        _ => Strings.Msg_All,
     };
 
     [RelayCommand]
@@ -834,7 +834,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
 
     // ───── 班次标注 ─────
 
-    private string _currentShiftName = Strings.M110;
+    private string _currentShiftName = Strings.Msg_NoShiftsConfigured;
     public string CurrentShiftName
     {
         get => _currentShiftName;
@@ -859,7 +859,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         var (shift, _) = HistoryQueryHelper.FindCurrentShift(shifts, now.TimeOfDay);
         if (shift == null)
         {
-            CurrentShiftName = (shifts == null || shifts.Count == 0) ? Strings.M110 : Strings.M111;
+            CurrentShiftName = (shifts == null || shifts.Count == 0) ? Strings.Msg_NoShiftsConfigured : Strings.Msg_NoMatchingShift;
             CurrentShiftTimeRange = string.Empty;
             OnPropertyChanged(nameof(ShiftTooltip));
             return;

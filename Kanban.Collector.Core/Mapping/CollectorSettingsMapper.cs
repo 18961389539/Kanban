@@ -1,3 +1,4 @@
+using Kanban.Localization;
 using System.Collections.ObjectModel;
 using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Models;

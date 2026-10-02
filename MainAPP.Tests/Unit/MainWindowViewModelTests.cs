@@ -344,7 +344,7 @@ public class MainWindowViewModelTests : IDisposable
         vm.SwitchUserCommand.Execute(null);
 
         Assert.Equal("操作员", vm.CurrentUserDisplay);
-        Assert.Equal(MainAPP.Resources.Strings.M332, vm.CurrentRoleText);
+        Assert.Equal(MainAPP.Resources.Strings.Msg_OperatorText, vm.CurrentRoleText);
         Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
         Assert.DoesNotContain(vm.NavItems, item => item.Index == NavigationPageCatalog.Settings.Index);
     }

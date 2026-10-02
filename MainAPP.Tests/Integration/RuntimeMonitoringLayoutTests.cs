@@ -127,13 +127,13 @@ public sealed class RuntimeMonitoringLayoutTests : WpfTestHost, IDisposable
 
             Assert.Contains(Strings.Rtmon_DiagnosticsTitle, report);
             Assert.Contains($"[{Strings.Rtmon_DiagOverview}]", report);
-            Assert.Contains($"[{Strings.K427}]", report);
-            Assert.Contains($"[{Strings.K434}]", report);
-            Assert.Contains($"[{Strings.K440}]", report);
-            Assert.Contains($"[{Strings.K444}]", report);
-            Assert.Contains($"[{Strings.K450}]", report);
-            Assert.Contains($"[{Strings.K456}]", report);
-            Assert.Contains($"[{Strings.K467}]", report);
+            Assert.Contains($"[{Strings.Lbl_AcquisitionLoop}]", report);
+            Assert.Contains($"[{Strings.Lbl_DeviceReads}]", report);
+            Assert.Contains($"[{Strings.Lbl_PLCCommunicationDetails}]", report);
+            Assert.Contains($"[{Strings.Lbl_AcquisitionQualityReadPerformance}]", report);
+            Assert.Contains($"[{Strings.Lbl_HistoryWriteHealth}]", report);
+            Assert.Contains($"[{Strings.Lbl_AcquisitionProcessResourcesConfiguration}]", report);
+            Assert.Contains($"[{Strings.Lbl_DeviceAcquisitionStatus}]", report);
 
             // 数值与异常必须落到文本里，否则导出的快照没有排查价值
             Assert.Contains("42", report);
@@ -143,7 +143,7 @@ public sealed class RuntimeMonitoringLayoutTests : WpfTestHost, IDisposable
             Assert.Contains(Strings.Rtmon_RefreshFailed, report);
             Assert.Contains("注塑机 A1", report);
             // 设备明细为制表符分隔，便于直接粘进表格
-            Assert.Contains($"{Strings.K002}\t{Strings.K083}", report);
+            Assert.Contains($"{Strings.Lbl_Device}\t{Strings.Lbl_CurrentStatus}", report);
         });
     }
 
@@ -157,8 +157,8 @@ public sealed class RuntimeMonitoringLayoutTests : WpfTestHost, IDisposable
             var report = vm.BuildDiagnosticsReport();
 
             Assert.NotNull(report);
-            Assert.Contains(Strings.K595, report);   // 最近成功时间 = 暂无
-            Assert.Contains(Strings.K583, report);   // 设备状态 = 暂无数据
+            Assert.Contains(Strings.Lbl_N, report);   // 最近成功时间 = 暂无
+            Assert.Contains(Strings.Lbl_NoData, report);   // 设备状态 = 暂无数据
             Assert.DoesNotContain("\t运行\t", report);
         });
     }

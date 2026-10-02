@@ -31,11 +31,11 @@ public class PlcAddressValidationRule : ValidationRule
         var codec = s_codecProvider?.Invoke() ?? new MitsubishiAddressCodec();
         var result = codec.Parse(addr);
         if (!result.IsValid)
-            return new ValidationResult(false, string.Format(Strings.F137, codec.Brand, addr));
+            return new ValidationResult(false, string.Format(Strings.Prompt_UnrecognizedAddress, codec.Brand, addr));
 
         if (result.Type != ExpectedType)
             return new ValidationResult(false,
-                string.Format(Strings.F142, ExpectedType, result.Type));
+                string.Format(Strings.Prompt_ExpectedTypeAddressCurrent, ExpectedType, result.Type));
 
         return ValidationResult.ValidResult;
     }

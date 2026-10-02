@@ -6,7 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
@@ -21,7 +21,7 @@
             Margin="0,18,0,0"
             HorizontalAlignment="Center"
             Style="{StaticResource EmptyStateMessageText}"
-            Text="{Binding Message, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue={x:Static resources:Strings.K583}}" />
+            Text="{Binding Message, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue={x:Static resources:Strings.Lbl_NoData}}" />
         <TextBlock
             Margin="0,6,0,0"
             HorizontalAlignment="Center"

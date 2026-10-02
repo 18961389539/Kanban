@@ -27,7 +27,7 @@ public sealed class ApplicationStartupCoordinator(
         cancellationToken = linkedCts.Token;
         try
         {
-            runtime.SetState(ApplicationRuntimeState.LoadingConfiguration, Strings.M123);
+            runtime.SetState(ApplicationRuntimeState.LoadingConfiguration, Strings.Msg_LoadingConfiguration);
             var settings = services.GetRequiredService<AppSettings>();
             settings.Load();
             services.GetService<IPlcRuntimeSessionManager>()?.RefreshFromSettings();
@@ -50,9 +50,9 @@ public sealed class ApplicationStartupCoordinator(
             {
                 Log.Warning("配置验证发现 {Count} 个错误", configErrors.Count);
                 dialog.Show(
-                    Strings.M131 + "\n\n" + string.Join("\n", configErrors) +
-                    "\n\n" + Strings.M132,
-                    Strings.M121, MessageBoxButton.OK, MessageBoxImage.Warning);
+                    Strings.Msg_ConfigIssuesDetectedSomeFeaturesUnavailable + "\n\n" + string.Join("\n", configErrors) +
+                    "\n\n" + Strings.Msg_PleaseFixSettingsPage,
+                    Strings.Msg_ConfigValidationWarning, MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
             var isRemote = services.GetRequiredService<IRuntimeMode>().IsRemote;
@@ -89,7 +89,7 @@ public sealed class ApplicationStartupCoordinator(
             if (!string.IsNullOrEmpty(deviceRepository.LoadErrorMessage))
             {
                 dialog.Show(
-                    deviceRepository.LoadErrorMessage, Strings.M122,
+                    deviceRepository.LoadErrorMessage, Strings.Msg_ConfigFileCorrupted,
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 Log.Warning("DeviceRepository.LoadAll 警告: {Message}", deviceRepository.LoadErrorMessage);
             }
@@ -111,7 +111,7 @@ public sealed class ApplicationStartupCoordinator(
                 Log.Information("RecipeStore.LoadAll 完成");
             }
 
-            runtime.SetState(ApplicationRuntimeState.MigratingDatabase, Strings.M127);
+            runtime.SetState(ApplicationRuntimeState.MigratingDatabase, Strings.Msg_UpgradingHistoryDB);
             var databaseProvider = services.GetRequiredService<DatabaseProvider>();
             // 数据库表结构初始化：必须在 MainWindow.Show() 之前完成，
             // 否则 ViewModel 在 Loaded/Dispatcher.BeginInvoke 中立即查询会命中空库，
@@ -135,7 +135,7 @@ public sealed class ApplicationStartupCoordinator(
             }
 
             runtime.IsDatabaseReady = true;
-            runtime.SetState(ApplicationRuntimeState.Ready, Strings.M126);
+            runtime.SetState(ApplicationRuntimeState.Ready, Strings.Msg_DatabaseReady);
 
             // 获取 MainWindow（DI 会传递构造 MainWindowViewModel → 各子 ViewModel →
             // PlcConnectionManager/PlcDataAcquisitionService/HistoryService，含 HslCommunication 与 EF Core 首次 JIT）
@@ -153,7 +153,7 @@ public sealed class ApplicationStartupCoordinator(
     public async Task StartRuntimeAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        runtime.SetState(ApplicationRuntimeState.StartingAcquisition, Strings.M124);
+        runtime.SetState(ApplicationRuntimeState.StartingAcquisition, Strings.Msg_StartingDataCollection);
         try
         {
             var settings = services.GetRequiredService<AppSettings>();
@@ -165,7 +165,7 @@ public sealed class ApplicationStartupCoordinator(
                 // Remote 模式同样支持按设定时刻自动生成上一自然日日报（历史查询经 SignalR 路由到 Collector）
                 services.GetRequiredService<ProductionDailyReportService>().Start();
                 runtime.IsAcquisitionRunning = true;
-                runtime.SetState(ApplicationRuntimeState.Running, Strings.M125);
+                runtime.SetState(ApplicationRuntimeState.Running, Strings.Msg_RunningRemote);
                 return;
             }
 
@@ -182,12 +182,12 @@ public sealed class ApplicationStartupCoordinator(
                 Log.Information("历史清理和 PLC 采集启动完成，耗时 {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
             });
             runtime.IsAcquisitionRunning = true;
-            runtime.SetState(ApplicationRuntimeState.Running, Strings.M129);
+            runtime.SetState(ApplicationRuntimeState.Running, Strings.Msg_Running);
         }
         catch (Exception exception)
         {
             runtime.SetFailure(exception);
-            runtime.SetState(ApplicationRuntimeState.Degraded, Strings.M128);
+            runtime.SetState(ApplicationRuntimeState.Degraded, Strings.Msg_PartialFunctionality);
             throw;
         }
     }

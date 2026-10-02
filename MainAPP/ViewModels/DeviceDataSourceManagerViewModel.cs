@@ -122,7 +122,7 @@ public partial class DeviceDataSourceManagerViewModel : DeviceChildManagerViewMo
     {
         if (!CanEditSelected()) return;
         if (SelectedDevice == null) return;
-        var baseName = string.Format(Strings.F198, SelectedDevice.Sources.Count + 1);
+        var baseName = string.Format(Strings.Prompt_CountAlarm, SelectedDevice.Sources.Count + 1);
         var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.Sources.Select(s => s.Name));
         var source = new DataSource { DeviceId = SelectedDevice.Id, Name = newName };
         source.Values.Add(new DataSourceValue { Name = string.Format(Strings.Dsm_DefaultValueName, 1) });
@@ -138,8 +138,8 @@ public partial class DeviceDataSourceManagerViewModel : DeviceChildManagerViewMo
         if (!CanEditSelected()) return;
         if (source == null) return;
         var confirm = _dialog.Show(
-            string.Format(Strings.F503, source.Name),
-            Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            string.Format(Strings.Prompt_DeleteCounterAlarmActionCannotUndone, source.Name),
+            Strings.Msg_ConfirmDelete, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
 
         if (SelectedSource == source) SelectedSource = null;
@@ -219,14 +219,14 @@ public partial class DeviceDataSourceManagerViewModel : DeviceChildManagerViewMo
 
             var summary = await Task.Run(() => _dataSourceCsvIO.ExportDataSourcesToPath(device, path)).ConfigureAwait(true);
             _dialog.NotifySuccess(string.Format(
-                Strings.F331,
+                Strings.Prompt_ExportedSourcesValues,
                 summary.SourceCount,
                 summary.ValueCount,
                 System.IO.Path.GetFileName(path)));
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
         }
         finally
         {
@@ -252,17 +252,17 @@ public partial class DeviceDataSourceManagerViewModel : DeviceChildManagerViewMo
             if (result.Imported.Count == 0)
             {
                 var details = result.Errors.Count == 0
-                    ? Strings.F333
+                    ? Strings.Prompt_CSVFileEmptyHasNoData
                     : string.Join("\n  · ", result.Errors.Take(5));
-                _dialog.NotifyError(string.Format(Strings.F348, details));
+                _dialog.NotifyError(string.Format(Strings.Prompt_ImportFailed2, details));
                 return;
             }
 
             var choice = _dialog.Show(
-                string.Format(Strings.F344, result.Imported.Count, result.ImportedValueCount, device.Sources.Count)
+                string.Format(Strings.Prompt_ImportSourcesValuesDeviceCurrentlyHas, result.Imported.Count, result.ImportedValueCount, device.Sources.Count)
                     + "\n"
-                    + Strings.F228,
-                Strings.M120,
+                    + Strings.Prompt_ChooseImportModeYesReplaceClear,
+                Strings.Msg_ConfirmImportAlarms,
                 MessageBoxButton.YesNoCancel,
                 MessageBoxImage.Question);
             if (choice == MessageBoxResult.Cancel) return;
@@ -273,7 +273,7 @@ public partial class DeviceDataSourceManagerViewModel : DeviceChildManagerViewMo
             if (result.HasErrors)
             {
                 _dialog.NotifyWarning(string.Format(
-                    Strings.F347,
+                    Strings.Prompt_ImportedSourcesValuesValidationErrors,
                     result.Imported.Count,
                     result.ImportedValueCount,
                     result.Errors.Count,
@@ -282,7 +282,7 @@ public partial class DeviceDataSourceManagerViewModel : DeviceChildManagerViewMo
             else
             {
                 _dialog.NotifySuccess(string.Format(
-                    Strings.F345,
+                    Strings.Prompt_ImportedSourcesValues,
                     result.Imported.Count,
                     result.ImportedValueCount));
             }

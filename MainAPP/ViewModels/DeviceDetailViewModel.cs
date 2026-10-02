@@ -202,8 +202,8 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     [ObservableProperty] private int _actualCycle;
     [ObservableProperty] private string _statusText = Strings.Status_Offline;
     [ObservableProperty] private string _statusBrushKey = "StatusIdleBrush";
-    [ObservableProperty] private string _dataScopeText = Strings.M063;
-    [ObservableProperty] private string _refreshStatusText = Strings.M062;
+    [ObservableProperty] private string _dataScopeText = Strings.Msg_LiveDataTodayAlarms24hOutput;
+    [ObservableProperty] private string _refreshStatusText = Strings.Msg_Ready;
     [ObservableProperty] private bool _isRefreshing;
 
     // ──────────── 设备配置（从 Device 读取） ────────────
@@ -267,7 +267,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     /// <summary>缺陷占比饼图。</summary>
     [ObservableProperty] private PlotModel? _defectPieChart;
     [ObservableProperty] private int _hourlyRangeHours = 24;
-    [ObservableProperty] private string _hourlyRangeText = Strings.K025;
+    [ObservableProperty] private string _hourlyRangeText = Strings.Lbl_Last24h;
 
     /// <summary>本班小时计划格（通栏，按当前班次 8–12 小时）。</summary>
     public ObservableCollection<HourBucketItem> HourBuckets { get; } = new();
@@ -310,7 +310,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     public string NgTooltip => FormatHelper.Tip(Strings.Ln_Tip_SessionNg, TotalNg);
     public string QualityTooltip => FormatHelper.Tip(
         Strings.Home_Tip_Quality,
-        TotalOk + TotalNg > 0 ? string.Format(Strings.F036, TotalOk, TotalOk + TotalNg) : "— / —",
+        TotalOk + TotalNg > 0 ? string.Format(Strings.Prompt_Pcs4, TotalOk, TotalOk + TotalNg) : "— / —",
         $"{QualityRate:P0}");
     public string OeeTooltip => FormatHelper.Tip(
         Strings.Home_Tip_Oee,
@@ -325,7 +325,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     public string PerformanceTooltip => FormatHelper.Tip(
         Strings.Home_Tip_Performance,
         TargetCycle > 0 && RunTimeHours > 0
-            ? string.Format(Strings.F037, TotalOk, TotalNg, TargetCycle * RunTimeHours)
+            ? string.Format(Strings.Prompt_Pcs5, TotalOk, TotalNg, TargetCycle * RunTimeHours)
             : "— / —",
         $"{PerformanceRate:P0}");
     public string RunTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_RunTime, $"{RunTimeHours:F1}h", RunTimeRatio);
@@ -858,10 +858,10 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         PlannedQuantity = order.TargetQuantity;
         WorkOrderStatusText = order.Status switch
         {
-            WorkOrderStatus.Pending => Strings.M041,
-            WorkOrderStatus.Running => Strings.M042,
-            WorkOrderStatus.Completed => Strings.M043,
-            WorkOrderStatus.Aborted => Strings.M031,
+            WorkOrderStatus.Pending => Strings.Msg_Pending,
+            WorkOrderStatus.Running => Strings.Msg_Progress,
+            WorkOrderStatus.Completed => Strings.Msg_Completed,
+            WorkOrderStatus.Aborted => Strings.Msg_Aborted,
             _ => order.Status.ToString(),
         };
 
@@ -1040,10 +1040,10 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     {
         var explanation = metric switch
         {
-            "Availability" => Strings.M150,
-            "Performance" => Strings.M151,
-            "Quality" => Strings.M152,
-            _ => Strings.M153,
+            "Availability" => Strings.Msg_AvailabilityRateRunTimePlannedTime,
+            "Performance" => Strings.Msg_PerformanceRateActualOutputTheoreticalOutput,
+            "Quality" => Strings.Msg_QualityRateOKOKNG,
+            _ => Strings.Msg_OEEAvailabilityXPerformanceXQuality,
         };
         _dialog.NotifyInfo(explanation);
     }
@@ -1070,7 +1070,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
             RecentAlarms.Clear();
             TodayAlarmCount = 0;
             IsRefreshing = false;
-            RefreshStatusText = Strings.M160;
+            RefreshStatusText = Strings.Msg_NoDevice;
             return;
         }
 
@@ -1095,7 +1095,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
                         RecentAlarms.Add(r);
                     TodayAlarmCount = todayTrigger;
                     IsRefreshing = false;
-                    RefreshStatusText = Strings.M155;
+                    RefreshStatusText = Strings.Msg_RefreshComplete;
                     OnPropertyChanged(nameof(TodayAlarmTooltip));
                 });
             }
@@ -1109,10 +1109,10 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
                 UiDispatcher.DispatchOrDrop(() =>
                 {
                     IsRefreshing = false;
-                    RefreshStatusText = Strings.M157;
+                    RefreshStatusText = Strings.Msg_RefreshFailed;
                 });
                 if (notifyErrors)
-                    UiDispatcher.DispatchOrDrop(() => _dialog.NotifyError(string.Format(Strings.F155, ex.Message)));
+                    UiDispatcher.DispatchOrDrop(() => _dialog.NotifyError(string.Format(Strings.Prompt_FailedQueryAlarmEvents, ex.Message)));
             }
         }, token).Forget(_logger);
     }
@@ -1124,7 +1124,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     private void Refresh()
     {
         IsRefreshing = true;
-        RefreshStatusText = Strings.M156;
+        RefreshStatusText = Strings.Msg_Refreshing;
         RefreshKpis();
         RefreshRecentAlarms();
         RefreshHourlyProduction();
@@ -1137,7 +1137,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     /// </summary>
     public void RefreshOnEnter()
     {
-        RefreshStatusText = Strings.M159;
+        RefreshStatusText = Strings.Msg_Loading;
         RefreshHourlyProduction();
     }
 
@@ -1182,7 +1182,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         if (!int.TryParse(hoursText, out var hours) || hours is not (8 or 24))
             return;
         HourlyRangeHours = hours;
-        HourlyRangeText = hours == 8 ? Strings.M109 : Strings.K025;
+        HourlyRangeText = hours == 8 ? Strings.Msg_Last8Hours : Strings.Lbl_Last24h;
         RefreshHourlyProduction();
     }
 
@@ -1250,7 +1250,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
                     {
                         HourlyProductionChart = chart;
                         ApplyHourBoard(buckets, meta, summary, behind, offShift);
-                        RefreshStatusText = Strings.M154;
+                        RefreshStatusText = Strings.Msg_LoadComplete;
                     }
                 });
             }
@@ -1263,8 +1263,8 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
                 _logger.LogError(ex, "查询设备 {DeviceId} 按小时产量失败", deviceId);
                 UiDispatcher.DispatchOrDrop(() =>
                 {
-                    RefreshStatusText = Strings.M158;
-                    _dialog.NotifyError(string.Format(Strings.F153, ex.Message));
+                    RefreshStatusText = Strings.Msg_LoadFailed;
+                    _dialog.NotifyError(string.Format(Strings.Prompt_FailedQueryOutputData, ex.Message));
                 });
             }
         }, token).Forget(_logger);
@@ -1348,8 +1348,8 @@ public partial class AlarmConfigRow : ObservableObject
         : "—";
 
     public string ValueText => IsCounterAlarm
-        ? string.Format(Strings.F120, CurrentValue, Threshold)
-        : string.Format(Strings.F196, StartTime, PlcAddress);
+        ? string.Format(Strings.Prompt_CurrentThreshold, CurrentValue, Threshold)
+        : string.Format(Strings.Prompt_Triggered, StartTime, PlcAddress);
 
     /// <summary>同值判定（身份 = 名称 + 地址 + 报警类型，用于差分复用）。</summary>
     public override bool Equals(object? obj)

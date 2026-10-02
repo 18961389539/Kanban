@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Resources;
 
 namespace Kanban.Collector.Core.Localization;
 
@@ -12,11 +11,7 @@ namespace Kanban.Collector.Core.Localization;
 /// </summary>
 public static class RecipeValidationMessages
 {
-    private static readonly ResourceManager s_rm = new(
-        "Kanban.Collector.Core.Resources.Messages",
-        typeof(RecipeValidationMessages).Assembly);
-
-    // ─── 默认中文模板（与 Messages.resx 中性资源一致，向后兼容）───
+    // ─── 默认中文模板（目录缺失时的回退，向后兼容）───
     public const string DefaultRecipeNull = "配方不能为空";
     public const string DefaultRecipeNameEmpty = "配方名称不能为空";
     public const string DefaultRecipeItemsEmpty = "配方至少需要一项参数";
@@ -185,53 +180,53 @@ public static class RecipeValidationMessages
             return;
         }
 
-        s_recipeNull = s_rm.GetString("RecipeNull", culture) ?? DefaultRecipeNull;
-        s_recipeNameEmpty = s_rm.GetString("RecipeNameEmpty", culture) ?? DefaultRecipeNameEmpty;
-        s_recipeItemsEmpty = s_rm.GetString("RecipeItemsEmpty", culture) ?? DefaultRecipeItemsEmpty;
-        s_recipeParamNameEmpty = s_rm.GetString("RecipeParamNameEmpty", culture) ?? DefaultRecipeParamNameEmpty;
-        s_recipeAddressEmpty = s_rm.GetString("RecipeAddressEmpty", culture) ?? DefaultRecipeAddressEmpty;
-        s_recipeAddressDuplicate = s_rm.GetString("RecipeAddressDuplicate", culture) ?? DefaultRecipeAddressDuplicate;
-        s_recipeAddressUnresolvable = s_rm.GetString("RecipeAddressUnresolvable", culture) ?? DefaultRecipeAddressUnresolvable;
-        s_recipeAddressTypeMismatch = s_rm.GetString("RecipeAddressTypeMismatch", culture) ?? DefaultRecipeAddressTypeMismatch;
-        s_recipeValueInvalid = s_rm.GetString("RecipeValueInvalid", culture) ?? DefaultRecipeValueInvalid;
-        s_recipeBelowMin = s_rm.GetString("RecipeBelowMin", culture) ?? DefaultRecipeBelowMin;
-        s_recipeAboveMax = s_rm.GetString("RecipeAboveMax", culture) ?? DefaultRecipeAboveMax;
-        s_recipeTypeInt32 = s_rm.GetString("RecipeTypeInt32", culture) ?? DefaultRecipeTypeInt32;
-        s_recipeTypeFloat = s_rm.GetString("RecipeTypeFloat", culture) ?? DefaultRecipeTypeFloat;
-        s_recipeTypeBool = s_rm.GetString("RecipeTypeBool", culture) ?? DefaultRecipeTypeBool;
-        s_recipeTypeString = s_rm.GetString("RecipeTypeString", culture) ?? DefaultRecipeTypeString;
-        s_recipeTypeUInt16 = s_rm.GetString("RecipeTypeUInt16", culture) ?? DefaultRecipeTypeUInt16;
-        s_recipeDeviceOrRecipeEmpty = s_rm.GetString("RecipeDeviceOrRecipeEmpty", culture) ?? DefaultRecipeDeviceOrRecipeEmpty;
-        s_recipePlcNotConnected = s_rm.GetString("RecipePlcNotConnected", culture) ?? DefaultRecipePlcNotConnected;
-        s_recipeReadBackupFailed = s_rm.GetString("RecipeReadBackupFailed", culture) ?? DefaultRecipeReadBackupFailed;
-        s_recipeBackupAbort = s_rm.GetString("RecipeBackupAbort", culture) ?? DefaultRecipeBackupAbort;
-        s_recipeValueParseFailed = s_rm.GetString("RecipeValueParseFailed", culture) ?? DefaultRecipeValueParseFailed;
-        s_recipeValueParseAbort = s_rm.GetString("RecipeValueParseAbort", culture) ?? DefaultRecipeValueParseAbort;
-        s_recipeWriteFailed = s_rm.GetString("RecipeWriteFailed", culture) ?? DefaultRecipeWriteFailed;
-        s_recipeWriteRollback = s_rm.GetString("RecipeWriteRollback", culture) ?? DefaultRecipeWriteRollback;
-        s_recipeReadBackFailed = s_rm.GetString("RecipeReadBackFailed", culture) ?? DefaultRecipeReadBackFailed;
-        s_recipeReadBackRollback = s_rm.GetString("RecipeReadBackRollback", culture) ?? DefaultRecipeReadBackRollback;
-        s_recipeReadBackMismatch = s_rm.GetString("RecipeReadBackMismatch", culture) ?? DefaultRecipeReadBackMismatch;
-        s_recipeMismatchRollback = s_rm.GetString("RecipeMismatchRollback", culture) ?? DefaultRecipeMismatchRollback;
-        s_recipeApplySuccess = s_rm.GetString("RecipeApplySuccess", culture) ?? DefaultRecipeApplySuccess;
-        s_recipeApplyException = s_rm.GetString("RecipeApplyException", culture) ?? DefaultRecipeApplyException;
-        s_recipeUnsupportedType = s_rm.GetString("RecipeUnsupportedType", culture) ?? DefaultRecipeUnsupportedType;
-        s_recipeAddressReadonly = s_rm.GetString("RecipeAddressReadonly", culture) ?? DefaultRecipeAddressReadonly;
-        s_recipeNameDuplicate = s_rm.GetString("RecipeNameDuplicate", culture) ?? DefaultRecipeNameDuplicate;
-        s_recipeMinMaxInverted = s_rm.GetString("RecipeMinMaxInverted", culture) ?? DefaultRecipeMinMaxInverted;
-        s_recipeStringTooLong = s_rm.GetString("RecipeStringTooLong", culture) ?? DefaultRecipeStringTooLong;
-        s_recipeDeviceNotFound = s_rm.GetString("RecipeDeviceNotFound", culture) ?? DefaultRecipeDeviceNotFound;
-        s_recipeNotFound = s_rm.GetString("RecipeNotFound", culture) ?? DefaultRecipeNotFound;
-        s_recipeApplyCancelled = s_rm.GetString("RecipeApplyCancelled", culture) ?? DefaultRecipeApplyCancelled;
-        s_recipeWriteVerified = s_rm.GetString("RecipeWriteVerified", culture) ?? DefaultRecipeWriteVerified;
-        s_recipeWriteInProgress = s_rm.GetString("RecipeWriteInProgress", culture) ?? DefaultRecipeWriteInProgress;
-        s_recipeStringNotRolledBack = s_rm.GetString("RecipeStringNotRolledBack", culture) ?? DefaultRecipeStringNotRolledBack;
-        s_recipeRollbackIncomplete = s_rm.GetString("RecipeRollbackIncomplete", culture) ?? DefaultRecipeRollbackIncomplete;
-        s_recipeRollbackItemFailed = s_rm.GetString("RecipeRollbackItemFailed", culture) ?? DefaultRecipeRollbackItemFailed;
-        s_recipeRollbackRestored = s_rm.GetString("RecipeRollbackRestored", culture) ?? DefaultRecipeRollbackRestored;
-        s_recipeDeviceRunning = s_rm.GetString("RecipeDeviceRunning", culture) ?? DefaultRecipeDeviceRunning;
-        s_recipeApplyBusy = s_rm.GetString("RecipeApplyBusy", culture) ?? DefaultRecipeApplyBusy;
-        s_recipeLoadInvalid = s_rm.GetString("RecipeLoadInvalid", culture) ?? DefaultRecipeLoadInvalid;
+        s_recipeNull = CoreText.Get("RecipeNull", culture, DefaultRecipeNull);
+        s_recipeNameEmpty = CoreText.Get("RecipeNameEmpty", culture, DefaultRecipeNameEmpty);
+        s_recipeItemsEmpty = CoreText.Get("RecipeItemsEmpty", culture, DefaultRecipeItemsEmpty);
+        s_recipeParamNameEmpty = CoreText.Get("RecipeParamNameEmpty", culture, DefaultRecipeParamNameEmpty);
+        s_recipeAddressEmpty = CoreText.Get("RecipeAddressEmpty", culture, DefaultRecipeAddressEmpty);
+        s_recipeAddressDuplicate = CoreText.Get("RecipeAddressDuplicate", culture, DefaultRecipeAddressDuplicate);
+        s_recipeAddressUnresolvable = CoreText.Get("RecipeAddressUnresolvable", culture, DefaultRecipeAddressUnresolvable);
+        s_recipeAddressTypeMismatch = CoreText.Get("RecipeAddressTypeMismatch", culture, DefaultRecipeAddressTypeMismatch);
+        s_recipeValueInvalid = CoreText.Get("RecipeValueInvalid", culture, DefaultRecipeValueInvalid);
+        s_recipeBelowMin = CoreText.Get("RecipeBelowMin", culture, DefaultRecipeBelowMin);
+        s_recipeAboveMax = CoreText.Get("RecipeAboveMax", culture, DefaultRecipeAboveMax);
+        s_recipeTypeInt32 = CoreText.Get("RecipeTypeInt32", culture, DefaultRecipeTypeInt32);
+        s_recipeTypeFloat = CoreText.Get("RecipeTypeFloat", culture, DefaultRecipeTypeFloat);
+        s_recipeTypeBool = CoreText.Get("RecipeTypeBool", culture, DefaultRecipeTypeBool);
+        s_recipeTypeString = CoreText.Get("RecipeTypeString", culture, DefaultRecipeTypeString);
+        s_recipeTypeUInt16 = CoreText.Get("RecipeTypeUInt16", culture, DefaultRecipeTypeUInt16);
+        s_recipeDeviceOrRecipeEmpty = CoreText.Get("RecipeDeviceOrRecipeEmpty", culture, DefaultRecipeDeviceOrRecipeEmpty);
+        s_recipePlcNotConnected = CoreText.Get("RecipePlcNotConnected", culture, DefaultRecipePlcNotConnected);
+        s_recipeReadBackupFailed = CoreText.Get("RecipeReadBackupFailed", culture, DefaultRecipeReadBackupFailed);
+        s_recipeBackupAbort = CoreText.Get("RecipeBackupAbort", culture, DefaultRecipeBackupAbort);
+        s_recipeValueParseFailed = CoreText.Get("RecipeValueParseFailed", culture, DefaultRecipeValueParseFailed);
+        s_recipeValueParseAbort = CoreText.Get("RecipeValueParseAbort", culture, DefaultRecipeValueParseAbort);
+        s_recipeWriteFailed = CoreText.Get("RecipeWriteFailed", culture, DefaultRecipeWriteFailed);
+        s_recipeWriteRollback = CoreText.Get("RecipeWriteRollback", culture, DefaultRecipeWriteRollback);
+        s_recipeReadBackFailed = CoreText.Get("RecipeReadBackFailed", culture, DefaultRecipeReadBackFailed);
+        s_recipeReadBackRollback = CoreText.Get("RecipeReadBackRollback", culture, DefaultRecipeReadBackRollback);
+        s_recipeReadBackMismatch = CoreText.Get("RecipeReadBackMismatch", culture, DefaultRecipeReadBackMismatch);
+        s_recipeMismatchRollback = CoreText.Get("RecipeMismatchRollback", culture, DefaultRecipeMismatchRollback);
+        s_recipeApplySuccess = CoreText.Get("RecipeApplySuccess", culture, DefaultRecipeApplySuccess);
+        s_recipeApplyException = CoreText.Get("RecipeApplyException", culture, DefaultRecipeApplyException);
+        s_recipeUnsupportedType = CoreText.Get("RecipeUnsupportedType", culture, DefaultRecipeUnsupportedType);
+        s_recipeAddressReadonly = CoreText.Get("RecipeAddressReadonly", culture, DefaultRecipeAddressReadonly);
+        s_recipeNameDuplicate = CoreText.Get("RecipeNameDuplicate", culture, DefaultRecipeNameDuplicate);
+        s_recipeMinMaxInverted = CoreText.Get("RecipeMinMaxInverted", culture, DefaultRecipeMinMaxInverted);
+        s_recipeStringTooLong = CoreText.Get("RecipeStringTooLong", culture, DefaultRecipeStringTooLong);
+        s_recipeDeviceNotFound = CoreText.Get("RecipeDeviceNotFound", culture, DefaultRecipeDeviceNotFound);
+        s_recipeNotFound = CoreText.Get("RecipeNotFound", culture, DefaultRecipeNotFound);
+        s_recipeApplyCancelled = CoreText.Get("RecipeApplyCancelled", culture, DefaultRecipeApplyCancelled);
+        s_recipeWriteVerified = CoreText.Get("RecipeWriteVerified", culture, DefaultRecipeWriteVerified);
+        s_recipeWriteInProgress = CoreText.Get("RecipeWriteInProgress", culture, DefaultRecipeWriteInProgress);
+        s_recipeStringNotRolledBack = CoreText.Get("RecipeStringNotRolledBack", culture, DefaultRecipeStringNotRolledBack);
+        s_recipeRollbackIncomplete = CoreText.Get("RecipeRollbackIncomplete", culture, DefaultRecipeRollbackIncomplete);
+        s_recipeRollbackItemFailed = CoreText.Get("RecipeRollbackItemFailed", culture, DefaultRecipeRollbackItemFailed);
+        s_recipeRollbackRestored = CoreText.Get("RecipeRollbackRestored", culture, DefaultRecipeRollbackRestored);
+        s_recipeDeviceRunning = CoreText.Get("RecipeDeviceRunning", culture, DefaultRecipeDeviceRunning);
+        s_recipeApplyBusy = CoreText.Get("RecipeApplyBusy", culture, DefaultRecipeApplyBusy);
+        s_recipeLoadInvalid = CoreText.Get("RecipeLoadInvalid", culture, DefaultRecipeLoadInvalid);
         ApplyExternalOverrides(culture);
     }
 

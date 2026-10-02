@@ -135,8 +135,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         if (!IsDirty) return true;
         var confirm = _dialog.Show(
-            Strings.K734,
-            Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            Strings.Lbl_LeavingDeviceManagerDiscardUnsavedConfiguration,
+            Strings.Msg_ConfirmDelete, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         return confirm == MessageBoxResult.Yes;
     }
 
@@ -292,7 +292,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         {
             // 测试宿主或未启用窗口服务时保留原有的内存创建路径；生产宿主始终注册向导。
             if (_deviceSetupWizard != null) return;
-            var baseName = string.Format(Strings.F135, Devices.Count + 1);
+            var baseName = string.Format(Strings.Prompt_NewDevice, Devices.Count + 1);
             var newName = EnsureUniqueName(baseName, Devices.Select(d => d.Name));
             newDevice = new Device { Name = newName };
         }
@@ -390,8 +390,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
         // 使用 HC MessageBox（深色主题）进行 YesNo 确认，返回 MessageBoxResult 与原 API 一致。
         var result = _dialog.Show(
-            string.Format(Strings.F175, target.Name),
-            Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            string.Format(Strings.Prompt_DeleteDeviceAlarmsDefectsCounterAlarms, target.Name),
+            Strings.Msg_ConfirmDelete, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return;
 
         // 报警/缺陷/计数报警的选中状态由各子 VM 订阅 SelectedDevice 变化自动清空
@@ -410,7 +410,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         // 设备数量变化后刷新 Save 按钮可用状态（删除最后一个设备时 CanSave 应变 false）
         SaveCommand.NotifyCanExecuteChanged();
 
-        _dialog.NotifySuccess(Strings.M008);
+        _dialog.NotifySuccess(Strings.Msg_DeviceDeleted);
         MarkDirty();
         // 不在此处刷新审计基线：删除尚未保存，before 应反映「删除前」的持久化状态。
     }
@@ -495,13 +495,13 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         if (src == null) return;
 
         var copy = CloneDevice(src);
-        copy.Name = EnsureUniqueName(string.Format(Strings.F039, src.Name), Devices.Select(d => d.Name));
+        copy.Name = EnsureUniqueName(string.Format(Strings.Prompt_Copy, src.Name), Devices.Select(d => d.Name));
         DeviceList.ClearFilters();
         Devices.Add(copy);
         _deviceRepository.AddRuntime(copy);
         SelectedDevice = copy;
         MarkDirty();
-        _dialog.NotifySuccess(string.Format(Strings.F100, src.Name, copy.Name));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_DeviceCopied, src.Name, copy.Name));
     }
 
     /// <summary>
@@ -633,8 +633,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         OnPropertyChanged(nameof(HasCurrentDeviceValidationErrors));
         if (errors.Count > 0)
         {
-            Feedback.Error(string.Format(Strings.F067, errors.Count));
-            _dialog.NotifyWarning(string.Format(Strings.F067, errors.Count));
+            Feedback.Error(string.Format(Strings.Prompt_SaveFailedConfigurationIssuesFoundPlease, errors.Count));
+            _dialog.NotifyWarning(string.Format(Strings.Prompt_SaveFailedConfigurationIssuesFoundPlease, errors.Count));
             if (_dialog.ShowConfigErrors(errors) is { } selectedError)
                 NavigateToError(selectedError);
             return;
@@ -676,11 +676,11 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             // 非阻断提示：0 值阈值报警（仅记录不触发）仍可正常保存，但提醒用户其不会触发报警
             var zeroThresholdCount = Devices.Sum(d => d.CounterAlarms.Count(c => c.MaxValue <= 0));
             Feedback.Success(zeroThresholdCount > 0
-                ? string.Format(Strings.K651, after.Count, zeroThresholdCount)
+                ? string.Format(Strings.Lbl_SavedDeviceSCounterAlarmS, after.Count, zeroThresholdCount)
                 : Strings.Ux_StatusSaved);
             _dialog.NotifySuccess(zeroThresholdCount > 0
-                ? string.Format(Strings.K651, after.Count, zeroThresholdCount)
-                : Strings.M009);
+                ? string.Format(Strings.Lbl_SavedDeviceSCounterAlarmS, after.Count, zeroThresholdCount)
+                : Strings.Msg_SavedSuccessfully);
             IsDirty = Interlocked.Read(ref _configurationRevision) != saveRevision;
             AuditLog.Record("Device.Update", "Device", null,
                 before: before,
@@ -689,8 +689,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         }
         catch (System.Exception ex)
         {
-            Feedback.Error(string.Format(Strings.F066, ex.Message));
-            _dialog.NotifyError(string.Format(Strings.F066, ex.Message));
+            Feedback.Error(string.Format(Strings.Prompt_SaveFailed, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_SaveFailed, ex.Message));
             Log.Error(ex, "保存设备配置失败");
             AuditLog.Record("Device.Update", "Device", null, succeeded: false, detail: ex.Message);
         }
@@ -802,13 +802,13 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
         if (errors.Count == 0)
         {
-            var msg = string.Format(Strings.K725, Devices.Count);
+            var msg = string.Format(Strings.Lbl_DeviceConfigValidatedOKDevices, Devices.Count);
             Feedback.Success(msg);
             _dialog.NotifySuccess(msg);
             return;
         }
 
-        Feedback.Error(string.Format(Strings.F067, errors.Count));
+        Feedback.Error(string.Format(Strings.Prompt_SaveFailedConfigurationIssuesFoundPlease, errors.Count));
         if (_dialog.ShowConfigErrors(errors) is { } selectedError)
             NavigateToError(selectedError);
     }
@@ -830,19 +830,19 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         if (src == null || !CanExportDevice()) return;
         var defaultName = (src.Name ?? "device").Trim();
         foreach (var c in System.IO.Path.GetInvalidFileNameChars()) defaultName = defaultName.Replace(c, '_');
-        var path = _dialog.ShowSaveFileDialog(Strings.M226, $"{defaultName}.json", Strings.K695);
+        var path = _dialog.ShowSaveFileDialog(Strings.Msg_ExportDeviceConfig, $"{defaultName}.json", Strings.Lbl_JSONFilesJsonAllFiles);
         if (string.IsNullOrEmpty(path)) return;
         try
         {
             var json = JsonSerializer.Serialize(src, DeviceJsonOptions);
             // P1-8 修复 2026-09-02：写盘移出 UI 线程
             await Task.Run(() => System.IO.File.WriteAllText(path, json));
-            _dialog.NotifySuccess(string.Format(Strings.K730, src.Name));
+            _dialog.NotifySuccess(string.Format(Strings.Lbl_ExportedDevice, src.Name));
         }
         catch (Exception ex)
         {
             Log.Error(ex, "导出单台设备配置失败");
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
         }
     }
 
@@ -854,7 +854,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     private async Task ImportDevice()
     {
         if (!CanImportDevice()) return;
-        var path = _dialog.ShowOpenFileDialog(Strings.M227, Strings.K695);
+        var path = _dialog.ShowOpenFileDialog(Strings.Msg_ImportDeviceConfig, Strings.Lbl_JSONFilesJsonAllFiles);
         if (string.IsNullOrEmpty(path)) return;
 
         Device? imported;
@@ -872,12 +872,12 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
         if (imported == null || string.IsNullOrWhiteSpace(imported.Id))
         {
-            _dialog.NotifyError(Strings.K731);
+            _dialog.NotifyError(Strings.Lbl_ImportFailedFileEmptyCouldParsed);
             return;
         }
         if (Devices.Any(d => string.Equals(d.Id, imported.Id, StringComparison.OrdinalIgnoreCase)))
         {
-            _dialog.NotifyError(string.Format(Strings.K732, imported.Id));
+            _dialog.NotifyError(string.Format(Strings.Lbl_ImportFailedDeviceIdConflictsExisting, imported.Id));
             return;
         }
 
@@ -902,8 +902,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         {
             Devices.Remove(copy);
             _deviceRepository.RemoveRuntime(copy.Id);
-            Feedback.Error(string.Format(Strings.F067, importErrors.Count));
-            _dialog.NotifyWarning(string.Format(Strings.F067, importErrors.Count));
+            Feedback.Error(string.Format(Strings.Prompt_SaveFailedConfigurationIssuesFoundPlease, importErrors.Count));
+            _dialog.NotifyWarning(string.Format(Strings.Prompt_SaveFailedConfigurationIssuesFoundPlease, importErrors.Count));
             if (_dialog.ShowConfigErrors(importErrors) is { } selectedError)
                 NavigateToError(selectedError);
             return;
@@ -912,7 +912,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         SelectedDevice = copy;
         MarkDirty();
         RefreshAddressConflictFlag();
-        _dialog.NotifySuccess(string.Format(Strings.K733, copy.Name));
+        _dialog.NotifySuccess(string.Format(Strings.Lbl_ImportedDevice, copy.Name));
     }
 
     /// <summary>
@@ -925,12 +925,12 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         if (!CanRollbackToBackup()) return;
 
-        var password = _dialog.ShowPasswordInput(Strings.M119, Strings.M167);
+        var password = _dialog.ShowPasswordInput(Strings.Msg_ConfirmImport, Strings.Msg_EnterPasswordRestore);
         if (string.IsNullOrEmpty(password))
             return;
         if (!_userSession.VerifyCurrentPassword(password))
         {
-            _dialog.NotifyWarning(Strings.M010);
+            _dialog.NotifyWarning(Strings.Msg_WrongPasswordRestoreCancelled);
             return;
         }
 
@@ -986,15 +986,15 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         // 权限验证：生成虚拟数据需工程师或以上角色
         if (!_userSession.IsEngineerOrAbove)
         {
-            _dialog.NotifyWarning(Strings.M336);
+            _dialog.NotifyWarning(Strings.Msg_InsufficientPermissionEngineerAboveRequired);
             return;
         }
 
         if (Devices.Count > 0)
         {
             var confirm = _dialog.Show(
-                string.Format(Strings.F092, Devices.Count),
-                Strings.M169, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                string.Format(Strings.Prompt_ReplaceCurrentDeviceConfigs20Virtual, Devices.Count),
+                Strings.Msg_GenerateDemoDevices, MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (confirm != MessageBoxResult.Yes) return;
         }
 
@@ -1006,7 +1006,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         DeviceList.RefreshDeviceList();
         RefreshAddressConflictFlag();
         MarkDirty();
-        _dialog.NotifySuccess(string.Format(Strings.F114, samples.Count));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_VirtualDevicesGeneratedClickSavePersist, samples.Count));
     }
 
     private bool CanSeedSampleDevices() => !IsLoading && CanManageDevices;
@@ -1021,8 +1021,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             if (value != null && !ReferenceEquals(value, previous) && IsDirty)
             {
                 var confirm = _dialog.Show(
-                    Strings.K727,
-                    Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    Strings.Lbl_CurrentDeviceHasUnsavedChangesSwitching,
+                    Strings.Msg_ConfirmDelete, MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (confirm != MessageBoxResult.Yes)
                 {
                     // 拒绝切换：回退原选择（置位抑制避免递归触发），本次不更新确认记录
@@ -1160,8 +1160,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         if (!IsDirty) return true;
         var result = _dialog.Show(
-            Strings.M173,
-            Strings.M174,
+            Strings.Msg_UnsavedChangesExistExitAnyway,
+            Strings.Msg_UnsavedChanges2,
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
         return result == MessageBoxResult.Yes;
@@ -1175,7 +1175,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         if (!IsDirty) return true;
         var result = _dialog.Show(
             Strings.M_UnsavedChangesLeave,
-            Strings.M174,
+            Strings.Msg_UnsavedChanges2,
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return false;

@@ -19,7 +19,7 @@ public partial class EmptyState : System.Windows.Controls.UserControl
     /// <summary>主文案依赖属性</summary>
     public static readonly DependencyProperty MessageProperty =
         DependencyProperty.Register(nameof(Message), typeof(string),
-            typeof(EmptyState), new PropertyMetadata(Strings.K583));
+            typeof(EmptyState), new PropertyMetadata(Strings.Lbl_NoData));
 
     /// <summary>辅助提示依赖属性（可选，为空时不显示）</summary>
     public static readonly DependencyProperty HintProperty =

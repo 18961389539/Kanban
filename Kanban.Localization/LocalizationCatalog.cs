@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Globalization;
 
-namespace Kanban.Collector.Core.Localization;
+namespace Kanban.Localization
+{
 
 /// <summary>
 /// 从 Localization.csv 生成的共享本地化目录。语言代码、资源 Key 和占位符签名均来自 CSV。
@@ -575,1299 +577,1299 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "轻微", ["en-US"] = "Minor", ["ja-JP"] = "軽微", ["pt-BR"] = "Leve"
         },
-        ["Wpf|K001"] = new Dictionary<string, string>
+        ["Wpf|Lbl_QualityRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "良品率", ["en-US"] = "Quality Rate", ["ja-JP"] = "良品率", ["pt-BR"] = "Taxa de qualidade"
         },
-        ["Wpf|K002"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Device"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备", ["en-US"] = "Device", ["ja-JP"] = "設備", ["pt-BR"] = "Dispositivo"
         },
-        ["Wpf|K003"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Status"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态", ["en-US"] = "Status", ["ja-JP"] = "状態", ["pt-BR"] = "Status"
         },
-        ["Wpf|K004"] = new Dictionary<string, string>
+        ["Wpf|Lbl_All"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "全部", ["en-US"] = "All", ["ja-JP"] = "すべて", ["pt-BR"] = "Todos"
         },
-        ["Wpf|K005"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Running"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行", ["en-US"] = "Running", ["ja-JP"] = "稼働中", ["pt-BR"] = "Em execução"
         },
-        ["Wpf|K006"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Standby"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "待机", ["en-US"] = "Standby", ["ja-JP"] = "待機", ["pt-BR"] = "Em espera"
         },
-        ["Wpf|K007"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RunTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行时长", ["en-US"] = "Run Time", ["ja-JP"] = "稼働時間", ["pt-BR"] = "Tempo de execução"
         },
-        ["Wpf|K008"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WorkOrderNo"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单号", ["en-US"] = "Work Order No", ["ja-JP"] = "工単番号", ["pt-BR"] = "Nº do pedido"
         },
-        ["Wpf|K009"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TimeAvailability"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时间稼动率", ["en-US"] = "Time Availability", ["ja-JP"] = "時間稼働率", ["pt-BR"] = "Disponibilidade de tempo"
         },
-        ["Wpf|K010"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Pending"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "待开始", ["en-US"] = "Pending", ["ja-JP"] = "未開始", ["pt-BR"] = "Pendente"
         },
-        ["Wpf|K011"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Progress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "进行中", ["en-US"] = "In Progress", ["ja-JP"] = "進行中", ["pt-BR"] = "Em andamento"
         },
-        ["Wpf|K012"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Completed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已完成", ["en-US"] = "Completed", ["ja-JP"] = "完了", ["pt-BR"] = "Concluído"
         },
-        ["Wpf|K013"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Aborted"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已中止", ["en-US"] = "Aborted", ["ja-JP"] = "中止", ["pt-BR"] = "Abortado"
         },
-        ["Wpf|K014"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Pcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "件", ["en-US"] = "pcs", ["ja-JP"] = "個", ["pt-BR"] = "pçs"
         },
-        ["Wpf|K015"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Refresh"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "刷新", ["en-US"] = "Refresh", ["ja-JP"] = "更新", ["pt-BR"] = "Atualizar"
         },
-        ["Wpf|K016"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Alarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警", ["en-US"] = "Alarm", ["ja-JP"] = "アラーム", ["pt-BR"] = "Alarme"
         },
-        ["Wpf|K017"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TargetCycleTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标周期", ["en-US"] = "Target cycle time", ["ja-JP"] = "目標サイクルタイム", ["pt-BR"] = "Tempo de ciclo alvo"
         },
-        ["Wpf|K018"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警名称", ["en-US"] = "Alarm Name", ["ja-JP"] = "アラーム名", ["pt-BR"] = "Nome do alarme"
         },
-        ["Wpf|K019"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ProductCode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产品编码", ["en-US"] = "Product Code", ["ja-JP"] = "製品コード", ["pt-BR"] = "Código do produto"
         },
-        ["Wpf|K020"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ProductName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产品名称", ["en-US"] = "Product Name", ["ja-JP"] = "製品名", ["pt-BR"] = "Nome do produto"
         },
-        ["Wpf|K021"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Remark"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "备注", ["en-US"] = "Remark", ["ja-JP"] = "備考", ["pt-BR"] = "Observação"
         },
-        ["Wpf|K022"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Shift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次", ["en-US"] = "Shift", ["ja-JP"] = "シフト", ["pt-BR"] = "Turno"
         },
-        ["Wpf|K023"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TotalOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "总产量", ["en-US"] = "Total Output", ["ja-JP"] = "総生産量", ["pt-BR"] = "Produção total"
         },
-        ["Wpf|K024"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceFilter"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备筛选", ["en-US"] = "Device Filter", ["ja-JP"] = "設備フィルター", ["pt-BR"] = "Filtro de dispositivo"
         },
-        ["Wpf|K025"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Last24h"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "近24小时", ["en-US"] = "Last 24h", ["ja-JP"] = "直近24時間", ["pt-BR"] = "Últimas 24 h"
         },
-        ["Wpf|K026"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Copy"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复制", ["en-US"] = "Copy", ["ja-JP"] = "コピー", ["pt-BR"] = "Copiar"
         },
-        ["Wpf|K027"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Recipe"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方", ["en-US"] = "Recipe", ["ja-JP"] = "レシピ", ["pt-BR"] = "Receita"
         },
-        ["Wpf|K028"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceStatus"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备状态", ["en-US"] = "Device Status", ["ja-JP"] = "設備状態", ["pt-BR"] = "Status do dispositivo"
         },
-        ["Wpf|K029"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PerformanceRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "性能达标率", ["en-US"] = "Performance Rate", ["ja-JP"] = "性能達成率", ["pt-BR"] = "Taxa de desempenho"
         },
-        ["Wpf|K030"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmDescription"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警描述", ["en-US"] = "Alarm Description", ["ja-JP"] = "アラーム説明", ["pt-BR"] = "Descrição do alarme"
         },
-        ["Wpf|K031"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Read"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "读取", ["en-US"] = "Read", ["ja-JP"] = "読取り", ["pt-BR"] = "Ler"
         },
-        ["Wpf|K032"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ReadCurrentPLCValuesDisabledPLC"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "读取 PLC 当前值；PLC 断线时不可用", ["en-US"] = "Read current PLC values; disabled when PLC is disconnected", ["ja-JP"] = "PLC現在値を読み取ります。PLC切断時は利用不可", ["pt-BR"] = "Lê os valores atuais do PLC; desabilitado quando o PLC está desconectado"
         },
-        ["Wpf|K033"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Add"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "新增", ["en-US"] = "Add", ["ja-JP"] = "追加", ["pt-BR"] = "Adicionar"
         },
-        ["Wpf|K034"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Delete"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "删除", ["en-US"] = "Delete", ["ja-JP"] = "削除", ["pt-BR"] = "Excluir"
         },
-        ["Wpf|K035"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PlannedOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计划产量", ["en-US"] = "Planned Output", ["ja-JP"] = "計画生産量", ["pt-BR"] = "Produção planejada"
         },
-        ["Wpf|K036"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Start"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "开始", ["en-US"] = "Start", ["ja-JP"] = "開始", ["pt-BR"] = "Iniciar"
         },
-        ["Wpf|K037"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Time"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时间", ["en-US"] = "Time", ["ja-JP"] = "時間", ["pt-BR"] = "Hora"
         },
-        ["Wpf|K038"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmDuration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警时长", ["en-US"] = "Alarm Duration", ["ja-JP"] = "アラーム時間", ["pt-BR"] = "Duração de alarmes"
         },
-        ["Wpf|K039"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SiemensBatchInt32Limit"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Siemens 批量 Int32 上限", ["en-US"] = "Siemens Batch Int32 Limit", ["ja-JP"] = "Siemens一括Int32上限", ["pt-BR"] = "Limite Int32 em lote Siemens"
         },
-        ["Wpf|K040"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OmronFINSReadSplitLength"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "欧姆龙 FINS 读取切割长度", ["en-US"] = "Omron FINS Read Split Length", ["ja-JP"] = "オムロンFINS読取り分割長", ["pt-BR"] = "Comprimento de divisão de leitura FINS Omron"
         },
-        ["Wpf|K041"] = new Dictionary<string, string>
+        ["Wpf|Lbl_BoundDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "绑定设备", ["en-US"] = "Bound Device", ["ja-JP"] = "バインド設備", ["pt-BR"] = "Dispositivo vinculado"
         },
-        ["Wpf|K042"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Last1h"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "近1小时", ["en-US"] = "Last 1h", ["ja-JP"] = "直近1時間", ["pt-BR"] = "Última 1 h"
         },
-        ["Wpf|K043"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Last4h"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "近4小时", ["en-US"] = "Last 4h", ["ja-JP"] = "直近4時間", ["pt-BR"] = "Últimas 4 h"
         },
-        ["Wpf|K044"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RefreshF5"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "刷新（F5）", ["en-US"] = "Refresh (F5)", ["ja-JP"] = "更新（F5）", ["pt-BR"] = "Atualizar (F5)"
         },
-        ["Wpf|K045"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ActiveAlarmsLive"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "实时活跃报警", ["en-US"] = "Active Alarms (Live)", ["ja-JP"] = "リアルタイムアラーム", ["pt-BR"] = "Alarmes ativos (tempo real)"
         },
-        ["Wpf|K046"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecentEventStream"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近事件流", ["en-US"] = "Recent Event Stream", ["ja-JP"] = "直近イベント", ["pt-BR"] = "Fluxo de eventos recentes"
         },
-        ["Wpf|K047"] = new Dictionary<string, string>
+        ["Wpf|Lbl_GoodOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "合格产量", ["en-US"] = "Good Output", ["ja-JP"] = "良品生産量", ["pt-BR"] = "Produção boa"
         },
-        ["Wpf|K048"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 地址", ["en-US"] = "PLC Address", ["ja-JP"] = "PLCアドレス", ["pt-BR"] = "Endereço PLC"
         },
-        ["Wpf|K049"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentWorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前工单", ["en-US"] = "Current Work Order", ["ja-JP"] = "現在の工単", ["pt-BR"] = "Ordem de produção atual"
         },
-        ["Wpf|K050"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ActualCycleTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "实际周期", ["en-US"] = "Actual cycle time", ["ja-JP"] = "実サイクルタイム", ["pt-BR"] = "Tempo de ciclo real"
         },
-        ["Wpf|K051"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoOutputData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无产量数据", ["en-US"] = "No output data", ["ja-JP"] = "生産データがありません", ["pt-BR"] = "Sem dados de produção"
         },
-        ["Wpf|K052"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoDefectData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无缺陷数据", ["en-US"] = "No defect data", ["ja-JP"] = "不良データがありません", ["pt-BR"] = "Sem dados de defeitos"
         },
-        ["Wpf|K053"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AddAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "新增报警", ["en-US"] = "Add Alarm", ["ja-JP"] = "アラーム追加", ["pt-BR"] = "Adicionar alarme"
         },
-        ["Wpf|K054"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmLevel"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警级别", ["en-US"] = "Alarm Level", ["ja-JP"] = "アラームレベル", ["pt-BR"] = "Nível do alarme"
         },
-        ["Wpf|K055"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeleteAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "删除报警", ["en-US"] = "Delete Alarm", ["ja-JP"] = "アラーム削除", ["pt-BR"] = "Excluir alarme"
         },
-        ["Wpf|K056"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AddCounterAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "新增计数器报警", ["en-US"] = "Add Counter Alarm", ["ja-JP"] = "カカカウンタアラーム追加", ["pt-BR"] = "Adicionar alarme de contador"
         },
-        ["Wpf|K057"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeleteCounterAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "删除计数器报警", ["en-US"] = "Delete Counter Alarm", ["ja-JP"] = "カカカウンタアラーム削除", ["pt-BR"] = "Excluir alarme de contador"
         },
-        ["Wpf|K058"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AddDefect"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "新增缺陷", ["en-US"] = "Add Defect", ["ja-JP"] = "不良追加", ["pt-BR"] = "Adicionar defeito"
         },
-        ["Wpf|K059"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷名称", ["en-US"] = "Defect Name", ["ja-JP"] = "不良名", ["pt-BR"] = "Nome do defeito"
         },
-        ["Wpf|K060"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectCategory"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷类别", ["en-US"] = "Defect Category", ["ja-JP"] = "不良カテゴリ", ["pt-BR"] = "Categoria do defeito"
         },
-        ["Wpf|K061"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeleteDefect"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "删除缺陷", ["en-US"] = "Delete Defect", ["ja-JP"] = "不良削除", ["pt-BR"] = "Excluir defeito"
         },
-        ["Wpf|K062"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备名称", ["en-US"] = "Device Name", ["ja-JP"] = "設備名", ["pt-BR"] = "Nome do dispositivo"
         },
-        ["Wpf|K063"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方名称", ["en-US"] = "Recipe Name", ["ja-JP"] = "レシピ名", ["pt-BR"] = "Nome da receita"
         },
-        ["Wpf|K064"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceList"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备列表", ["en-US"] = "Device List", ["ja-JP"] = "設備一覧", ["pt-BR"] = "Lista de dispositivos"
         },
-        ["Wpf|K065"] = new Dictionary<string, string>
+        ["Wpf|Lbl_GenerateVirtualDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生成虚拟设备", ["en-US"] = "Generate Virtual Devices", ["ja-JP"] = "仮想設備を生成", ["pt-BR"] = "Gerar dispositivos virtuais"
         },
-        ["Wpf|K066"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceDetail"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备详情", ["en-US"] = "Device Detail", ["ja-JP"] = "設備詳細", ["pt-BR"] = "Detalhes do dispositivo"
         },
-        ["Wpf|K067"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceParameters"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备参数", ["en-US"] = "Device Parameters", ["ja-JP"] = "設備パラメータ", ["pt-BR"] = "Parâmetros do dispositivo"
         },
-        ["Wpf|K068"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmManagement"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警管理", ["en-US"] = "Alarm Management", ["ja-JP"] = "アラーム管理", ["pt-BR"] = "Gestão de alarmes"
         },
-        ["Wpf|K069"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectManagement"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷管理", ["en-US"] = "Defect Management", ["ja-JP"] = "不良管理", ["pt-BR"] = "Gestão de defeitos"
         },
-        ["Wpf|K070"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CounterAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计数器报警", ["en-US"] = "Counter Alarm", ["ja-JP"] = "カカカウンタアラーム", ["pt-BR"] = "Alarme de contador"
         },
-        ["Wpf|K071"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单", ["en-US"] = "Work Order", ["ja-JP"] = "工単", ["pt-BR"] = "Ordem de produção"
         },
-        ["Wpf|K072"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Edit"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "编辑", ["en-US"] = "Edit", ["ja-JP"] = "編集", ["pt-BR"] = "Editar"
         },
-        ["Wpf|K073"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WorkOrderDetail"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单详情", ["en-US"] = "Work Order Detail", ["ja-JP"] = "工単詳細", ["pt-BR"] = "Detalhes da ordem de produção"
         },
-        ["Wpf|K074"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SelectWorkOrderLeftViewDetails"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请选择左侧工单查看详情", ["en-US"] = "Select a work order on the left to view details", ["ja-JP"] = "左の工単を選択して詳細を表示", ["pt-BR"] = "Selecione uma ordem à esquerda para ver os detalhes"
         },
-        ["Wpf|K075"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PlannedTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计划时间", ["en-US"] = "Planned Time", ["ja-JP"] = "計画時間", ["pt-BR"] = "Hora planejada"
         },
-        ["Wpf|K076"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Complete"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "完成", ["en-US"] = "Complete", ["ja-JP"] = "完了", ["pt-BR"] = "Concluir"
         },
-        ["Wpf|K077"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Abort"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "中止", ["en-US"] = "Abort", ["ja-JP"] = "中止", ["pt-BR"] = "Abortar"
         },
-        ["Wpf|K078"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Shift2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "本班次", ["en-US"] = "This Shift", ["ja-JP"] = "本シフト", ["pt-BR"] = "Neste turno"
         },
-        ["Wpf|K079"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Export"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出", ["en-US"] = "Export", ["ja-JP"] = "エクスポート", ["pt-BR"] = "Exportar"
         },
-        ["Wpf|K080"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OKOutputPcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OK 产量(件)", ["en-US"] = "OK Output (pcs)", ["ja-JP"] = "OK生産量（個）", ["pt-BR"] = "Produção OK (pçs)"
         },
-        ["Wpf|K081"] = new Dictionary<string, string>
+        ["Wpf|Lbl_StatusDistribution"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态分布", ["en-US"] = "Status Distribution", ["ja-JP"] = "状態分布", ["pt-BR"] = "Distribuição de estados"
         },
-        ["Wpf|K082"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShiftComparison"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次对比", ["en-US"] = "Shift Comparison", ["ja-JP"] = "シフト比較", ["pt-BR"] = "Comparação de turnos"
         },
-        ["Wpf|K083"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentStatus"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前状态", ["en-US"] = "Current Status", ["ja-JP"] = "現在の状態", ["pt-BR"] = "Status atual"
         },
-        ["Wpf|K084"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CQualityRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "C良品率", ["en-US"] = "C: Quality Rate", ["ja-JP"] = "C:良品率", ["pt-BR"] = "C: Taxa de qualidade"
         },
-        ["Wpf|K085"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "不良率", ["en-US"] = "Defect Rate", ["ja-JP"] = "不良率", ["pt-BR"] = "Taxa de defeitos"
         },
-        ["Wpf|K086"] = new Dictionary<string, string>
+        ["Wpf|Lbl_FilterHighLevelAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "筛选 High 级别报警", ["en-US"] = "Filter High level alarms", ["ja-JP"] = "Highレベルアラームを絞り込み", ["pt-BR"] = "Filtrar alarmes de nível High"
         },
-        ["Wpf|K087"] = new Dictionary<string, string>
+        ["Wpf|Lbl_FilterMediumLevelAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "筛选 Medium 级别报警", ["en-US"] = "Filter Medium level alarms", ["ja-JP"] = "Mediumレベルアラームを絞り込み", ["pt-BR"] = "Filtrar alarmes de nível Medium"
         },
-        ["Wpf|K088"] = new Dictionary<string, string>
+        ["Wpf|Lbl_FilterLowLevelAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "筛选 Low 级别报警", ["en-US"] = "Filter Low level alarms", ["ja-JP"] = "Lowレベルアラームを絞り込み", ["pt-BR"] = "Filtrar alarmes de nível Low"
         },
-        ["Wpf|K089"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WorkOrderManagement"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单管理", ["en-US"] = "Work Order Management", ["ja-JP"] = "工単管理", ["pt-BR"] = "Gestão de ordens de produção"
         },
-        ["Wpf|K090"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmCount"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警次数", ["en-US"] = "Alarm Count", ["ja-JP"] = "アラーム回数", ["pt-BR"] = "Nº de alarmes"
         },
-        ["Wpf|K091"] = new Dictionary<string, string>
+        ["Wpf|Lbl_LongestDowntime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最长停机", ["en-US"] = "Longest Downtime", ["ja-JP"] = "最長停止", ["pt-BR"] = "Maior tempo de parada"
         },
-        ["Wpf|K092"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Cancel"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "取消", ["en-US"] = "Cancel", ["ja-JP"] = "キャンセル", ["pt-BR"] = "Cancelar"
         },
-        ["Wpf|K093"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OK"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确定", ["en-US"] = "OK", ["ja-JP"] = "OK", ["pt-BR"] = "OK"
         },
-        ["Wpf|K099"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCConnection"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 连接", ["en-US"] = "PLC Connection", ["ja-JP"] = "PLC接続", ["pt-BR"] = "Conexão PLC"
         },
-        ["Wpf|K100"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CumulativeDisconnects"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "累计断线", ["en-US"] = "Cumulative Disconnects", ["ja-JP"] = "累積切断", ["pt-BR"] = "Desconexões acumuladas"
         },
-        ["Wpf|K101"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CopyMachineCode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复制机器码", ["en-US"] = "Copy Machine Code", ["ja-JP"] = "マシンコードをコピー", ["pt-BR"] = "Copiar código da máquina"
         },
-        ["Wpf|K102"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Reactivate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "重新激活", ["en-US"] = "Reactivate", ["ja-JP"] = "再アクティベーション", ["pt-BR"] = "Reativar"
         },
-        ["Wpf|K103"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CollectorServiceURL"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集服务地址", ["en-US"] = "Collector Service URL", ["ja-JP"] = "収集サービスURL", ["pt-BR"] = "URL do serviço de coleta"
         },
-        ["Wpf|K104"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCBrand"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 品牌", ["en-US"] = "PLC Brand", ["ja-JP"] = "PLCブランド", ["pt-BR"] = "Marca do PLC"
         },
-        ["Wpf|K105"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Port"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "端口", ["en-US"] = "Port", ["ja-JP"] = "ポート", ["pt-BR"] = "Porta"
         },
-        ["Wpf|K106"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SiemensModel"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Siemens 型号", ["en-US"] = "Siemens Model", ["ja-JP"] = "Siemensモデル", ["pt-BR"] = "Modelo Siemens"
         },
-        ["Wpf|K107"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SiemensDataFormat"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Siemens 数据格式", ["en-US"] = "Siemens Data Format", ["ja-JP"] = "Siemensデータ形式", ["pt-BR"] = "Formato de dados Siemens"
         },
-        ["Wpf|K108"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ModbusRegisterFunction"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Modbus 寄存器功能码", ["en-US"] = "Modbus Register Function", ["ja-JP"] = "Modbusレジスタ機能コード", ["pt-BR"] = "Código de função de registro Modbus"
         },
-        ["Wpf|K109"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ModbusBitFunction"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Modbus 位功能码", ["en-US"] = "Modbus Bit Function", ["ja-JP"] = "Modbusビット機能コード", ["pt-BR"] = "Código de função de bit Modbus"
         },
-        ["Wpf|K110"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ModbusDataFormat"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Modbus 数据格式", ["en-US"] = "Modbus Data Format", ["ja-JP"] = "Modbusデータ形式", ["pt-BR"] = "Formato de dados Modbus"
         },
-        ["Wpf|K111"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCBatchReadMaxCount"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 批量读取最大数量", ["en-US"] = "PLC Batch Read Max Count", ["ja-JP"] = "PLC一括読取り最大数", ["pt-BR"] = "Número máximo de leituras em lote do PLC"
         },
-        ["Wpf|K112"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AllowedAddressGapsBatch"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "批量读取允许地址空洞数", ["en-US"] = "Allowed Address Gaps in Batch", ["ja-JP"] = "一括読取り許容アドレス欠落数", ["pt-BR"] = "Lacunas de endereço permitidas em lote"
         },
-        ["Wpf|K113"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DashboardTitle"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "看板标题", ["en-US"] = "Dashboard Title", ["ja-JP"] = "看板タイトル", ["pt-BR"] = "Título do painel"
         },
-        ["Wpf|K114"] = new Dictionary<string, string>
+        ["Wpf|Lbl_EnableNewAlarmSound"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "启用新报警声音", ["en-US"] = "Enable New Alarm Sound", ["ja-JP"] = "新規アラーム音を有効化", ["pt-BR"] = "Habilitar som de novo alarme"
         },
-        ["Wpf|K115"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AutoDailyReportTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "自动日报生成时间", ["en-US"] = "Auto Daily Report Time", ["ja-JP"] = "自動日報生成時刻", ["pt-BR"] = "Horário do relatório diário automático"
         },
-        ["Wpf|K116"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AddShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "新增班次", ["en-US"] = "Add Shift", ["ja-JP"] = "シフト追加", ["pt-BR"] = "Adicionar turno"
         },
-        ["Wpf|K117"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShiftName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次名称", ["en-US"] = "Shift Name", ["ja-JP"] = "シフト名", ["pt-BR"] = "Nome do turno"
         },
-        ["Wpf|K118"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ClickClockIconPickTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "点击时钟图标选择时刻", ["en-US"] = "Click the clock icon to pick a time", ["ja-JP"] = "時計アイコンをクリックして時刻を選択", ["pt-BR"] = "Clique no ícone do relógio para escolher o horário"
         },
-        ["Wpf|K119"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PlannedStart"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计划开始时间", ["en-US"] = "Planned Start", ["ja-JP"] = "計画開始時間", ["pt-BR"] = "Início planejado"
         },
-        ["Wpf|K120"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PlannedEnd"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计划结束时间", ["en-US"] = "Planned End", ["ja-JP"] = "計画終了時間", ["pt-BR"] = "Fim planejado"
         },
-        ["Wpf|K121"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShowNavigationMenu"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "显示导航菜单", ["en-US"] = "Show Navigation Menu", ["ja-JP"] = "ナビメニューを表示", ["pt-BR"] = "Mostrar menu de navegação"
         },
-        ["Wpf|K122"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmCenter"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警中心", ["en-US"] = "Alarm Center", ["ja-JP"] = "アラームセンター", ["pt-BR"] = "Central de alarmes"
         },
-        ["Wpf|K123"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShowAlarmsAllDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "显示全部设备报警", ["en-US"] = "Show alarms from all devices", ["ja-JP"] = "全設備のアラームを表示", ["pt-BR"] = "Mostrar alarmes de todos os dispositivos"
         },
-        ["Wpf|K124"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SearchDeviceAlarmName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "搜索设备或报警名称", ["en-US"] = "Search device or alarm name", ["ja-JP"] = "設備またはアラーム名を検索", ["pt-BR"] = "Pesquisar dispositivo ou nome do alarme"
         },
-        ["Wpf|K125"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ActiveAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "活跃报警", ["en-US"] = "Active Alarms", ["ja-JP"] = "アクティブアラーム", ["pt-BR"] = "Alarmes ativos"
         },
-        ["Wpf|K126"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TriggeredToday"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "今日触发", ["en-US"] = "Triggered Today", ["ja-JP"] = "本日発生", ["pt-BR"] = "Disparados hoje"
         },
-        ["Wpf|K127"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecoveredToday"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "今日恢复", ["en-US"] = "Recovered Today", ["ja-JP"] = "本日復帰", ["pt-BR"] = "Recuperados hoje"
         },
-        ["Wpf|K128"] = new Dictionary<string, string>
+        ["Wpf|Lbl_EarliestAlarmOngoing"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最早报警·已持续", ["en-US"] = "Earliest Alarm · Ongoing", ["ja-JP"] = "最早アラーム・継続中", ["pt-BR"] = "Alarme mais antigo · em curso"
         },
-        ["Wpf|K129"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AffectedDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "影响设备", ["en-US"] = "Affected Device", ["ja-JP"] = "影響設備", ["pt-BR"] = "Dispositivo afetado"
         },
-        ["Wpf|K131"] = new Dictionary<string, string>
+        ["Wpf|Lbl_High"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "高级", ["en-US"] = "High", ["ja-JP"] = "高", ["pt-BR"] = "Alto"
         },
-        ["Wpf|K132"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Medium"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "中级", ["en-US"] = "Medium", ["ja-JP"] = "中", ["pt-BR"] = "Médio"
         },
-        ["Wpf|K133"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Low"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "低级", ["en-US"] = "Low", ["ja-JP"] = "低", ["pt-BR"] = "Baixo"
         },
-        ["Wpf|K134"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ActiveAlarmList"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "活跃报警列表", ["en-US"] = "Active Alarm List", ["ja-JP"] = "アクティブアラーム一覧", ["pt-BR"] = "Lista de alarmes ativos"
         },
-        ["Wpf|K135"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CopyAlarmInfo"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复制报警信息", ["en-US"] = "Copy Alarm Info", ["ja-JP"] = "アラーム情報をコピー", ["pt-BR"] = "Copiar informações do alarme"
         },
-        ["Wpf|K136"] = new Dictionary<string, string>
+        ["Wpf|Lbl_History"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "历史", ["en-US"] = "History", ["ja-JP"] = "履歴", ["pt-BR"] = "Histórico"
         },
-        ["Wpf|K137"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ViewAlarmHistory"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查看报警历史", ["en-US"] = "View Alarm History", ["ja-JP"] = "アラーム履歴を表示", ["pt-BR"] = "Ver histórico de alarmes"
         },
-        ["Wpf|K138"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TriggerCountTop10"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "触发次数 Top 10", ["en-US"] = "Trigger Count Top 10", ["ja-JP"] = "トリガー回数 TOP 10", ["pt-BR"] = "Top 10 por nº de disparos"
         },
-        ["Wpf|K139"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmRankingList"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警排行列表", ["en-US"] = "Alarm Ranking List", ["ja-JP"] = "アラームランキング", ["pt-BR"] = "Ranking de alarmes"
         },
-        ["Wpf|K140"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SaveFailedConfigValidation"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存失败 - 配置校验", ["en-US"] = "Save Failed - Config Validation", ["ja-JP"] = "保存失敗 - 設定検証", ["pt-BR"] = "Falha ao salvar - validação de configuração"
         },
-        ["Wpf|K141"] = new Dictionary<string, string>
+        ["Wpf|Lbl_FollowingConfigurationIssuesWereFound"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存前发现以下配置问题：", ["en-US"] = "The following configuration issues were found:", ["ja-JP"] = "保存前に以下の設定問題が見つかりました：", ["pt-BR"] = "Os seguintes problemas de configuração foram encontrados:"
         },
-        ["Wpf|K142"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DoubleClickErrorJumpDeviceTab"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "双击错误项可跳转到对应设备与选项卡。", ["en-US"] = "Double-click an error to jump to the device and tab.", ["ja-JP"] = "エラー項目をダブルクリックして対応する設備とタブに移動。", ["pt-BR"] = "Clique duas vezes num erro para ir ao dispositivo e à aba correspondente."
         },
-        ["Wpf|K143"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Close"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "关闭", ["en-US"] = "Close", ["ja-JP"] = "閉じる", ["pt-BR"] = "Fechar"
         },
-        ["Wpf|K144"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoDeviceSelected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未选择设备", ["en-US"] = "No Device Selected", ["ja-JP"] = "設備未選択", ["pt-BR"] = "Nenhum dispositivo selecionado"
         },
-        ["Wpf|K145"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SelectDeviceHomeProductionLine"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请从主页或产线页选择一台设备", ["en-US"] = "Select a device from Home or Production Line", ["ja-JP"] = "ホームまたは生産ラインから設備を選択してください", ["pt-BR"] = "Selecione um dispositivo na página Início ou Linha de Produção"
         },
-        ["Wpf|K146"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Back"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "返回", ["en-US"] = "Back", ["ja-JP"] = "戻る", ["pt-BR"] = "Voltar"
         },
-        ["Wpf|K147"] = new Dictionary<string, string>
+        ["Wpf|Lbl_BackHomeEsc"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "返回主页（Esc）", ["en-US"] = "Back to Home (Esc)", ["ja-JP"] = "ホームへ戻る（Esc）", ["pt-BR"] = "Voltar ao início (Esc)"
         },
-        ["Wpf|K148"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectiveOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "不合格产量", ["en-US"] = "Defective Output", ["ja-JP"] = "不合格生産量", ["pt-BR"] = "Produção defeituosa"
         },
-        ["Wpf|K149"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TodaySAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "今日报警", ["en-US"] = "Today's Alarms", ["ja-JP"] = "本日のアラーム", ["pt-BR"] = "Alarmes de hoje"
         },
-        ["Wpf|K150"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备配置", ["en-US"] = "Device Config", ["ja-JP"] = "設備設定", ["pt-BR"] = "Configuração do dispositivo"
         },
-        ["Wpf|K151"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCLiveValues"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 实时值", ["en-US"] = "PLC Live Values", ["ja-JP"] = "PLCリアルタイム値", ["pt-BR"] = "Valores em tempo real do PLC"
         },
-        ["Wpf|K152"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OKCount"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OK计数", ["en-US"] = "OK Count", ["ja-JP"] = "OKカカウント", ["pt-BR"] = "Contagem OK"
         },
-        ["Wpf|K153"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NGCount"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "NG计数", ["en-US"] = "NG Count", ["ja-JP"] = "NGカカウント", ["pt-BR"] = "Contagem NG"
         },
-        ["Wpf|K154"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Product"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产品", ["en-US"] = "Product", ["ja-JP"] = "製品", ["pt-BR"] = "Produto"
         },
-        ["Wpf|K155"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Progress2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "进度", ["en-US"] = "Progress", ["ja-JP"] = "進捗", ["pt-BR"] = "Progresso"
         },
-        ["Wpf|K156"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoActiveWorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "无活跃工单", ["en-US"] = "No Active Work Order", ["ja-JP"] = "アクティブな工単なし", ["pt-BR"] = "Sem ordem de produção ativa"
         },
-        ["Wpf|K157"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OutputComparison"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产能对比", ["en-US"] = "Output comparison", ["ja-JP"] = "能力比較", ["pt-BR"] = "Comparação de capacidade"
         },
-        ["Wpf|K158"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Gap"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "差距", ["en-US"] = "Gap", ["ja-JP"] = "差", ["pt-BR"] = "Diferença"
         },
-        ["Wpf|K159"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RunWindowDueActual"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行应产/实际", ["en-US"] = "Run-window due/actual", ["ja-JP"] = "運転応産/実績", ["pt-BR"] = "Previsto (run)/real"
         },
-        ["Wpf|K160"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OEEBreakdown"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 分解", ["en-US"] = "OEE Breakdown", ["ja-JP"] = "OEE分解", ["pt-BR"] = "Detalhamento do OEE"
         },
-        ["Wpf|K161"] = new Dictionary<string, string>
+        ["Wpf|Lbl_StatusDurationInclOffline"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态时长分布（含离线）", ["en-US"] = "Status duration (incl. offline)", ["ja-JP"] = "状態時間分布（オフライン含む）", ["pt-BR"] = "Duração por estado (incl. offline)"
         },
-        ["Wpf|K162"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ViewHistory"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查看历史", ["en-US"] = "View History", ["ja-JP"] = "履歴を表示", ["pt-BR"] = "Ver histórico"
         },
-        ["Wpf|K163"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoActiveAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前无活跃报警", ["en-US"] = "No Active Alarms", ["ja-JP"] = "アクティブなアラームなし", ["pt-BR"] = "Nenhum alarme ativo"
         },
-        ["Wpf|K164"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceRunningNormally"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备当前运行正常", ["en-US"] = "Device is running normally", ["ja-JP"] = "設備は正常稼働中", ["pt-BR"] = "O dispositivo está em execução normal"
         },
-        ["Wpf|K165"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecentAlarmEvents"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近报警事件", ["en-US"] = "Recent Alarm Events", ["ja-JP"] = "直近のアラームイベント", ["pt-BR"] = "Eventos de alarme recentes"
         },
-        ["Wpf|K166"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectRatio"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷占比", ["en-US"] = "Defect Ratio", ["ja-JP"] = "不良割合", ["pt-BR"] = "Proporção de defeitos"
         },
-        ["Wpf|K167"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportAlarmCSV"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出报警 CSV", ["en-US"] = "Export Alarm CSV", ["ja-JP"] = "アラームCSVエクスポート", ["pt-BR"] = "Exportar CSV de alarmes"
         },
-        ["Wpf|K168"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportAllAlarmsCurrentDeviceCSV"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出当前设备全部报警到 CSV 文件（可用 Excel 编辑）", ["en-US"] = "Export all alarms of the current device to CSV (Excel-editable)", ["ja-JP"] = "現在の設備の全アラームをCSVにエクスポート（Excel編集可）", ["pt-BR"] = "Exporta todos os alarmes do dispositivo atual para CSV (editável no Excel)"
         },
-        ["Wpf|K169"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportAlarmCSV"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入报警 CSV", ["en-US"] = "Import Alarm CSV", ["ja-JP"] = "アラームCSVインポート", ["pt-BR"] = "Importar CSV de alarmes"
         },
-        ["Wpf|K170"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportAlarmsCSVAppendReplaceCurrent"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "从 CSV 文件导入报警（追加或替换当前设备报警列表）", ["en-US"] = "Import alarms from CSV (append or replace current list)", ["ja-JP"] = "CSVからアラームをインポート（追加または置換）", ["pt-BR"] = "Importa alarmes de um CSV (anexa ou substitui a lista atual)"
         },
-        ["Wpf|K171"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmList"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警列表", ["en-US"] = "Alarm List", ["ja-JP"] = "アラーム一覧", ["pt-BR"] = "Lista de alarmes"
         },
-        ["Wpf|K172"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCAddressEGM100"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 地址（如 M100）", ["en-US"] = "PLC Address (e.g. M100)", ["ja-JP"] = "PLCアドレス（例：M100）", ["pt-BR"] = "Endereço PLC (ex.: M100)"
         },
-        ["Wpf|K173"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmPLCAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警 PLC 地址", ["en-US"] = "Alarm PLC Address", ["ja-JP"] = "アラームPLCアドレス", ["pt-BR"] = "Endereço PLC do alarme"
         },
-        ["Wpf|K174"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CounterAlarmList"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计数器报警列表", ["en-US"] = "Counter Alarm List", ["ja-JP"] = "カカカウンタアラーム一覧", ["pt-BR"] = "Lista de alarmes de contador"
         },
-        ["Wpf|K175"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CounterAlarmName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计数器报警名称", ["en-US"] = "Counter Alarm Name", ["ja-JP"] = "カカカウンタアラーム名", ["pt-BR"] = "Nome do alarme de contador"
         },
-        ["Wpf|K176"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCAddressEGD300"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 地址（如 D300）", ["en-US"] = "PLC Address (e.g. D300)", ["ja-JP"] = "PLCアドレス（例：D300）", ["pt-BR"] = "Endereço PLC (ex.: D300)"
         },
-        ["Wpf|K177"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CounterAlarmPLCAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计数器报警 PLC 地址", ["en-US"] = "Counter Alarm PLC Address", ["ja-JP"] = "カカカウンタアラームPLCアドレス", ["pt-BR"] = "Endereço PLC do alarme de contador"
         },
-        ["Wpf|K178"] = new Dictionary<string, string>
+        ["Wpf|Lbl_UpperThreshold"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "阈值上限", ["en-US"] = "Upper Threshold", ["ja-JP"] = "閾値上限", ["pt-BR"] = "Limite superior"
         },
-        ["Wpf|K179"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CounterAlarmUpperThreshold"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计数器报警阈值上限", ["en-US"] = "Counter Alarm Upper Threshold", ["ja-JP"] = "カカカウンタアラーム閾値上限", ["pt-BR"] = "Limite superior do alarme de contador"
         },
-        ["Wpf|K180"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Unit"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "单位", ["en-US"] = "Unit", ["ja-JP"] = "単位", ["pt-BR"] = "Unidade"
         },
-        ["Wpf|K181"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CountUnit"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计数单位", ["en-US"] = "Count Unit", ["ja-JP"] = "カウント単位", ["pt-BR"] = "Unidade de contagem"
         },
-        ["Wpf|K182"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CounterAlarmDescription"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计数器报警描述", ["en-US"] = "Counter Alarm Description", ["ja-JP"] = "カカカウンタアラーム説明", ["pt-BR"] = "Descrição do alarme de contador"
         },
-        ["Wpf|K183"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentValue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前值：", ["en-US"] = "Current value:", ["ja-JP"] = "現在値：", ["pt-BR"] = "Valor atual:"
         },
-        ["Wpf|K184"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Exceeded"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已超限", ["en-US"] = "Exceeded", ["ja-JP"] = "上限超過", ["pt-BR"] = "Excedido"
         },
-        ["Wpf|K185"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ClearCounterAlarmValue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "清空计数器报警当前值", ["en-US"] = "Clear Counter Alarm Value", ["ja-JP"] = "カカカウンタアラーム現在値をクリア", ["pt-BR"] = "Limpar valor do alarme de contador"
         },
-        ["Wpf|K186"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ClearValue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "清空当前值", ["en-US"] = "Clear Value", ["ja-JP"] = "現在値をクリア", ["pt-BR"] = "Limpar valor atual"
         },
-        ["Wpf|K187"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectList"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷列表", ["en-US"] = "Defect List", ["ja-JP"] = "不良一覧", ["pt-BR"] = "Lista de defeitos"
         },
-        ["Wpf|K188"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCAddressEGD200"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 地址（如 D200）", ["en-US"] = "PLC Address (e.g. D200)", ["ja-JP"] = "PLCアドレス（例：D200）", ["pt-BR"] = "Endereço PLC (ex.: D200)"
         },
-        ["Wpf|K189"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectPLCAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷 PLC 地址", ["en-US"] = "Defect PLC Address", ["ja-JP"] = "不良PLCアドレス", ["pt-BR"] = "Endereço PLC do defeito"
         },
-        ["Wpf|K190"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Severity"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "严重等级", ["en-US"] = "Severity", ["ja-JP"] = "重大度", ["pt-BR"] = "Severidade"
         },
-        ["Wpf|K191"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectSeverity"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷严重等级", ["en-US"] = "Defect Severity", ["ja-JP"] = "不良重大度", ["pt-BR"] = "Severidade do defeito"
         },
-        ["Wpf|K192"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCDisconnectedReadWriteClearOperations"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 未连接，读取、写入和清零操作已禁用", ["en-US"] = "PLC disconnected; read/write/clear operations disabled", ["ja-JP"] = "PLC未接続：読取り/書込み/クリア操作は無効", ["pt-BR"] = "PLC desconectado; operações de leitura/gravação/limpeza desabilitadas"
         },
-        ["Wpf|K193"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentDeviceHasConfigurationIssues"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前设备存在配置问题", ["en-US"] = "Current device has configuration issues", ["ja-JP"] = "現在の設備に設定問題があります", ["pt-BR"] = "O dispositivo atual tem problemas de configuração"
         },
-        ["Wpf|K194"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConfigErrorClickLocate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配置错误，点击定位", ["en-US"] = "Config error, click to locate", ["ja-JP"] = "設定エラー、クリックで移動", ["pt-BR"] = "Erro de configuração; clique para localizar"
         },
-        ["Wpf|K195"] = new Dictionary<string, string>
+        ["Wpf|Lbl_BasicParameters"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "基本参数", ["en-US"] = "Basic Parameters", ["ja-JP"] = "基本パラメータ", ["pt-BR"] = "Parâmetros básicos"
         },
-        ["Wpf|K196"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TargetOutputPcsHour"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标产能（件/小时）", ["en-US"] = "Target output (pcs/hour)", ["ja-JP"] = "目標能力（個/時間）", ["pt-BR"] = "Capacidade alvo (pçs/hora)"
         },
-        ["Wpf|K197"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TargetOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标产能", ["en-US"] = "Target output", ["ja-JP"] = "目標能力", ["pt-BR"] = "Capacidade alvo"
         },
-        ["Wpf|K198"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCAddressConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 地址配置", ["en-US"] = "PLC Address Config", ["ja-JP"] = "PLCアドレス設定", ["pt-BR"] = "Configuração de endereços PLC"
         },
-        ["Wpf|K199"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OKCountAddressEGD100"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OK 数量地址（如 D100）", ["en-US"] = "OK Count Address (e.g. D100)", ["ja-JP"] = "OK数アドレス（例：D100）", ["pt-BR"] = "Endereço de contagem OK (ex.: D100)"
         },
-        ["Wpf|K200"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OKCountPLCAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OK 数量 PLC 地址", ["en-US"] = "OK Count PLC Address", ["ja-JP"] = "OK数PLCアドレス", ["pt-BR"] = "Endereço PLC de contagem OK"
         },
-        ["Wpf|K201"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ReadOKCountAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "读取 OK 数量地址", ["en-US"] = "Read OK Count Address", ["ja-JP"] = "OK数アドレスを読取り", ["pt-BR"] = "Ler endereço de contagem OK"
         },
-        ["Wpf|K202"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NGCountAddressEGD102"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "NG 数量地址（如 D102）", ["en-US"] = "NG Count Address (e.g. D102)", ["ja-JP"] = "NG数アドレス（例：D102）", ["pt-BR"] = "Endereço de contagem NG (ex.: D102)"
         },
-        ["Wpf|K203"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NGCountPLCAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "NG 数量 PLC 地址", ["en-US"] = "NG Count PLC Address", ["ja-JP"] = "NG数PLCアドレス", ["pt-BR"] = "Endereço PLC de contagem NG"
         },
-        ["Wpf|K204"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ReadNGCountAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "读取 NG 数量地址", ["en-US"] = "Read NG Count Address", ["ja-JP"] = "NG数アドレスを読取り", ["pt-BR"] = "Ler endereço de contagem NG"
         },
-        ["Wpf|K205"] = new Dictionary<string, string>
+        ["Wpf|Lbl_StatusAddressEGD104"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态地址（如 D104）", ["en-US"] = "Status Address (e.g. D104)", ["ja-JP"] = "状態アドレス（例：D104）", ["pt-BR"] = "Endereço de estado (ex.: D104)"
         },
-        ["Wpf|K206"] = new Dictionary<string, string>
+        ["Wpf|Lbl_StatusPLCAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态 PLC 地址", ["en-US"] = "Status PLC Address", ["ja-JP"] = "状態PLCアドレス", ["pt-BR"] = "Endereço PLC de estado"
         },
-        ["Wpf|K207"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ReadStatusAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "读取状态地址", ["en-US"] = "Read Status Address", ["ja-JP"] = "状態アドレスを読取り", ["pt-BR"] = "Ler endereço de estado"
         },
-        ["Wpf|K208"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OEEResetAddressEGD106"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 清零地址（如 D106）", ["en-US"] = "OEE Reset Address (e.g. D106)", ["ja-JP"] = "OEEクリアアドレス（例：D106）", ["pt-BR"] = "Endereço de zeramento do OEE (ex.: D106)"
         },
-        ["Wpf|K209"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OEEResetPLCAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 清零 PLC 地址", ["en-US"] = "OEE Reset PLC Address", ["ja-JP"] = "OEEクリアPLCアドレス", ["pt-BR"] = "Endereço PLC de zeramento do OEE"
         },
-        ["Wpf|K210"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Writes1ShiftChangeManualReset"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次切换或手动清零时向该地址写 1，由 PLC 程序清零本设备的 OK/NG 产量计数器。", ["en-US"] = "Writes 1 on shift change or manual reset; the PLC program clears the OK/NG counters.", ["ja-JP"] = "シフト切替または手動クリア時にこのアドレスへ1を書込み、PLCプログラムがOK/NGカウンタをクリアします。", ["pt-BR"] = "Escreve 1 na troca de turno ou zeramento manual; o programa do PLC zera os contadores OK/NG do dispositivo."
         },
-        ["Wpf|K211"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ManualOEEReset"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "手动触发 OEE 清零", ["en-US"] = "Manual OEE Reset", ["ja-JP"] = "手動OEEクリア", ["pt-BR"] = "Zeramento manual do OEE"
         },
-        ["Wpf|K212"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Reset"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "清零", ["en-US"] = "Reset", ["ja-JP"] = "クリア", ["pt-BR"] = "Zerar"
         },
-        ["Wpf|K213"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SendsResetCommandPLCIrreversibleUnavailable"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "向 PLC 写入清零指令；不可撤销且断线时不可用", ["en-US"] = "Sends reset command to PLC; irreversible, unavailable when disconnected", ["ja-JP"] = "PLCへクリア指令を書込み。取消不可、切断時は利用不可", ["pt-BR"] = "Envia comando de zeramento ao PLC; irreversível e indisponível quando desconectado"
         },
-        ["Wpf|K214"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeParameters"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方参数", ["en-US"] = "Recipe Parameters", ["ja-JP"] = "レシピパラメータ", ["pt-BR"] = "Parâmetros da receita"
         },
-        ["Wpf|K215"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeValueIntegerDWord"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方值（整数，写入 DWord）", ["en-US"] = "Recipe Value (integer, DWord)", ["ja-JP"] = "レシピ値（整数、DWord）", ["pt-BR"] = "Valor da receita (inteiro, DWord)"
         },
-        ["Wpf|K216"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeValue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方值", ["en-US"] = "Recipe Value", ["ja-JP"] = "レシピ値", ["pt-BR"] = "Valor da receita"
         },
-        ["Wpf|K217"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeAddressEGD500"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方地址（如 D500）", ["en-US"] = "Recipe Address (e.g. D500)", ["ja-JP"] = "レシピアドレス（例：D500）", ["pt-BR"] = "Endereço da receita (ex.: D500)"
         },
-        ["Wpf|K218"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipePLCAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方 PLC 地址", ["en-US"] = "Recipe PLC Address", ["ja-JP"] = "レシピPLCアドレス", ["pt-BR"] = "Endereço PLC da receita"
         },
-        ["Wpf|K219"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WriteRecipePLC"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "写入配方到 PLC", ["en-US"] = "Write Recipe to PLC", ["ja-JP"] = "レシピをPLCへ書込み", ["pt-BR"] = "Gravar receita no PLC"
         },
-        ["Wpf|K220"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WritePLC"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "写入 PLC", ["en-US"] = "Write to PLC", ["ja-JP"] = "PLCへ書込み", ["pt-BR"] = "Gravar no PLC"
         },
-        ["Wpf|K221"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WritesRecipePLCVerifyDeviceAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "写入配方到 PLC；请确认设备和地址后操作", ["en-US"] = "Writes recipe to PLC; verify device and address first", ["ja-JP"] = "レシピをPLCへ書込みます。設備とアドレスを確認してから操作", ["pt-BR"] = "Grava a receita no PLC; confirme o dispositivo e o endereço antes de operar"
         },
-        ["Wpf|K222"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Unsaved"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "● 未保存", ["en-US"] = "● Unsaved", ["ja-JP"] = "● 未保存", ["pt-BR"] = "● Não salvo"
         },
-        ["Wpf|K223"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SearchDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "搜索设备", ["en-US"] = "Search Device", ["ja-JP"] = "設備を検索", ["pt-BR"] = "Pesquisar dispositivo"
         },
-        ["Wpf|K224"] = new Dictionary<string, string>
+        ["Wpf|Lbl_FilterDevicesStatus"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "按状态筛选设备", ["en-US"] = "Filter devices by status", ["ja-JP"] = "状態で設備を絞り込み", ["pt-BR"] = "Filtrar dispositivos por status"
         },
-        ["Wpf|K225"] = new Dictionary<string, string>
+        ["Wpf|Lbl_StatusFilter"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态筛选", ["en-US"] = "Status Filter", ["ja-JP"] = "状態フィルター", ["pt-BR"] = "Filtro de status"
         },
-        ["Wpf|K226"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AddressConflictClickLocate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "地址冲突，点击定位", ["en-US"] = "Address conflict, click to locate", ["ja-JP"] = "アドレス衝突、クリックで移動", ["pt-BR"] = "Conflito de endereço; clique para localizar"
         },
-        ["Wpf|K227"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoMatchingDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "无匹配的设备", ["en-US"] = "No matching device", ["ja-JP"] = "一致する設備なし", ["pt-BR"] = "Nenhum dispositivo correspondente"
         },
-        ["Wpf|K228"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HintAdjustKeywordStatusFilter"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "提示：调整搜索关键词或状态筛选条件", ["en-US"] = "Hint: adjust the keyword or status filter", ["ja-JP"] = "ヒント：キーワードまたは状態フィルターを調整", ["pt-BR"] = "Dica: ajuste a palavra-chave ou o filtro de status"
         },
-        ["Wpf|K229"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AddDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "新增设备", ["en-US"] = "Add Device", ["ja-JP"] = "設備追加", ["pt-BR"] = "Adicionar dispositivo"
         },
-        ["Wpf|K230"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeleteSelectedDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "删除选中的设备", ["en-US"] = "Delete Selected Device", ["ja-JP"] = "選択設備を削除", ["pt-BR"] = "Excluir dispositivo selecionado"
         },
-        ["Wpf|K231"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SaveDeviceConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存设备配置", ["en-US"] = "Save Device Config", ["ja-JP"] = "設備設定を保存", ["pt-BR"] = "Salvar configuração do dispositivo"
         },
-        ["Wpf|K232"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Save"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存", ["en-US"] = "Save", ["ja-JP"] = "保存", ["pt-BR"] = "Salvar"
         },
-        ["Wpf|K233"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SaveDeviceConfigCtrlS"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存设备配置 (Ctrl+S)", ["en-US"] = "Save Device Config (Ctrl+S)", ["ja-JP"] = "設備設定を保存（Ctrl+S）", ["pt-BR"] = "Salvar configuração (Ctrl+S)"
         },
-        ["Wpf|K234"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MoreDeviceActions"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "更多设备操作", ["en-US"] = "More Device Actions", ["ja-JP"] = "その他の設備操作", ["pt-BR"] = "Mais ações do dispositivo"
         },
-        ["Wpf|K235"] = new Dictionary<string, string>
+        ["Wpf|Lbl_More"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "更多", ["en-US"] = "More", ["ja-JP"] = "その他", ["pt-BR"] = "Mais"
         },
-        ["Wpf|K236"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CopyImportExportRestoreVirtual"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复制 / 导入 / 导出 / 恢复 / 虚拟", ["en-US"] = "Copy / Import / Export / Restore / Virtual", ["ja-JP"] = "コピー / インポート / エクスポート / 復元 / 仮想", ["pt-BR"] = "Copiar / Importar / Exportar / Restaurar / Virtual"
         },
-        ["Wpf|K237"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CopySelectedDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复制选中的设备", ["en-US"] = "Copy Selected Device", ["ja-JP"] = "選択設備をコピー", ["pt-BR"] = "Copiar dispositivo selecionado"
         },
-        ["Wpf|K238"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CopySelectedDevice2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复制选中设备", ["en-US"] = "Copy Selected Device", ["ja-JP"] = "選択設備をコピー", ["pt-BR"] = "Copiar dispositivo selecionado"
         },
-        ["Wpf|K239"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportDeviceConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入设备配置", ["en-US"] = "Import Device Config", ["ja-JP"] = "設備設定をインポート", ["pt-BR"] = "Importar configuração do dispositivo"
         },
-        ["Wpf|K240"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入配置", ["en-US"] = "Import Config", ["ja-JP"] = "設定をインポート", ["pt-BR"] = "Importar configuração"
         },
-        ["Wpf|K241"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportDeviceConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出设备配置", ["en-US"] = "Export Device Config", ["ja-JP"] = "設備設定をエクスポート", ["pt-BR"] = "Exportar configuração do dispositivo"
         },
-        ["Wpf|K242"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出配置", ["en-US"] = "Export Config", ["ja-JP"] = "設定をエクスポート", ["pt-BR"] = "Exportar configuração"
         },
-        ["Wpf|K243"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RestorePreviousConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "恢复上一版本配置", ["en-US"] = "Restore Previous Config", ["ja-JP"] = "前回設定を復元", ["pt-BR"] = "Restaurar configuração anterior"
         },
-        ["Wpf|K244"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RestorePrevious"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "恢复上一版本", ["en-US"] = "Restore Previous", ["ja-JP"] = "前回へ復元", ["pt-BR"] = "Restaurar versão anterior"
         },
-        ["Wpf|K245"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OverwriteLastSavedConfigPasswordRequired"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "用上一次保存前的配置覆盖当前配置（需密码确认）", ["en-US"] = "Overwrite with the last saved config (password required)", ["ja-JP"] = "前回保存前の設定で上書き（パスワード確認あり）", ["pt-BR"] = "Sobrescreve com a última configuração salva (requer senha)"
         },
-        ["Wpf|K246"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Generate20VirtualDevicesPreviewPassword"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生成 20 台虚拟设备用于预览（需密码确认）", ["en-US"] = "Generate 20 virtual devices for preview (password required)", ["ja-JP"] = "プレビュー用に仮想設備20台を生成（パスワード確認あり）", ["pt-BR"] = "Gera 20 dispositivos virtuais para pré-visualização (requer senha)"
         },
-        ["Wpf|K247"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AdjustWidthDeviceListDetail"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "调整设备列表与设备详情的宽度", ["en-US"] = "Adjust width of device list and detail", ["ja-JP"] = "設備一覧と詳細の幅を調整", ["pt-BR"] = "Ajustar largura da lista e dos detalhes do dispositivo"
         },
-        ["Wpf|K248"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SelectDeviceEditParametersPLCAddresses"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "选中后可在此处编辑设备参数、PLC 地址、报警与缺陷", ["en-US"] = "Select a device to edit parameters, PLC addresses, alarms and defects", ["ja-JP"] = "設備を選択するとパラメータ、PLCアドレス、アラーム、不良を編集できます", ["pt-BR"] = "Selecione um dispositivo para editar parâmetros, endereços PLC, alarmes e defeitos"
         },
-        ["Wpf|K249"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SelectDeviceClickAdd"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请选择设备或点击新增", ["en-US"] = "Select a device or click Add", ["ja-JP"] = "設備を選択するか「追加」をクリック", ["pt-BR"] = "Selecione um dispositivo ou clique em Adicionar"
         },
-        ["Wpf|K250"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceDetailTabs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备详情选项卡", ["en-US"] = "Device Detail Tabs", ["ja-JP"] = "設備詳細タブ", ["pt-BR"] = "Abas de detalhes do dispositivo"
         },
-        ["Wpf|K251"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Loading"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "加载中", ["en-US"] = "Loading", ["ja-JP"] = "読み込み中", ["pt-BR"] = "Carregando"
         },
-        ["Wpf|K252"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HistoryQuery"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "历史查询", ["en-US"] = "History Query", ["ja-JP"] = "履歴照会", ["pt-BR"] = "Consulta de histórico"
         },
-        ["Wpf|K253"] = new Dictionary<string, string>
+        ["Wpf|Lbl_QuickTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "快捷时间", ["en-US"] = "Quick Time", ["ja-JP"] = "クイック時間", ["pt-BR"] = "Tempo rápido"
         },
-        ["Wpf|K254"] = new Dictionary<string, string>
+        ["Wpf|Lbl_QuickTimeSelection"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "快捷时间选择", ["en-US"] = "Quick Time Selection", ["ja-JP"] = "クイック時間選択", ["pt-BR"] = "Seleção de tempo rápido"
         },
-        ["Wpf|K255"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Custom"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "自定义", ["en-US"] = "Custom", ["ja-JP"] = "カスタム", ["pt-BR"] = "Personalizado"
         },
-        ["Wpf|K256"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Today"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "今天", ["en-US"] = "Today", ["ja-JP"] = "今日", ["pt-BR"] = "Hoje"
         },
-        ["Wpf|K257"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Yesterday"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "昨天", ["en-US"] = "Yesterday", ["ja-JP"] = "昨日", ["pt-BR"] = "Ontem"
         },
-        ["Wpf|K258"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Last7Days"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "近7天", ["en-US"] = "Last 7 Days", ["ja-JP"] = "直近7日", ["pt-BR"] = "Últimos 7 dias"
         },
-        ["Wpf|K259"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Last30Days"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "近30天", ["en-US"] = "Last 30 Days", ["ja-JP"] = "直近30日", ["pt-BR"] = "Últimos 30 dias"
         },
-        ["Wpf|K260"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PreviousShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "上班次", ["en-US"] = "Previous Shift", ["ja-JP"] = "前シフト", ["pt-BR"] = "Turno anterior"
         },
-        ["Wpf|K261"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Week"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "本周", ["en-US"] = "This Week", ["ja-JP"] = "今週", ["pt-BR"] = "Esta semana"
         },
-        ["Wpf|K262"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Month"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "本月", ["en-US"] = "This Month", ["ja-JP"] = "今月", ["pt-BR"] = "Este mês"
         },
-        ["Wpf|K263"] = new Dictionary<string, string>
+        ["Wpf|Lbl_From"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "从", ["en-US"] = "From", ["ja-JP"] = "開始", ["pt-BR"] = "De"
         },
-        ["Wpf|K264"] = new Dictionary<string, string>
+        ["Wpf|Lbl_QueryStartTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询起始时间", ["en-US"] = "Query Start Time", ["ja-JP"] = "照会開始時刻", ["pt-BR"] = "Hora inicial da consulta"
         },
-        ["Wpf|K265"] = new Dictionary<string, string>
+        ["Wpf|Lbl_To"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "至", ["en-US"] = "To", ["ja-JP"] = "終了", ["pt-BR"] = "Até"
         },
-        ["Wpf|K266"] = new Dictionary<string, string>
+        ["Wpf|Lbl_QueryEndTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询结束时间", ["en-US"] = "Query End Time", ["ja-JP"] = "照会終了時刻", ["pt-BR"] = "Hora final da consulta"
         },
-        ["Wpf|K267"] = new Dictionary<string, string>
+        ["Wpf|Lbl_QueryHistoryData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询历史数据", ["en-US"] = "Query History Data", ["ja-JP"] = "履歴データを照会", ["pt-BR"] = "Consultar histórico"
         },
-        ["Wpf|K268"] = new Dictionary<string, string>
+        ["Wpf|Lbl_QueryCtrlEnter"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询 (Ctrl+Enter)", ["en-US"] = "Query (Ctrl+Enter)", ["ja-JP"] = "照会（Ctrl+Enter）", ["pt-BR"] = "Consultar (Ctrl+Enter)"
         },
-        ["Wpf|K269"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Query"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询", ["en-US"] = "Query", ["ja-JP"] = "照会", ["pt-BR"] = "Consultar"
         },
-        ["Wpf|K270"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ResetFilters"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "重置筛选条件", ["en-US"] = "Reset Filters", ["ja-JP"] = "フィルターをリセット", ["pt-BR"] = "Redefinir filtros"
         },
-        ["Wpf|K271"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ClearFiltersCtrlR"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "清空筛选条件 (Ctrl+R)", ["en-US"] = "Clear Filters (Ctrl+R)", ["ja-JP"] = "フィルターをクリア（Ctrl+R）", ["pt-BR"] = "Limpar filtros (Ctrl+R)"
         },
-        ["Wpf|K272"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Reset2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "重置", ["en-US"] = "Reset", ["ja-JP"] = "リセット", ["pt-BR"] = "Redefinir"
         },
-        ["Wpf|K273"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportCurrentTabDataCSV"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出当前 Tab 数据为 CSV", ["en-US"] = "Export current tab data as CSV", ["ja-JP"] = "現在のタブをCSVにエクスポート", ["pt-BR"] = "Exporta os dados da aba atual como CSV"
         },
-        ["Wpf|K274"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportCSVCtrlE"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出 CSV (Ctrl+E)", ["en-US"] = "Export CSV (Ctrl+E)", ["ja-JP"] = "CSVエクスポート（Ctrl+E）", ["pt-BR"] = "Exportar CSV (Ctrl+E)"
         },
-        ["Wpf|K275"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShiftFilter"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次筛选", ["en-US"] = "Shift Filter", ["ja-JP"] = "シフトフィルター", ["pt-BR"] = "Filtro de turno"
         },
-        ["Wpf|K276"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmType"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警类型", ["en-US"] = "Alarm Type", ["ja-JP"] = "アラーム種別", ["pt-BR"] = "Tipo de alarme"
         },
-        ["Wpf|K277"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmTypeFilter"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警类型筛选", ["en-US"] = "Alarm Type Filter", ["ja-JP"] = "アラーム種別フィルター", ["pt-BR"] = "Filtro de tipo de alarme"
         },
-        ["Wpf|K278"] = new Dictionary<string, string>
+        ["Wpf|Lbl_GeneratedHistoricalAlarmEvents"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "从历史报警事件中动态生成", ["en-US"] = "Generated from historical alarm events", ["ja-JP"] = "履歴アラームイベントから動的に生成", ["pt-BR"] = "gerado dinamicamente dos eventos históricos de alarme"
         },
-        ["Wpf|K279"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OutputQueryTab"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量查询 标签", ["en-US"] = "Output Query Tab", ["ja-JP"] = "生産量照会タブ", ["pt-BR"] = "Aba de consulta de produção"
         },
-        ["Wpf|K280"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OutputQuery"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量查询", ["en-US"] = "Output Query", ["ja-JP"] = "生産量照会", ["pt-BR"] = "Consulta de produção"
         },
-        ["Wpf|K281"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TotalOKOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "总 OK 产量", ["en-US"] = "Total OK Output", ["ja-JP"] = "総OK生産量", ["pt-BR"] = "Produção OK total"
         },
-        ["Wpf|K282"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TotalNGOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "总 NG 产量", ["en-US"] = "Total NG Output", ["ja-JP"] = "総NG生産量", ["pt-BR"] = "Produção NG total"
         },
-        ["Wpf|K283"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OutputLogTable"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量日志表", ["en-US"] = "Output Log Table", ["ja-JP"] = "生産量ログ表", ["pt-BR"] = "Tabela de log de produção"
         },
-        ["Wpf|K284"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NGOutputPcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "NG 产量(件)", ["en-US"] = "NG Output (pcs)", ["ja-JP"] = "NG生産量（個）", ["pt-BR"] = "Produção NG (pçs)"
         },
-        ["Wpf|K285"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoMatchingOutputData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未查询到符合条件的产量数据", ["en-US"] = "No matching output data", ["ja-JP"] = "条件に合う生産量データがありません", ["pt-BR"] = "Nenhum dado de produção correspondente"
         },
-        ["Wpf|K286"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HintSwitchDeviceWidenTimeRange"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "提示：尝试切换设备、放宽时间范围，或检查 PLC 采集是否正常", ["en-US"] = "Hint: switch device, widen the time range, or check PLC acquisition", ["ja-JP"] = "ヒント：設備を切り替えるか時間範囲を広げるか、PLC収集を確認", ["pt-BR"] = "Dica: troque o dispositivo, amplie o período ou verifique a coleta do PLC"
         },
-        ["Wpf|K287"] = new Dictionary<string, string>
+        ["Wpf|Lbl_StatusDurationTab"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态时长 标签", ["en-US"] = "Status Duration Tab", ["ja-JP"] = "状態時間タブ", ["pt-BR"] = "Aba de duração por estado"
         },
-        ["Wpf|K288"] = new Dictionary<string, string>
+        ["Wpf|Lbl_StatusDuration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态时长", ["en-US"] = "Status Duration", ["ja-JP"] = "状態時間", ["pt-BR"] = "Duração por estado"
         },
-        ["Wpf|K289"] = new Dictionary<string, string>
+        ["Wpf|Lbl_StandbyDuration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "待机时长", ["en-US"] = "Standby Duration", ["ja-JP"] = "待機時間", ["pt-BR"] = "Duração em espera"
         },
-        ["Wpf|K290"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DurationBarChart"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时长柱状图", ["en-US"] = "Duration Bar Chart", ["ja-JP"] = "時間棒グラフ", ["pt-BR"] = "Gráfico de barras de duração"
         },
-        ["Wpf|K291"] = new Dictionary<string, string>
+        ["Wpf|Lbl_StatusTransitionTimeline"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态切换时间线", ["en-US"] = "Status Transition Timeline", ["ja-JP"] = "状態遷移タイムライン", ["pt-BR"] = "Linha do tempo de transições de estado"
         },
-        ["Wpf|K292"] = new Dictionary<string, string>
+        ["Wpf|Lbl_StatusTransitionTable"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态转换记录表", ["en-US"] = "Status Transition Table", ["ja-JP"] = "状態遷移記録表", ["pt-BR"] = "Tabela de transições de estado"
         },
-        ["Wpf|K293"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PreviousStatus"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "之前状态", ["en-US"] = "Previous Status", ["ja-JP"] = "遷移前の状態", ["pt-BR"] = "Estado anterior"
         },
-        ["Wpf|K294"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NextStatus"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "之后状态", ["en-US"] = "Next Status", ["ja-JP"] = "遷移後の状態", ["pt-BR"] = "Estado seguinte"
         },
-        ["Wpf|K295"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoMatchingStatusTransitions"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未查询到符合条件的状态转换记录", ["en-US"] = "No matching status transitions", ["ja-JP"] = "条件に合う状態遷移記録がありません", ["pt-BR"] = "Nenhuma transição de estado correspondente"
         },
-        ["Wpf|K296"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HintStatusDurationRequiresSpecificDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "提示：状态时长需选择具体设备，请检查设备筛选", ["en-US"] = "Hint: status duration requires a specific device; check the device filter", ["ja-JP"] = "ヒント：状態時間は設備を指定する必要があります。設備フィルターを確認", ["pt-BR"] = "Dica: a duração por estado exige um dispositivo específico; verifique o filtro"
         },
-        ["Wpf|K297"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmRecordsTab"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警记录 标签", ["en-US"] = "Alarm Records Tab", ["ja-JP"] = "アラーム記録タブ", ["pt-BR"] = "Aba de registros de alarme"
         },
-        ["Wpf|K298"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmRecords"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警记录", ["en-US"] = "Alarm Records", ["ja-JP"] = "アラーム記録", ["pt-BR"] = "Registros de alarme"
         },
-        ["Wpf|K299"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TriggeredCount"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "触发次数", ["en-US"] = "Triggered Count", ["ja-JP"] = "発生回数", ["pt-BR"] = "Nº de disparos"
         },
-        ["Wpf|K300"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecoveredCount"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "恢复次数", ["en-US"] = "Recovered Count", ["ja-JP"] = "復帰回数", ["pt-BR"] = "Nº de recuperações"
         },
-        ["Wpf|K301"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PendingRecovery"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "待恢复", ["en-US"] = "Pending Recovery", ["ja-JP"] = "復帰待ち", ["pt-BR"] = "Aguardando recuperação"
         },
-        ["Wpf|K302"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmEventTable"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警事件表", ["en-US"] = "Alarm Event Table", ["ja-JP"] = "アラームイベント表", ["pt-BR"] = "Tabela de eventos de alarme"
         },
-        ["Wpf|K303"] = new Dictionary<string, string>
+        ["Wpf|Lbl_EventType"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "事件类型", ["en-US"] = "Event Type", ["ja-JP"] = "イベント種別", ["pt-BR"] = "Tipo de evento"
         },
-        ["Wpf|K304"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoMatchingAlarmRecords"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未查询到符合条件的报警记录", ["en-US"] = "No matching alarm records", ["ja-JP"] = "条件に合うアラーム記録がありません", ["pt-BR"] = "Nenhum registro de alarme correspondente"
         },
-        ["Wpf|K305"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HintSwitchDeviceWidenTimeRange2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "提示：尝试切换设备或放宽时间范围", ["en-US"] = "Hint: switch device or widen the time range", ["ja-JP"] = "ヒント：設備を切り替えるか時間範囲を広げてください", ["pt-BR"] = "Dica: troque o dispositivo ou amplie o período"
         },
-        ["Wpf|K306"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OEEAnalysisTab"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 分析 标签", ["en-US"] = "OEE Analysis Tab", ["ja-JP"] = "OEE分析タブ", ["pt-BR"] = "Aba de análise de OEE"
         },
-        ["Wpf|K307"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OEEAnalysis"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 分析", ["en-US"] = "OEE Analysis", ["ja-JP"] = "OEE分析", ["pt-BR"] = "Análise de OEE"
         },
-        ["Wpf|K308"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OverallOEE"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 综合", ["en-US"] = "Overall OEE", ["ja-JP"] = "総合OEE", ["pt-BR"] = "OEE geral"
         },
-        ["Wpf|K309"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OEEMetrics"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 指标", ["en-US"] = "OEE Metrics", ["ja-JP"] = "OEE指標", ["pt-BR"] = "Indicadores do OEE"
         },
-        ["Wpf|K310"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TrendChange"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "趋势变化", ["en-US"] = "Trend Change", ["ja-JP"] = "トレンド変化", ["pt-BR"] = "Mudança de tendência"
         },
-        ["Wpf|K311"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OKOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OK 产量", ["en-US"] = "OK Output", ["ja-JP"] = "OK生産量", ["pt-BR"] = "Produção OK"
         },
-        ["Wpf|K312"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NGOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "NG 产量", ["en-US"] = "NG Output", ["ja-JP"] = "NG生産量", ["pt-BR"] = "Produção NG"
         },
-        ["Wpf|K313"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OEEShiftDetailTable"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 班次明细表", ["en-US"] = "OEE Shift Detail Table", ["ja-JP"] = "OEEシフト明細表", ["pt-BR"] = "Tabela de detalhes por turno do OEE"
         },
-        ["Wpf|K314"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShiftStart"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次开始", ["en-US"] = "Shift Start", ["ja-JP"] = "シフト開始", ["pt-BR"] = "Início do turno"
         },
-        ["Wpf|K315"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SelectDeviceTimeRangeClickQuery"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "选择设备和时间范围后点击「查询」，即可计算该时段的 OEE 指标。", ["en-US"] = "Select a device and time range, then click Query to compute OEE for that period.", ["ja-JP"] = "設備と時間範囲を選択して「照会」をクリックすると、その期間のOEE指標を計算します。", ["pt-BR"] = "Selecione o dispositivo e o período e clique em Consultar para calcular o OEE."
         },
-        ["Wpf|K316"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OEEQualityRatePerformanceRateTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE = 良品率 × 性能达标率 × 时间稼动率", ["en-US"] = "OEE = Quality Rate × Performance Rate × Time Availability", ["ja-JP"] = "OEE = 良品率 × 性能達成率 × 時間稼働率", ["pt-BR"] = "OEE = Taxa de qualidade × Taxa de desempenho × Disponibilidade de tempo"
         },
-        ["Wpf|K317"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectParetoTop8"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷帕累托（TOP8）", ["en-US"] = "Defect Pareto (Top 8)", ["ja-JP"] = "不良パレート（TOP8）", ["pt-BR"] = "Pareto de defeitos (Top 8)"
         },
-        ["Wpf|K318"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoStatusData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无状态数据", ["en-US"] = "No status data", ["ja-JP"] = "状態データがありません", ["pt-BR"] = "Sem dados de estado"
         },
-        ["Wpf|K319"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OEEOverallEquipmentEffectiveness"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE设备综合使用效率", ["en-US"] = "OEE Overall Equipment Effectiveness", ["ja-JP"] = "OEE設備総合使用効率", ["pt-BR"] = "OEE eficiência geral de uso do equipamento"
         },
-        ["Wpf|K320"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoOEEData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无 OEE 数据", ["en-US"] = "No OEE data", ["ja-JP"] = "OEEデータがありません", ["pt-BR"] = "Sem dados de OEE"
         },
-        ["Wpf|K321"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TimeAvailability2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "A时间稼动率", ["en-US"] = "A: Time Availability", ["ja-JP"] = "A:時間稼働率", ["pt-BR"] = "A: Disponibilidade de tempo"
         },
-        ["Wpf|K322"] = new Dictionary<string, string>
+        ["Wpf|Lbl_BPerformanceRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "B性能达标率", ["en-US"] = "B: Performance Rate", ["ja-JP"] = "B:性能達成率", ["pt-BR"] = "B: Taxa de desempenho"
         },
-        ["Wpf|K323"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentProductionProgress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前生产进度状态", ["en-US"] = "Current Production Progress", ["ja-JP"] = "現在の生産進捗状態", ["pt-BR"] = "Progresso da produção atual"
         },
-        ["Wpf|K324"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentSpeed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前速度", ["en-US"] = "Current Speed", ["ja-JP"] = "現在速度", ["pt-BR"] = "Velocidade atual"
         },
-        ["Wpf|K325"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PcsH"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "件/h", ["en-US"] = "pcs/h", ["ja-JP"] = "個/h", ["pt-BR"] = "pçs/h"
         },
-        ["Wpf|K326"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OrderTarget"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单目标", ["en-US"] = "Order Target", ["ja-JP"] = "工単目標", ["pt-BR"] = "Meta da ordem"
         },
-        ["Wpf|K327"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OrderCompletion"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单完成", ["en-US"] = "Order Completion", ["ja-JP"] = "工単完了", ["pt-BR"] = "Conclusão da ordem"
         },
-        ["Wpf|K328"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentShiftQuality"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前班次良率", ["en-US"] = "Current Shift Quality", ["ja-JP"] = "当シフト良品率", ["pt-BR"] = "Qualidade do turno atual"
         },
-        ["Wpf|K329"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RealTimeFaults"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "实时故障", ["en-US"] = "Real-time Faults", ["ja-JP"] = "リアルタイム故障", ["pt-BR"] = "Falhas em tempo real"
         },
-        ["Wpf|K330"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MuteNewAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "新报警静音", ["en-US"] = "Mute New Alarms", ["ja-JP"] = "新規アラームをミュート", ["pt-BR"] = "Silenciar novos alarmes"
         },
@@ -1879,3207 +1881,3207 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "选择设备", ["en-US"] = "Select device", ["ja-JP"] = "設備を選択", ["pt-BR"] = "Selecione o dispositivo"
         },
-        ["Wpf|K331"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ToggleSoundFlashingNewAlarmsSame"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "切换新报警声音与闪烁（与主页同一开关，整个程序生效）；报警列表仍照常更新", ["en-US"] = "Toggle sound and flashing for new alarms (same switch as Home, applies to the whole app); the alarm list still updates", ["ja-JP"] = "新規アラームの音と点滅を切替（ホームと同一、アプリ全体に効く。一覧は更新されます）", ["pt-BR"] = "Alterna som e piscada de novos alarmes (o mesmo botão da página inicial; vale para o aplicativo); a lista continua atualizando"
         },
-        ["Wpf|K332"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Level"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "级别", ["en-US"] = "Level", ["ja-JP"] = "レベル", ["pt-BR"] = "Nível"
         },
-        ["Wpf|K333"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RealTimeFaultList"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "实时故障列表", ["en-US"] = "Real-time Fault List", ["ja-JP"] = "リアルタイム故障一覧", ["pt-BR"] = "Lista de falhas em tempo real"
         },
-        ["Wpf|K335"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ProductionDashboard"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生产仪表板", ["en-US"] = "Production Dashboard", ["ja-JP"] = "生産ダッシュボード", ["pt-BR"] = "Painel de produção"
         },
-        ["Wpf|K336"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCDisconnected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 未连接", ["en-US"] = "PLC Disconnected", ["ja-JP"] = "PLC未接続", ["pt-BR"] = "PLC desconectado"
         },
-        ["Wpf|K337"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCConnected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 已连接", ["en-US"] = "PLC Connected", ["ja-JP"] = "PLC接続済み", ["pt-BR"] = "PLC conectado"
         },
-        ["Wpf|K338"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OpenWorkOrderManagement"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "打开工单管理页", ["en-US"] = "Open Work Order Management", ["ja-JP"] = "工単管理を開く", ["pt-BR"] = "Abrir gestão de ordens de produção"
         },
-        ["Wpf|K339"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ViewDetails"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查看详情", ["en-US"] = "View Details", ["ja-JP"] = "詳細を表示", ["pt-BR"] = "Ver detalhes"
         },
-        ["Wpf|K340"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ViewDetailsSelectedDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查看当前选中设备的详情", ["en-US"] = "View details of the selected device", ["ja-JP"] = "選択中の設備の詳細を表示", ["pt-BR"] = "Ver detalhes do dispositivo selecionado"
         },
-        ["Wpf|K341"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCDisconnectedLiveDataMayStale"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 未连接，实时数据可能已过期", ["en-US"] = "PLC disconnected; live data may be stale", ["ja-JP"] = "PLC未接続：リアルタイムデータが古い可能性があります", ["pt-BR"] = "PLC desconectado; dados em tempo real podem estar desatualizados"
         },
-        ["Wpf|K342"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ProductionReview"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生产复盘", ["en-US"] = "Production Review", ["ja-JP"] = "生産レビュー", ["pt-BR"] = "Revisão de produção"
         },
-        ["Wpf|K343"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ReviewDeviceSelection"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复盘设备选择", ["en-US"] = "Review Device Selection", ["ja-JP"] = "レビュー設備選択", ["pt-BR"] = "Seleção de dispositivo para revisão"
         },
-        ["Wpf|K344"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SelectDeviceReview"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "选择要复盘的单台设备", ["en-US"] = "Select a device to review", ["ja-JP"] = "レビューする設備を選択", ["pt-BR"] = "Selecione o dispositivo a revisar"
         },
-        ["Wpf|K345"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TimeRangeSelection"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时间范围选择", ["en-US"] = "Time Range Selection", ["ja-JP"] = "時間範囲選択", ["pt-BR"] = "Seleção de período"
         },
-        ["Wpf|K346"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RefreshReviewData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "刷新复盘数据", ["en-US"] = "Refresh Review Data", ["ja-JP"] = "レビューデータを更新", ["pt-BR"] = "Atualizar dados da revisão"
         },
-        ["Wpf|K347"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ManualRefreshF5"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "手动刷新 (F5)", ["en-US"] = "Manual Refresh (F5)", ["ja-JP"] = "手動更新（F5）", ["pt-BR"] = "Atualização manual (F5)"
         },
-        ["Wpf|K348"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportReviewReport"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出生产复盘报表", ["en-US"] = "Export Review Report", ["ja-JP"] = "生産レビュー帳票をエクスポート", ["pt-BR"] = "Exportar relatório de revisão"
         },
-        ["Wpf|K349"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportReport"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出报表", ["en-US"] = "Export Report", ["ja-JP"] = "帳票をエクスポート", ["pt-BR"] = "Exportar relatório"
         },
-        ["Wpf|K350"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportReviewReportCurrentTimeRange"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出当前时间范围的生产复盘报表", ["en-US"] = "Export review report for the current time range", ["ja-JP"] = "現在の時間範囲のレビュー帳票をエクスポート", ["pt-BR"] = "Exporta o relatório de revisão do período atual"
         },
-        ["Wpf|K351"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportReviewPDF"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出生产复盘 PDF", ["en-US"] = "Export Review PDF", ["ja-JP"] = "生産レビューPDFをエクスポート", ["pt-BR"] = "Exportar PDF da revisão"
         },
-        ["Wpf|K352"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportPDF"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出 PDF", ["en-US"] = "Export PDF", ["ja-JP"] = "PDFをエクスポート", ["pt-BR"] = "Exportar PDF"
         },
-        ["Wpf|K353"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportReviewPDFCurrentTimeRange"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出当前时间范围的生产复盘 PDF", ["en-US"] = "Export review PDF for the current time range", ["ja-JP"] = "現在の時間範囲のレビューPDFをエクスポート", ["pt-BR"] = "Exporta o PDF da revisão do período atual"
         },
-        ["Wpf|K354"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceHealthScore"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备健康评分", ["en-US"] = "Device Health Score", ["ja-JP"] = "設備健全度スコア", ["pt-BR"] = "Pontuação de saúde do dispositivo"
         },
-        ["Wpf|K355"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ProductBatch"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产品 / 批次", ["en-US"] = "Product / Batch", ["ja-JP"] = "製品 / ロット", ["pt-BR"] = "Produto / Lote"
         },
-        ["Wpf|K356"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentRecipe"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前配方", ["en-US"] = "Current Recipe", ["ja-JP"] = "現在のレシピ", ["pt-BR"] = "Receita atual"
         },
-        ["Wpf|K357"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeValueCurrentDeviceConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方值来自当前设备配置", ["en-US"] = "Recipe value from current device config", ["ja-JP"] = "レシピ値は現在の設備設定に基づく", ["pt-BR"] = "Valor da receita vem da configuração atual do dispositivo"
         },
-        ["Wpf|K359"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ReviewConclusion"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复盘结论", ["en-US"] = "Review Conclusion", ["ja-JP"] = "レビュー結論", ["pt-BR"] = "Conclusão da revisão"
         },
-        ["Wpf|K360"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConclusionGeneratedProductionDeviceQualityData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "根据当前生产、设备与质量数据生成分析结论", ["en-US"] = "Conclusion generated from production, device and quality data", ["ja-JP"] = "生産・設備・品質データから分析結論を生成", ["pt-BR"] = "Conclusão gerada a partir dos dados de produção, dispositivo e qualidade"
         },
-        ["Wpf|K361"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Times"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "次", ["en-US"] = "times", ["ja-JP"] = "回", ["pt-BR"] = "vezes"
         },
-        ["Wpf|K362"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PeakPeriod"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "峰值时段", ["en-US"] = "Peak Period", ["ja-JP"] = "ピーク時間帯", ["pt-BR"] = "Período de pico"
         },
-        ["Wpf|K363"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ValleyPeriod"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "谷值时段", ["en-US"] = "Valley Period", ["ja-JP"] = "ボトム時間帯", ["pt-BR"] = "Período de vale"
         },
-        ["Wpf|K364"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CycleComparison"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "周期对比", ["en-US"] = "Cycle Comparison", ["ja-JP"] = "周期比較", ["pt-BR"] = "Comparação de ciclo"
         },
-        ["Wpf|K365"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ChangeVsPreviousPeriod"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前设备与上一周期的变化", ["en-US"] = "Change vs previous period", ["ja-JP"] = "前周期との変化", ["pt-BR"] = "Mudança em relação ao período anterior"
         },
-        ["Wpf|K366"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentTotalOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前总产量", ["en-US"] = "Current Total Output", ["ja-JP"] = "現在の総生産量", ["pt-BR"] = "Produção total atual"
         },
-        ["Wpf|K367"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentQualityRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前良品率", ["en-US"] = "Current Quality Rate", ["ja-JP"] = "現在の良品率", ["pt-BR"] = "Taxa de qualidade atual"
         },
-        ["Wpf|K368"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentOEE"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前 OEE", ["en-US"] = "Current OEE", ["ja-JP"] = "現在のOEE", ["pt-BR"] = "OEE atual"
         },
-        ["Wpf|K369"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OutputTrend"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量趋势", ["en-US"] = "Output Trend", ["ja-JP"] = "生産量トレンド", ["pt-BR"] = "Tendência de produção"
         },
-        ["Wpf|K370"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ViewOutputChangesTimeRange"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "按时间范围查看产量变化", ["en-US"] = "View output changes over the time range", ["ja-JP"] = "時間範囲の生産量変化を表示", ["pt-BR"] = "Acompanha a variação da produção no período"
         },
-        ["Wpf|K371"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Top5Alarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Top 5 报警", ["en-US"] = "Top 5 Alarms", ["ja-JP"] = "トップ5アラーム", ["pt-BR"] = "Top 5 alarmes"
         },
-        ["Wpf|K372"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MainAlarmsCurrentTimeRange"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前时间范围内的主要报警", ["en-US"] = "Main alarms in the current time range", ["ja-JP"] = "現在の時間範囲の主要アラーム", ["pt-BR"] = "Principais alarmes do período atual"
         },
-        ["Wpf|K374"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoAlarmRecords"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无报警记录", ["en-US"] = "No alarm records", ["ja-JP"] = "アラーム記録なし", ["pt-BR"] = "Sem registros de alarme"
         },
-        ["Wpf|K375"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceStatusTimeline"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备状态时间线", ["en-US"] = "Device Status Timeline", ["ja-JP"] = "設備状態タイムライン", ["pt-BR"] = "Linha do tempo de estados do dispositivo"
         },
-        ["Wpf|K376"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RunningPausedAlarmUnknownIntervalsClick"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行、暂停、报警与未知区间；点击格子查看该段产量与报警", ["en-US"] = "Running, paused, alarm and unknown intervals; click a cell to view its output and alarms", ["ja-JP"] = "稼働・待機・アラーム・不明区間。セルをクリックして生産量とアラームを表示", ["pt-BR"] = "Intervalos em execução, pausa, alarme e desconhecido; clique numa célula para ver produção e alarmes"
         },
-        ["Wpf|K378"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentDeviceDetails"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前设备明细", ["en-US"] = "Current Device Details", ["ja-JP"] = "現在の設備明細", ["pt-BR"] = "Detalhes do dispositivo atual"
         },
-        ["Wpf|K379"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OutputRunTimeOEESelectedDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "所选设备的产量、运行时长与 OEE", ["en-US"] = "Output, run time and OEE of the selected device", ["ja-JP"] = "選択設備の生産量、稼働時間、OEE", ["pt-BR"] = "Produção, tempo de execução e OEE do dispositivo selecionado"
         },
-        ["Wpf|K380"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Output"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量", ["en-US"] = "Output", ["ja-JP"] = "生産量", ["pt-BR"] = "Produção"
         },
-        ["Wpf|K381"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MainAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "主要报警", ["en-US"] = "Main Alarms", ["ja-JP"] = "主要アラーム", ["pt-BR"] = "Principais alarmes"
         },
-        ["Wpf|K382"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OutputQualityDifferencesAcrossShifts"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "各班次产量与良品率差异", ["en-US"] = "Output and quality differences across shifts", ["ja-JP"] = "シフト別の生産量と良品率の差", ["pt-BR"] = "Diferenças de produção e qualidade entre turnos"
         },
-        ["Wpf|K383"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OutputComposition"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量构成", ["en-US"] = "Output Composition", ["ja-JP"] = "生産量構成", ["pt-BR"] = "Composição da produção"
         },
-        ["Wpf|K384"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmDensity"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警密度", ["en-US"] = "Alarm Density", ["ja-JP"] = "アラーム密度", ["pt-BR"] = "Densidade de alarmes"
         },
-        ["Wpf|K385"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TargetAchievement"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标达成", ["en-US"] = "Target Achievement", ["ja-JP"] = "目標達成", ["pt-BR"] = "Atingimento da meta"
         },
-        ["Wpf|K386"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoShiftData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无班次数据", ["en-US"] = "No shift data", ["ja-JP"] = "シフトデータなし", ["pt-BR"] = "Sem dados de turno"
         },
-        ["Wpf|K387"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConfigureShiftsSettings"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请在设置页配置班次", ["en-US"] = "Configure shifts in Settings", ["ja-JP"] = "設定ページでシフトを設定してください", ["pt-BR"] = "Configura os turnos na página Configurações"
         },
-        ["Wpf|K388"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OEELossBreakdown"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 损失拆解", ["en-US"] = "OEE Loss Breakdown", ["ja-JP"] = "OEE損失分解", ["pt-BR"] = "Detalhamento de perdas do OEE"
         },
-        ["Wpf|K389"] = new Dictionary<string, string>
+        ["Wpf|Lbl_LocateLossesAcrossPerformanceAvailabilityQuality"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "从性能、可用率和质量三个维度定位损失来源", ["en-US"] = "Locate losses across performance, availability and quality", ["ja-JP"] = "性能・可用率・品質の3次元から損失源を特定", ["pt-BR"] = "Localiza perdas nos eixos de desempenho, disponibilidade e qualidade"
         },
-        ["Wpf|K390"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentDeviceDefectPareto"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前设备缺陷帕累托", ["en-US"] = "Current Device Defect Pareto", ["ja-JP"] = "現在の設備の不良パレート", ["pt-BR"] = "Pareto de defeitos do dispositivo atual"
         },
-        ["Wpf|K391"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RankedDefectsAddedSelectedTimeRange"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "按所选时间范围内新增缺陷数量排序", ["en-US"] = "Ranked by defects added in the selected time range", ["ja-JP"] = "選択した時間範囲で追加された欠陥数で並べ替え", ["pt-BR"] = "Ordenado pelos defeitos adicionados no período selecionado"
         },
-        ["Wpf|K392"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoCumulativeDefects"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无当前累计缺陷", ["en-US"] = "No cumulative defects", ["ja-JP"] = "累積不良なし", ["pt-BR"] = "Sem defeitos acumulados"
         },
-        ["Wpf|K393"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectCountsComeDeviceCumulativeSnapshot"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷计数来自设备当前累计快照，不代表所选时间范围", ["en-US"] = "Defect counts come from the device cumulative snapshot, not the selected range", ["ja-JP"] = "不良数は設備の累積スナップショットに基づき、選択範囲を表しません", ["pt-BR"] = "Contagem de defeitos vem do snapshot acumulado do dispositivo, não do período selecionado"
         },
-        ["Wpf|K395"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DowntimeAnalysis"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "停机分析", ["en-US"] = "Downtime Analysis", ["ja-JP"] = "停止分析", ["pt-BR"] = "Análise de paradas"
         },
-        ["Wpf|K396"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ComputedCurrentDeviceStatusAlarmHistory"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "基于当前设备状态和报警历史计算", ["en-US"] = "Computed from current device status and alarm history", ["ja-JP"] = "現在の設備状態とアラーム履歴に基づき計算", ["pt-BR"] = "Calculado a partir do estado atual do dispositivo e do histórico de alarmes"
         },
-        ["Wpf|K397"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TotalDowntime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "总停机时长", ["en-US"] = "Total Downtime", ["ja-JP"] = "総停止時間", ["pt-BR"] = "Tempo total de parada"
         },
-        ["Wpf|K398"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AverageAlarmDuration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "平均报警时长", ["en-US"] = "Average Alarm Duration", ["ja-JP"] = "平均アラーム時間", ["pt-BR"] = "Duração média de alarmes"
         },
-        ["Wpf|K399"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OutputHeatmap"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时段产量热力图", ["en-US"] = "Output Heatmap", ["ja-JP"] = "時間帯生産量ヒートマップ", ["pt-BR"] = "Mapa de calor de produção por período"
         },
-        ["Wpf|K400"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ViewOutputDistributionAcrossDevicesPeriods"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查看不同设备在各时段的产量分布", ["en-US"] = "View output distribution across devices and periods", ["ja-JP"] = "設備別・時間帯別の生産量分布を表示", ["pt-BR"] = "Vê a distribuição de produção por dispositivo e período"
         },
-        ["Wpf|K401"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoHeatmapData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无热力图数据", ["en-US"] = "No heatmap data", ["ja-JP"] = "ヒートマップデータなし", ["pt-BR"] = "Sem dados de mapa de calor"
         },
-        ["Wpf|K402"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceRunningNoOutputAcquired"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备未运行或未采集到产量", ["en-US"] = "Device not running or no output acquired", ["ja-JP"] = "設備が未稼働か生産量が未収集", ["pt-BR"] = "Dispositivo parado ou sem produção coletada"
         },
-        ["Wpf|K403"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceName2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备名", ["en-US"] = "Device Name", ["ja-JP"] = "設備名", ["pt-BR"] = "Nome do dispositivo"
         },
-        ["Wpf|K405"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ProductionLine"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产线总览", ["en-US"] = "Production Line", ["ja-JP"] = "生産ライン", ["pt-BR"] = "Linha de produção"
         },
-        ["Wpf|K406"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SearchDeviceName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "按设备名搜索", ["en-US"] = "Search by device name", ["ja-JP"] = "設備名で検索", ["pt-BR"] = "Pesquisar por nome do dispositivo"
         },
-        ["Wpf|K408"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Sort"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "排序", ["en-US"] = "Sort", ["ja-JP"] = "並替", ["pt-BR"] = "Ordenar"
         },
-        ["Wpf|K409"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AlarmFirst"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警优先", ["en-US"] = "Alarm First", ["ja-JP"] = "アラーム優先", ["pt-BR"] = "Alarmes primeiro"
         },
-        ["Wpf|K410"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefaultText"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "默认", ["en-US"] = "Default", ["ja-JP"] = "既定", ["pt-BR"] = "Padrão"
         },
-        ["Wpf|K411"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Output2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量↓", ["en-US"] = "Output ↓", ["ja-JP"] = "生産量↓", ["pt-BR"] = "Produção ↓"
         },
-        ["Wpf|K414"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WeightedOEE"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "加权 OEE", ["en-US"] = "Weighted OEE", ["ja-JP"] = "加重OEE", ["pt-BR"] = "OEE ponderado"
         },
-        ["Wpf|K415"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前班次：", ["en-US"] = "Current Shift:", ["ja-JP"] = "現在のシフト：", ["pt-BR"] = "Turno atual:"
         },
-        ["Wpf|K416"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无设备", ["en-US"] = "No Devices", ["ja-JP"] = "設備なし", ["pt-BR"] = "Sem dispositivos"
         },
-        ["Wpf|K417"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AddDevicesDeviceManagement"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请在设备管理中添加设备", ["en-US"] = "Add devices in Device Management", ["ja-JP"] = "設備管理で設備を追加してください", ["pt-BR"] = "Adicione dispositivos na gestão de dispositivos"
         },
-        ["Wpf|K418"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RunningNormally"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行正常", ["en-US"] = "Running Normally", ["ja-JP"] = "正常稼働", ["pt-BR"] = "Em execução normal"
         },
-        ["Wpf|K419"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CommunicationLost"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "通信中断", ["en-US"] = "Communication Lost", ["ja-JP"] = "通信断", ["pt-BR"] = "Comunicação perdida"
         },
-        ["Wpf|K420"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RuntimeMonitoring"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行状态监控", ["en-US"] = "Runtime Monitoring", ["ja-JP"] = "稼働状態監視", ["pt-BR"] = "Monitoramento de execução"
         },
-        ["Wpf|K421"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HealthPLCCommunicationAcquisitionLoopDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 通信、采集循环与设备读取健康度", ["en-US"] = "Health of PLC communication, acquisition loop and device reads", ["ja-JP"] = "PLC通信、収集ループ、設備読取りの健全度", ["pt-BR"] = "Saúde da comunicação PLC, do ciclo de coleta e das leituras dos dispositivos"
         },
-        ["Wpf|K422"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RefreshRuntimeMetricsF5"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "刷新运行指标（F5）", ["en-US"] = "Refresh Runtime Metrics (F5)", ["ja-JP"] = "稼働指標を更新（F5）", ["pt-BR"] = "Atualizar métricas de execução (F5)"
         },
-        ["Wpf|K423"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AcquisitionAbnormal"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集异常", ["en-US"] = "Acquisition Abnormal", ["ja-JP"] = "収集異常", ["pt-BR"] = "Coleta anormal"
         },
-        ["Wpf|K424"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConsecutiveFailures"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连续失败", ["en-US"] = "Consecutive Failures", ["ja-JP"] = "連続失敗", ["pt-BR"] = "Falhas consecutivas"
         },
-        ["Wpf|K425"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SystemHealth"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "系统健康", ["en-US"] = "System Health", ["ja-JP"] = "システム健全度", ["pt-BR"] = "Saúde do sistema"
         },
-        ["Wpf|K426"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecentAcquisitionCycle"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近采集周期", ["en-US"] = "Recent Acquisition Cycle", ["ja-JP"] = "直近収集周期", ["pt-BR"] = "Ciclo de coleta recente"
         },
-        ["Wpf|K427"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AcquisitionLoop"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集循环", ["en-US"] = "Acquisition Loop", ["ja-JP"] = "収集ループ", ["pt-BR"] = "Ciclo de coleta"
         },
-        ["Wpf|K428"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CompletedPolls"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "完成轮询", ["en-US"] = "Completed Polls", ["ja-JP"] = "完了ポーリング", ["pt-BR"] = "Ciclos concluídos"
         },
-        ["Wpf|K429"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AverageCycle"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "平均周期", ["en-US"] = "Average Cycle", ["ja-JP"] = "平均周期", ["pt-BR"] = "Ciclo médio"
         },
-        ["Wpf|K430"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MaxCycle"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最大周期", ["en-US"] = "Max Cycle", ["ja-JP"] = "最大周期", ["pt-BR"] = "Ciclo máximo"
         },
-        ["Wpf|K431"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConfiguredPollInterval"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配置轮询间隔", ["en-US"] = "Configured Poll Interval", ["ja-JP"] = "設定ポーリング間隔", ["pt-BR"] = "Intervalo de varredura configurado"
         },
-        ["Wpf|K432"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HistoryWriteFrequency"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "历史写入频率", ["en-US"] = "History Write Frequency", ["ja-JP"] = "履歴書込み頻度", ["pt-BR"] = "Frequência de gravação de histórico"
         },
-        ["Wpf|K433"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ActualCycleIncludesPLCReadTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "实际采集周期包含 PLC 读取耗时和轮询等待时间。若最大周期持续高于配置间隔，建议检查 PLC 响应、网络或地址数量。", ["en-US"] = "Actual cycle includes PLC read time and poll wait. If max stays above the configured interval, check PLC response, network or address count.", ["ja-JP"] = "実周期はPLC読取りとポーリング待ちを含みます。最大周期が設定間隔を超え続ける場合はPLC応答・ネットワーク・アドレス数を確認してください。", ["pt-BR"] = "O ciclo real inclui o tempo de leitura do PLC e a espera da varredura. Se o máximo ficar acima do intervalo configurado, verifique a resposta do PLC, a rede ou o nº de endereços."
         },
-        ["Wpf|K434"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceReads"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备读取", ["en-US"] = "Device Reads", ["ja-JP"] = "設備読取り", ["pt-BR"] = "Leituras por dispositivo"
         },
-        ["Wpf|K435"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConfiguredDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配置设备数", ["en-US"] = "Configured Devices", ["ja-JP"] = "設定設備数", ["pt-BR"] = "Dispositivos configurados"
         },
-        ["Wpf|K436"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecentSuccessfulReads"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近成功读取", ["en-US"] = "Recent Successful Reads", ["ja-JP"] = "直近成功読取り", ["pt-BR"] = "Leituras bem-sucedidas recentes"
         },
-        ["Wpf|K437"] = new Dictionary<string, string>
+        ["Wpf|Lbl_LastSuccessTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近成功时间", ["en-US"] = "Last Success Time", ["ja-JP"] = "直近成功時刻", ["pt-BR"] = "Hora da última execução bem-sucedida"
         },
-        ["Wpf|K439"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SuccessfulReadsLastRound0Triggers"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近成功读取表示上一轮至少成功读取到的设备数量；0 台时会触发断线判定或表示当前没有可读地址。", ["en-US"] = "Successful reads in the last round; 0 triggers disconnect or means no readable addresses.", ["ja-JP"] = "直近成功読取りは前ラウンドで少なくとも1台成功した設備数。0台は切断判定または読取り可能アドレスなしを意味します。", ["pt-BR"] = "Leituras bem-sucedidas na última rodada; 0 dispara o julgamento de desconexão ou significa que não há endereços legíveis."
         },
-        ["Wpf|K440"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCCommunicationDetails"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 通信详情", ["en-US"] = "PLC Communication Details", ["ja-JP"] = "PLC通信詳細", ["pt-BR"] = "Detalhes da comunicação PLC"
         },
-        ["Wpf|K441"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConnectionEndpoint"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连接端点", ["en-US"] = "Connection Endpoint", ["ja-JP"] = "接続エンドポイント", ["pt-BR"] = "Ponto de conexão"
         },
-        ["Wpf|K442"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DisconnectDuration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "断线持续", ["en-US"] = "Disconnect Duration", ["ja-JP"] = "切断継続", ["pt-BR"] = "Duração da desconexão"
         },
-        ["Wpf|K443"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConsecutiveFailureRetries"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连续失败重试", ["en-US"] = "Consecutive Failure Retries", ["ja-JP"] = "連続失敗リトライ", ["pt-BR"] = "Tentativas após falhas consecutivas"
         },
-        ["Wpf|K444"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AcquisitionQualityReadPerformance"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集质量与读取性能", ["en-US"] = "Acquisition Quality & Read Performance", ["ja-JP"] = "収集品質と読取り性能", ["pt-BR"] = "Qualidade de coleta e desempenho de leitura"
         },
-        ["Wpf|K445"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PollSuccessRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "轮询成功率", ["en-US"] = "Poll Success Rate", ["ja-JP"] = "ポーリング成功率", ["pt-BR"] = "Taxa de sucesso da varredura"
         },
-        ["Wpf|K446"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ReadPointsConfigured"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "读取点数 / 配置", ["en-US"] = "Read Points / Configured", ["ja-JP"] = "読取り点数 / 設定", ["pt-BR"] = "Pontos lidos / configurados"
         },
-        ["Wpf|K447"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecentSuccessfulDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近成功设备", ["en-US"] = "Recent Successful Devices", ["ja-JP"] = "直近成功設備", ["pt-BR"] = "Dispositivos lidos com sucesso recentemente"
         },
-        ["Wpf|K449"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AcquisitionSuccessRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集成功率", ["en-US"] = "Acquisition Success Rate", ["ja-JP"] = "収集成功率", ["pt-BR"] = "Taxa de sucesso da coleta"
         },
-        ["Wpf|K450"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HistoryWriteHealth"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "历史写入健康度", ["en-US"] = "History Write Health", ["ja-JP"] = "履歴書込み健全度", ["pt-BR"] = "Saúde da gravação de histórico"
         },
-        ["Wpf|K451"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PendingSnapshots"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "待写入快照", ["en-US"] = "Pending Snapshots", ["ja-JP"] = "書込み待ちスナップショット", ["pt-BR"] = "Snapshots pendentes"
         },
-        ["Wpf|K452"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecoveryFiles"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "恢复文件", ["en-US"] = "Recovery Files", ["ja-JP"] = "復元ファイル", ["pt-BR"] = "Arquivos de recuperação"
         },
-        ["Wpf|K453"] = new Dictionary<string, string>
+        ["Wpf|Lbl_LastSuccessfulWrite"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近成功写入历史", ["en-US"] = "Last Successful Write", ["ja-JP"] = "直近成功書込み", ["pt-BR"] = "Última gravação bem-sucedida no histórico"
         },
-        ["Wpf|K454"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WriteFailures"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "写入失败次数", ["en-US"] = "Write Failures", ["ja-JP"] = "書込み失敗回数", ["pt-BR"] = "Falhas de gravação"
         },
-        ["Wpf|K455"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DatabaseStorage"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "数据库存储", ["en-US"] = "Database Storage", ["ja-JP"] = "データベース保存", ["pt-BR"] = "Armazenamento do banco de dados"
         },
-        ["Wpf|K456"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AcquisitionProcessResourcesConfiguration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集进程资源与配置检查", ["en-US"] = "Acquisition process resources & configuration", ["ja-JP"] = "収集プロセスのリソースと設定チェック", ["pt-BR"] = "Recursos do processo de coleta e verificação"
         },
-        ["Wpf|K457"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CPUMemory"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "CPU / 内存", ["en-US"] = "CPU / Memory", ["ja-JP"] = "CPU / メモリ", ["pt-BR"] = "CPU / Memória"
         },
-        ["Wpf|K458"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ProgramUptime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "程序运行时长", ["en-US"] = "Program Uptime", ["ja-JP"] = "プログラム稼働時間", ["pt-BR"] = "Tempo de atividade do programa"
         },
-        ["Wpf|K459"] = new Dictionary<string, string>
+        ["Wpf|Lbl_GPUUsage"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "GPU 使用率", ["en-US"] = "GPU Usage", ["ja-JP"] = "GPU使用率", ["pt-BR"] = "Uso de GPU"
         },
-        ["Wpf|K460"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConfigCheck"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配置检查", ["en-US"] = "Config Check", ["ja-JP"] = "設定チェック", ["pt-BR"] = "Verificação de configuração"
         },
-        ["Wpf|K461"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ProcessResources"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "进程资源", ["en-US"] = "Process Resources", ["ja-JP"] = "プロセス資源", ["pt-BR"] = "Recursos do processo"
         },
-        ["Wpf|K462"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MemoryDisk"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "内存 / 磁盘", ["en-US"] = "Memory / Disk", ["ja-JP"] = "メモリ / ディスク", ["pt-BR"] = "Memória / Disco"
         },
-        ["Wpf|K463"] = new Dictionary<string, string>
+        ["Wpf|Lbl_FreeDisk"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "磁盘剩余", ["en-US"] = "Free Disk", ["ja-JP"] = "ディスク残量", ["pt-BR"] = "Espaço livre em disco"
         },
-        ["Wpf|K464"] = new Dictionary<string, string>
+        ["Wpf|Lbl_GPUEngineLoad"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "GPU 引擎负载", ["en-US"] = "GPU Engine Load", ["ja-JP"] = "GPUエンジン負荷", ["pt-BR"] = "Carga do motor de GPU"
         },
-        ["Wpf|K465"] = new Dictionary<string, string>
+        ["Wpf|Lbl_StageDuration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "阶段耗时", ["en-US"] = "Stage Duration", ["ja-JP"] = "段階所要時間", ["pt-BR"] = "Duração por etapa"
         },
-        ["Wpf|K466"] = new Dictionary<string, string>
+        ["Wpf|Lbl_BatchPlan"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "批次计划", ["en-US"] = "Batch Plan", ["ja-JP"] = "バッチ計画", ["pt-BR"] = "Plano de lote"
         },
-        ["Wpf|K467"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceAcquisitionStatus"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备级采集状态", ["en-US"] = "Per-Device Acquisition Status", ["ja-JP"] = "設備別収集状態", ["pt-BR"] = "Status de coleta por dispositivo"
         },
-        ["Wpf|K468"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Round"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "本轮采集", ["en-US"] = "This Round", ["ja-JP"] = "今回ラウンド", ["pt-BR"] = "Esta rodada"
         },
-        ["Wpf|K469"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ReadConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "读取配置", ["en-US"] = "Read Config", ["ja-JP"] = "読取り設定", ["pt-BR"] = "Ler configuração"
         },
-        ["Wpf|K470"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PollCycleTrend"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "轮询周期趋势", ["en-US"] = "Poll Cycle Trend", ["ja-JP"] = "ポーリング周期トレンド", ["pt-BR"] = "Tendência do ciclo de varredura"
         },
-        ["Wpf|K471"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Last60RefreshesMs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近 60 次刷新 · 单位 ms", ["en-US"] = "Last 60 refreshes · ms", ["ja-JP"] = "直近60回更新 · 単位ms", ["pt-BR"] = "Últimas 60 atualizações · ms"
         },
-        ["Wpf|K472"] = new Dictionary<string, string>
+        ["Wpf|Lbl_LicenseManagement"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "授权管理", ["en-US"] = "License Management", ["ja-JP"] = "ライセンス管理", ["pt-BR"] = "Gestão de licenças"
         },
-        ["Wpf|K473"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ViewLicenseStatusReactivateBackUp"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查看当前设备授权状态，必要时重新激活或备份授权信息。", ["en-US"] = "View license status; reactivate or back up as needed.", ["ja-JP"] = "現在のライセンス状態を表示。必要に応じて再アクティベーションやバックアップを行います。", ["pt-BR"] = "Vê o status da licença; reative ou faça backup conforme necessário."
         },
-        ["Wpf|K474"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MachineCode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "机器码：", ["en-US"] = "Machine Code:", ["ja-JP"] = "マシンコード：", ["pt-BR"] = "Código da máquina:"
         },
-        ["Wpf|K475"] = new Dictionary<string, string>
+        ["Wpf|Lbl_LicenseType"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "授权类型：", ["en-US"] = "License Type:", ["ja-JP"] = "ライセンス種別：", ["pt-BR"] = "Tipo de licença:"
         },
-        ["Wpf|K476"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ActivationTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "激活时间：", ["en-US"] = "Activation Time:", ["ja-JP"] = "アクティベーション時刻：", ["pt-BR"] = "Hora de ativação:"
         },
-        ["Wpf|K477"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExpiryTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "到期时间：", ["en-US"] = "Expiry Time:", ["ja-JP"] = "有効期限：", ["pt-BR"] = "Hora de expiração:"
         },
-        ["Wpf|K478"] = new Dictionary<string, string>
+        ["Wpf|Lbl_LicenseKey"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "激活码：", ["en-US"] = "License Key:", ["ja-JP"] = "アクティベーションコード：", ["pt-BR"] = "Chave de licença:"
         },
-        ["Wpf|K479"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CopyLicenseKey"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复制激活码", ["en-US"] = "Copy License Key", ["ja-JP"] = "アクティベーションコードをコピー", ["pt-BR"] = "Copiar chave de ativação"
         },
-        ["Wpf|K482"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DataAcquisitionMode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "数据采集模式", ["en-US"] = "Data Acquisition Mode", ["ja-JP"] = "データ収集モード", ["pt-BR"] = "Modo de aquisição de dados"
         },
-        ["Wpf|K483"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RemoteModeConnectsKanbanCollectorService"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "远程模式连接 Kanban.Collector 采集服务，支持多屏共享同一数据源。", ["en-US"] = "Remote mode connects to the Kanban.Collector service; multiple screens share one data source.", ["ja-JP"] = "リモートモードはKanban.Collectorに接続し、複数画面で同一データソースを共有します。", ["pt-BR"] = "O modo remoto conecta ao serviço Kanban.Collector; várias telas compartilham a mesma fonte de dados."
         },
-        ["Wpf|K484"] = new Dictionary<string, string>
+        ["Wpf|Lbl_LocalAcquisitionStandalone"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "本地采集（单机模式）", ["en-US"] = "Local Acquisition (standalone)", ["ja-JP"] = "ローカル収集（スタンドアロン）", ["pt-BR"] = "Coleta local (autônomo)"
         },
-        ["Wpf|K485"] = new Dictionary<string, string>
+        ["Wpf|Lbl_LocalAcquisitionMode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "本地采集模式", ["en-US"] = "Local Acquisition Mode", ["ja-JP"] = "ローカル収集モード", ["pt-BR"] = "Modo de coleta local"
         },
-        ["Wpf|K486"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RemoteAcquisitionCollectorService"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "远程采集（连接采集服务）", ["en-US"] = "Remote Acquisition (collector service)", ["ja-JP"] = "リモート収集（収集サービス）", ["pt-BR"] = "Coleta remota (serviço de coleta)"
         },
-        ["Wpf|K487"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RemoteAcquisitionMode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "远程采集模式", ["en-US"] = "Remote Acquisition Mode", ["ja-JP"] = "リモート収集モード", ["pt-BR"] = "Modo de coleta remota"
         },
-        ["Wpf|K488"] = new Dictionary<string, string>
+        ["Wpf|Lbl_KanbanCollectorSignalRURLEG"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Kanban.Collector 的 SignalR 地址，如 http://192.168.1.10:5129/hubs/kanban", ["en-US"] = "Kanban.Collector SignalR URL, e.g. http://192.168.1.10:5129/hubs/kanban", ["ja-JP"] = "Kanban.CollectorのSignalR URL（例：http://192.168.1.10:5129/hubs/kanban）", ["pt-BR"] = "URL SignalR do Kanban.Collector, ex.: http://192.168.1.10:5129/hubs/kanban"
         },
-        ["Wpf|K489"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TestCollectorConnection"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "测试采集服务连接", ["en-US"] = "Test Collector Connection", ["ja-JP"] = "収集サービス接続をテスト", ["pt-BR"] = "Testar conexão do serviço de coleta"
         },
-        ["Wpf|K490"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TestWhetherCollectorSignalRConnectionReachable"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "测试采集服务 SignalR 连接是否可达", ["en-US"] = "Test whether the collector SignalR connection is reachable", ["ja-JP"] = "収集サービスSignalR接続の到達性をテスト", ["pt-BR"] = "Testa se a conexão SignalR do serviço de coleta está acessível"
         },
-        ["Wpf|K491"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RunMode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行模式", ["en-US"] = "Run Mode", ["ja-JP"] = "実行モード", ["pt-BR"] = "Modo de execução"
         },
-        ["Wpf|K492"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ViewerModeKeepsOnlyDashboardPages"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "展示模式仅保留大屏页面并限制退出，适合车间屏端（保存后重启生效）。", ["en-US"] = "Viewer mode keeps only dashboard pages and restricts exit; ideal for shop-floor screens (effective after restart).", ["ja-JP"] = "表示モードは大画面ページのみを残し終了を制限します。工場画面向け（保存後再起動で有効）です。", ["pt-BR"] = "O modo exibição mantém apenas as páginas do painel e restringe a saída; ideal para telas de chão de fábrica (efeito após reinício)."
         },
-        ["Wpf|K493"] = new Dictionary<string, string>
+        ["Wpf|Lbl_FullModeDisplayManagement"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "完整模式（展示 + 管理）", ["en-US"] = "Full Mode (Display + Management)", ["ja-JP"] = "フルモード（表示 + 管理）", ["pt-BR"] = "Modo completo (exibição + gestão)"
         },
-        ["Wpf|K494"] = new Dictionary<string, string>
+        ["Wpf|Lbl_FullMode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "完整模式", ["en-US"] = "Full Mode", ["ja-JP"] = "フルモード", ["pt-BR"] = "Modo completo"
         },
-        ["Wpf|K495"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ViewerModeDashboardOnly"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "展示模式（仅大屏页面）", ["en-US"] = "Viewer Mode (Dashboard Only)", ["ja-JP"] = "表示モード（大画面のみ）", ["pt-BR"] = "Modo exibição (somente painel)"
         },
-        ["Wpf|K496"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ViewerMode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "展示模式", ["en-US"] = "Viewer Mode", ["ja-JP"] = "表示モード", ["pt-BR"] = "Modo exibição"
         },
-        ["Wpf|K497"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCConnectionConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 连接配置", ["en-US"] = "PLC Connection Config", ["ja-JP"] = "PLC接続設定", ["pt-BR"] = "Configuração de conexão PLC"
         },
-        ["Wpf|K498"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConfigureCommunicationAddressAcquisitionRateDisp"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配置通信地址、采集频率和显示密度。", ["en-US"] = "Configure communication address, acquisition rate and display density.", ["ja-JP"] = "通信アドレス、収集頻度、表示密度を設定します。", ["pt-BR"] = "Configura endereço de comunicação, taxa de coleta e densidade de exibição."
         },
-        ["Wpf|K501"] = new Dictionary<string, string>
+        ["Wpf|Lbl_IPAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "IP 地址", ["en-US"] = "IP Address", ["ja-JP"] = "IPアドレス", ["pt-BR"] = "Endereço IP"
         },
-        ["Wpf|K502"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCIPAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC IP 地址", ["en-US"] = "PLC IP Address", ["ja-JP"] = "PLC IPアドレス", ["pt-BR"] = "Endereço IP do PLC"
         },
-        ["Wpf|K503"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCPort"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 端口", ["en-US"] = "PLC Port", ["ja-JP"] = "PLCポート", ["pt-BR"] = "Porta do PLC"
         },
-        ["Wpf|K504"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConnectionTimeoutMs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连接超时（毫秒）", ["en-US"] = "Connection Timeout (ms)", ["ja-JP"] = "接続タイムアウト（ms）", ["pt-BR"] = "Timeout de conexão (ms)"
         },
-        ["Wpf|K505"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCConnectionTimeoutMs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 连接超时（毫秒）", ["en-US"] = "PLC Connection Timeout (ms)", ["ja-JP"] = "PLC接続タイムアウト（ms）", ["pt-BR"] = "Timeout de conexão do PLC (ms)"
         },
-        ["Wpf|K506"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ConnectionTimeout"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连接超时", ["en-US"] = "Connection Timeout", ["ja-JP"] = "接続タイムアウト", ["pt-BR"] = "Timeout de conexão"
         },
-        ["Wpf|K507"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ModbusAddressStarts0"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Modbus 地址从 0 开始", ["en-US"] = "Modbus Address Starts at 0", ["ja-JP"] = "Modbusアドレスは0から", ["pt-BR"] = "Endereços Modbus começam em 0"
         },
-        ["Wpf|K508"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ModbusRegisterFunction34"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Modbus 寄存器功能码（3/4）", ["en-US"] = "Modbus Register Function (3/4)", ["ja-JP"] = "Modbusレジスタ機能コード（3/4）", ["pt-BR"] = "Código de função de registro Modbus (3/4)"
         },
-        ["Wpf|K509"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ModbusBitFunction12"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Modbus 位功能码（1/2）", ["en-US"] = "Modbus Bit Function (1/2)", ["ja-JP"] = "Modbusビット機能コード（1/2）", ["pt-BR"] = "Código de função de bit Modbus (1/2)"
         },
-        ["Wpf|K510"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AcquisitionStrategy"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集策略", ["en-US"] = "Acquisition Strategy", ["ja-JP"] = "収集戦略", ["pt-BR"] = "Estratégia de coleta"
         },
-        ["Wpf|K511"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AdjustBatchReadPollingHistoryWrite"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "调整批量读取、轮询和历史写入节奏。", ["en-US"] = "Adjust batch read, polling and history write pacing.", ["ja-JP"] = "一括読取り、ポーリング、履歴書込みのペースを調整します。", ["pt-BR"] = "Ajusta leitura em lote, varredura e ritmo de gravação de histórico."
         },
-        ["Wpf|K512"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCBatchReadCount"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 批量读取数量", ["en-US"] = "PLC Batch Read Count", ["ja-JP"] = "PLC一括読取り数", ["pt-BR"] = "Contagem de leitura em lote do PLC"
         },
-        ["Wpf|K513"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AllowedUnconfiguredGapsWithinBatch0"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "允许批次跨过的未配置逻辑地址数量，0 表示仅合并严格连续地址。", ["en-US"] = "Allowed unconfigured gaps within a batch; 0 merges strictly consecutive addresses only.", ["ja-JP"] = "バッチ内で許容する未設定アドレス数。0は完全連続のみ結合します。", ["pt-BR"] = "Lacunas de endereço não configuradas permitidas num lote; 0 mescla apenas endereços estritamente consecutivos."
         },
-        ["Wpf|K514"] = new Dictionary<string, string>
+        ["Wpf|Lbl_BatchReadAddressGaps"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "批量读取地址空洞", ["en-US"] = "Batch Read Address Gaps", ["ja-JP"] = "一括読取りアドレス欠落", ["pt-BR"] = "Lacunas de endereço na leitura em lote"
         },
-        ["Wpf|K515"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TestPLCConnectionCurrentIPPort"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "使用当前 IP 和端口测试 PLC 连接（不会影响正在运行的数据采集）", ["en-US"] = "Test PLC connection with current IP/port (does not affect running acquisition)", ["ja-JP"] = "現在のIP/ポートでPLC接続をテスト（実行中の収集には影響なし）", ["pt-BR"] = "Testa a conexão PLC com o IP/porta atuais (não afeta a coleta em execução)"
         },
-        ["Wpf|K516"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PollIntervalMs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "轮询间隔（毫秒）", ["en-US"] = "Poll Interval (ms)", ["ja-JP"] = "ポーリング間隔（ms）", ["pt-BR"] = "Intervalo de varredura (ms)"
         },
-        ["Wpf|K517"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCAcquisitionPollIntervalMs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 数据采集轮询间隔（毫秒）", ["en-US"] = "PLC Acquisition Poll Interval (ms)", ["ja-JP"] = "PLCデータ収集ポーリング間隔（ms）", ["pt-BR"] = "Intervalo de varredura da coleta PLC (ms)"
         },
-        ["Wpf|K518"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PollInterval"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "轮询间隔", ["en-US"] = "Poll Interval", ["ja-JP"] = "ポーリング間隔", ["pt-BR"] = "Intervalo de varredura"
         },
-        ["Wpf|K519"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HistoryWriteIntervalScans"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "历史写入间隔（扫描次数）", ["en-US"] = "History Write Interval (scans)", ["ja-JP"] = "履歴書込み間隔（スキャン回数）", ["pt-BR"] = "Intervalo de gravação de histórico (varreduras)"
         },
-        ["Wpf|K520"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HistoryWriteIntervalScans2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "历史数据写入间隔（扫描次数）", ["en-US"] = "History Write Interval (scans)", ["ja-JP"] = "履歴データ書込み間隔（スキャン回数）", ["pt-BR"] = "Intervalo de gravação de histórico (varreduras)"
         },
-        ["Wpf|K521"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HistoryWriteInterval"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "历史写入间隔", ["en-US"] = "History Write Interval", ["ja-JP"] = "履歴書込み間隔", ["pt-BR"] = "Intervalo de gravação de histórico"
         },
-        ["Wpf|K522"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DashboardRefreshIntervalMs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "主页刷新间隔（毫秒）", ["en-US"] = "Dashboard Refresh Interval (ms)", ["ja-JP"] = "ホーム更新間隔（ms）", ["pt-BR"] = "Intervalo de atualização do painel (ms)"
         },
-        ["Wpf|K523"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DashboardRefreshIntervalMs2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "主页仪表板刷新间隔（毫秒）", ["en-US"] = "Dashboard Refresh Interval (ms)", ["ja-JP"] = "ホームダッシュボード更新間隔（ms）", ["pt-BR"] = "Intervalo de atualização do painel (ms)"
         },
-        ["Wpf|K524"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DashboardRefreshInterval"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "主页刷新间隔", ["en-US"] = "Dashboard Refresh Interval", ["ja-JP"] = "ホーム更新間隔", ["pt-BR"] = "Intervalo de atualização do painel"
         },
-        ["Wpf|K525"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DashboardWindowPageTitleWebScreens"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "看板窗口/页面标题。屏端（Web 大屏）自动从采集服务拉取，无需逐屏配置", ["en-US"] = "Dashboard window/page title. Web screens fetch it from the collector automatically.", ["ja-JP"] = "看板ウィンドウ/ページタイトル。Web大画面は収集サービスから自動取得", ["pt-BR"] = "Título da janela/página do painel. As telas Web o buscam automaticamente do serviço de coleta."
         },
-        ["Wpf|K526"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Language"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "界面语言", ["en-US"] = "Language", ["ja-JP"] = "言語", ["pt-BR"] = "Idioma da interface"
         },
-        ["Wpf|K529"] = new Dictionary<string, string>
+        ["Wpf|Lbl_UIScaleLargeScreenReadability"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "界面字号（大屏远距可读性）", ["en-US"] = "UI Scale (large-screen readability)", ["ja-JP"] = "文字サイズ（大画面の遠距離可読性）", ["pt-BR"] = "Escala da interface (legibilidade em telão)"
         },
-        ["Wpf|K530"] = new Dictionary<string, string>
+        ["Wpf|Lbl_UIScale"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "界面字号缩放", ["en-US"] = "UI Scale", ["ja-JP"] = "文字サイズ拡縮", ["pt-BR"] = "Escala da interface"
         },
-        ["Wpf|K531"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Standard100"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "标准 100%", ["en-US"] = "Standard 100%", ["ja-JP"] = "標準 100%", ["pt-BR"] = "Padrão 100%"
         },
-        ["Wpf|K532"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Large115"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "大屏 115%", ["en-US"] = "Large 115%", ["ja-JP"] = "大画面 115%", ["pt-BR"] = "Telão 115%"
         },
-        ["Wpf|K533"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExtraLarge130"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "超大屏 130%", ["en-US"] = "Extra Large 130%", ["ja-JP"] = "超大画面 130%", ["pt-BR"] = "Supertelão 130%"
         },
-        ["Wpf|K534"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PlaysSystemSoundNewAlarmsVisual"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "新报警触发时播放本机系统提示音；关闭后仍保留视觉提醒和历史记录", ["en-US"] = "Plays a system sound on new alarms; visual and history alerts remain when off", ["ja-JP"] = "新規アラーム時にシステム音を再生。オフでも視覚と履歴は維持", ["pt-BR"] = "Toca um som do sistema em novos alarmes; alertas visuais e histórico permanecem quando desligado"
         },
-        ["Wpf|K535"] = new Dictionary<string, string>
+        ["Wpf|Lbl_EnableAutoDailyReport"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "启用自动日报", ["en-US"] = "Enable Auto Daily Report", ["ja-JP"] = "自動日報を有効化", ["pt-BR"] = "Habilitar relatório diário automático"
         },
-        ["Wpf|K536"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AutoGenerateDeviceDailyReportPDF"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "自动生成单设备日报 PDF", ["en-US"] = "Auto-generate per-device daily report PDF", ["ja-JP"] = "設備別の日報PDFを自動生成", ["pt-BR"] = "Gera PDF diário por dispositivo automaticamente"
         },
-        ["Wpf|K537"] = new Dictionary<string, string>
+        ["Wpf|Lbl_GeneratesPreviousDayPDFEachDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "按设定时刻为每台有数据的设备生成上一自然日 PDF，文件保存在 Reports 目录", ["en-US"] = "Generates previous-day PDF for each device with data; saved under Reports", ["ja-JP"] = "設定時刻にデータのある各設備の前日日報PDFを生成しReportsに保存", ["pt-BR"] = "Gera o PDF do dia anterior para cada dispositivo com dados; salvo no diretório Reports"
         },
-        ["Wpf|K538"] = new Dictionary<string, string>
+        ["Wpf|Lbl_GeneratesPreviousDayDeviceReportTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "到达该时刻后生成上一自然日单设备日报", ["en-US"] = "Generates the previous-day device report after this time", ["ja-JP"] = "この時刻以降に前日の設備日報を生成", ["pt-BR"] = "Gera o relatório do dia anterior após este horário"
         },
-        ["Wpf|K539"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShiftConfiguration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次配置", ["en-US"] = "Shift Configuration", ["ja-JP"] = "シフト設定", ["pt-BR"] = "Configuração de turnos"
         },
-        ["Wpf|K540"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ManageProductionShiftsTimeRanges"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "管理生产班次和时间范围。", ["en-US"] = "Manage production shifts and time ranges.", ["ja-JP"] = "生産シフトと時間範囲を管理します。", ["pt-BR"] = "Gerencia turnos de produção e intervalos de tempo."
         },
-        ["Wpf|K541"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShiftsApplyImmediatelyAcquisitionUsesThem"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次保存后立即生效，采集将在下一个轮询周期使用；当前班次可能被重新判定。", ["en-US"] = "Shifts apply immediately; acquisition uses them next poll. The current shift may be re-evaluated.", ["ja-JP"] = "シフトは即時有効になり次回ポーリングから適用されます。現在のシフトが再判定される可能性があります。", ["pt-BR"] = "Turnos valem imediatamente; a coleta os usa na próxima varredura. O turno atual pode ser reavaliado."
         },
-        ["Wpf|K542"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeleteShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "删除此班次", ["en-US"] = "Delete This Shift", ["ja-JP"] = "このシフトを削除", ["pt-BR"] = "Excluir este turno"
         },
-        ["Wpf|K543"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShiftStartTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次开始时间", ["en-US"] = "Shift Start Time", ["ja-JP"] = "シフト開始時刻", ["pt-BR"] = "Início do turno"
         },
-        ["Wpf|K544"] = new Dictionary<string, string>
+        ["Wpf|Lbl_End"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "结束", ["en-US"] = "End", ["ja-JP"] = "終了", ["pt-BR"] = "Fim"
         },
-        ["Wpf|K545"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShiftEndTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次结束时间", ["en-US"] = "Shift End Time", ["ja-JP"] = "シフト終了時刻", ["pt-BR"] = "Fim do turno"
         },
-        ["Wpf|K546"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoShifts"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无班次", ["en-US"] = "No Shifts", ["ja-JP"] = "シフトなし", ["pt-BR"] = "Sem turnos"
         },
-        ["Wpf|K547"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ClickAddShiftTopRightConfigure"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "点击右上角「新增班次」开始配置", ["en-US"] = "Click \"Add Shift\" in the top-right to configure", ["ja-JP"] = "右上の「シフト追加」をクリックして設定", ["pt-BR"] = "Clique em \"Adicionar turno\" no canto superior direito para configurar"
         },
-        ["Wpf|K548"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DiscardChanges"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "取消修改", ["en-US"] = "Discard Changes", ["ja-JP"] = "変更を破棄", ["pt-BR"] = "Descartar alterações"
         },
-        ["Wpf|K549"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RestoreDefaults"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "恢复默认", ["en-US"] = "Restore Defaults", ["ja-JP"] = "既定に戻す", ["pt-BR"] = "Restaurar padrões"
         },
-        ["Wpf|K550"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SaveSettings"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存设置", ["en-US"] = "Save Settings", ["ja-JP"] = "設定を保存", ["pt-BR"] = "Salvar configurações"
         },
-        ["Wpf|K551"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SaveSettingsCtrlS"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存设置 (Ctrl+S)", ["en-US"] = "Save Settings (Ctrl+S)", ["ja-JP"] = "設定を保存（Ctrl+S）", ["pt-BR"] = "Salvar configurações (Ctrl+S)"
         },
-        ["Wpf|K552"] = new Dictionary<string, string>
+        ["Wpf|Lbl_EditWorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单编辑", ["en-US"] = "Edit Work Order", ["ja-JP"] = "工単編集", ["pt-BR"] = "Editar ordem de produção"
         },
-        ["Wpf|K553"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PlannedOutputPcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计划产量（件）", ["en-US"] = "Planned Output (pcs)", ["ja-JP"] = "計画生産量（個）", ["pt-BR"] = "Produção planejada (pçs)"
         },
-        ["Wpf|K554"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WorkOrderList"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单列表", ["en-US"] = "Work Order List", ["ja-JP"] = "工単一覧", ["pt-BR"] = "Lista de ordens de produção"
         },
-        ["Wpf|K555"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SearchOrderProductDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "搜索工单号/产品/设备", ["en-US"] = "Search order/product/device", ["ja-JP"] = "工単番号/製品/設備を検索", ["pt-BR"] = "Pesquisar ordem/produto/dispositivo"
         },
-        ["Wpf|K558"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OrderScheduleSort"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单排程排序", ["en-US"] = "Order Schedule Sort", ["ja-JP"] = "工単スケジュール並替", ["pt-BR"] = "Ordenação do plano de ordens"
         },
-        ["Wpf|K560"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OverdueOnly"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "仅超期", ["en-US"] = "Overdue Only", ["ja-JP"] = "期限超過のみ", ["pt-BR"] = "Somente atrasadas"
         },
-        ["Wpf|K561"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MetOnly"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "仅达标", ["en-US"] = "Met Only", ["ja-JP"] = "達成のみ", ["pt-BR"] = "Somente atingidas"
         },
-        ["Wpf|K562"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HasNG"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "有 NG", ["en-US"] = "Has NG", ["ja-JP"] = "NGあり", ["pt-BR"] = "Com NG"
         },
-        ["Wpf|K565"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ClickAddBelowAdjustFilters"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "点击下方「新增」或调整筛选条件", ["en-US"] = "Click \"Add\" below or adjust filters", ["ja-JP"] = "下の「追加」をクリックするかフィルターを調整", ["pt-BR"] = "Clique em \"Adicionar\" abaixo ou ajuste os filtros"
         },
-        ["Wpf|K566"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoMatchingWorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未找到匹配的工单", ["en-US"] = "No matching work order", ["ja-JP"] = "一致する工単なし", ["pt-BR"] = "Nenhuma ordem de produção correspondente"
         },
-        ["Wpf|K567"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CopyCurrentOrderNewPendingOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复制当前工单并创建新的待开始工单", ["en-US"] = "Copy the current order as a new pending order", ["ja-JP"] = "現在の工単をコピーして新規未開始工単を作成", ["pt-BR"] = "Copia a ordem atual como nova ordem pendente"
         },
-        ["Wpf|K568"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RefreshOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "刷新产量", ["en-US"] = "Refresh Output", ["ja-JP"] = "生産量を更新", ["pt-BR"] = "Atualizar produção"
         },
-        ["Wpf|K569"] = new Dictionary<string, string>
+        ["Wpf|Lbl_QueryOutputAllOrdersUpdateProgress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询所有工单的产量数据并更新列表进度", ["en-US"] = "Query output of all orders and update progress", ["ja-JP"] = "全工単の生産量を照会し進捗を更新", ["pt-BR"] = "Consulta a produção de todas as ordens e atualiza o progresso"
         },
-        ["Wpf|K571"] = new Dictionary<string, string>
+        ["Wpf|Lbl_GenerateSamples"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生成样本", ["en-US"] = "Generate Samples", ["ja-JP"] = "サンプル生成", ["pt-BR"] = "Gerar amostras"
         },
-        ["Wpf|K572"] = new Dictionary<string, string>
+        ["Wpf|Lbl_GenerateSampleOrdersPreviewPasswordRequired"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生成样本工单用于预览（需密码确认）", ["en-US"] = "Generate sample orders for preview (password required)", ["ja-JP"] = "プレビュー用のサンプル工単を生成（パスワード確認あり）", ["pt-BR"] = "Gera ordens de amostra para pré-visualização (requer senha)"
         },
-        ["Wpf|K573"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AdjustWidthOrderListDetail"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "调整工单列表与工单详情的宽度", ["en-US"] = "Adjust width of order list and detail", ["ja-JP"] = "工単一覧と詳細の幅を調整", ["pt-BR"] = "Ajustar largura da lista e dos detalhes da ordem"
         },
-        ["Wpf|K574"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SearchOrderNoProductNameDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "支持搜索工单号、产品名称或设备名快速定位", ["en-US"] = "Search by order no., product name or device name", ["ja-JP"] = "工単番号、製品名、設備名で検索可能", ["pt-BR"] = "Permite pesquisar por nº da ordem, produto ou dispositivo"
         },
-        ["Wpf|K576"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AchievementRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "达成率", ["en-US"] = "Achievement Rate", ["ja-JP"] = "達成率", ["pt-BR"] = "Taxa de realização"
         },
-        ["Wpf|K577"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CollapseExpandSidebar"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "折叠展开侧边栏", ["en-US"] = "Collapse/Expand Sidebar", ["ja-JP"] = "サイドバーを折畳/展開", ["pt-BR"] = "Recolher/Expandir barra lateral"
         },
-        ["Wpf|K578"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CollapseExpandSidebar2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "折叠/展开侧边栏", ["en-US"] = "Collapse/Expand Sidebar", ["ja-JP"] = "サイドバー折畳/展開", ["pt-BR"] = "Recolher/Expandir barra lateral"
         },
-        ["Wpf|K579"] = new Dictionary<string, string>
+        ["Wpf|Lbl_KanbanSystem"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "看板系统", ["en-US"] = "Kanban System", ["ja-JP"] = "看板システム", ["pt-BR"] = "Sistema Kanban"
         },
-        ["Wpf|K581"] = new Dictionary<string, string>
+        ["Wpf|Lbl_LicenseStatus"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "授权状态", ["en-US"] = "License Status", ["ja-JP"] = "ライセンス状態", ["pt-BR"] = "Status da licença"
         },
-        ["Wpf|K582"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MainNavigation"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "主导航", ["en-US"] = "Main Navigation", ["ja-JP"] = "メインナビゲーション", ["pt-BR"] = "Navegação principal"
         },
-        ["Wpf|M002"] = new Dictionary<string, string>
+        ["Wpf|Msg_MicrosoftYaHeiFontFoundCannotGenerate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未找到 Microsoft YaHei 中文字体，无法生成 PDF", ["en-US"] = "Microsoft YaHei font not found; cannot generate PDF", ["ja-JP"] = "Microsoft YaHeiフォントが見つからず、PDFを生成できません", ["pt-BR"] = "Fonte Microsoft YaHei não encontrada; não é possível gerar PDF"
         },
-        ["Wpf|M003"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoDeviceDataSelectedFile"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "所选文件中没有设备数据", ["en-US"] = "No device data in the selected file", ["ja-JP"] = "選択ファイルに設備データがありません", ["pt-BR"] = "Sem dados de dispositivos no arquivo selecionado"
         },
-        ["Wpf|M004"] = new Dictionary<string, string>
+        ["Wpf|Msg_PreviousVersionBackupFound"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未找到上一版本备份文件", ["en-US"] = "Previous version backup not found", ["ja-JP"] = "前回バージョンのバックアップが見つかりません", ["pt-BR"] = "Backup da versão anterior não encontrado"
         },
-        ["Wpf|M005"] = new Dictionary<string, string>
+        ["Wpf|Msg_BackupFileEmptyInvalid"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "备份文件为空或无效", ["en-US"] = "Backup file is empty or invalid", ["ja-JP"] = "バックアップファイルが空または無効です", ["pt-BR"] = "Arquivo de backup vazio ou inválido"
         },
-        ["Wpf|M006"] = new Dictionary<string, string>
+        ["Wpf|Msg_WorkOrderDeleted"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已删除工单", ["en-US"] = "Work order deleted", ["ja-JP"] = "工単を削除しました", ["pt-BR"] = "Ordem de produção excluída"
         },
-        ["Wpf|M007"] = new Dictionary<string, string>
+        ["Wpf|Msg_AlarmInfoCopied"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警信息已复制", ["en-US"] = "Alarm info copied", ["ja-JP"] = "アラーム情報をコピーしました", ["pt-BR"] = "Informações do alarme copiadas"
         },
-        ["Wpf|M008"] = new Dictionary<string, string>
+        ["Wpf|Msg_DeviceDeleted"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已删除设备", ["en-US"] = "Device deleted", ["ja-JP"] = "設備を削除しました", ["pt-BR"] = "Dispositivo excluído"
         },
-        ["Wpf|M009"] = new Dictionary<string, string>
+        ["Wpf|Msg_SavedSuccessfully"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存成功", ["en-US"] = "Saved successfully", ["ja-JP"] = "保存しました", ["pt-BR"] = "Salvo com sucesso"
         },
-        ["Wpf|M010"] = new Dictionary<string, string>
+        ["Wpf|Msg_WrongPasswordRestoreCancelled"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "密码错误，已取消恢复操作", ["en-US"] = "Wrong password; restore cancelled", ["ja-JP"] = "パスワードが違います。復元をキャンセルしました", ["pt-BR"] = "Senha incorreta; restauração cancelada"
         },
-        ["Wpf|M011"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoDataCurrentTabExport"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前 Tab 无数据可导出", ["en-US"] = "No data in the current tab to export", ["ja-JP"] = "現在のタブにエクスポートできるデータがありません", ["pt-BR"] = "Sem dados na aba atual para exportar"
         },
-        ["Wpf|M012"] = new Dictionary<string, string>
+        ["Wpf|Msg_Met"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "● 达标", ["en-US"] = "● Met", ["ja-JP"] = "● 達成", ["pt-BR"] = "● Atingida"
         },
-        ["Wpf|M014"] = new Dictionary<string, string>
+        ["Wpf|Msg_AcquisitionStopped"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集已停止", ["en-US"] = "Acquisition Stopped", ["ja-JP"] = "収集停止", ["pt-BR"] = "Coleta interrompida"
         },
-        ["Wpf|M015"] = new Dictionary<string, string>
+        ["Wpf|Msg_TrialLicense"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "试用授权", ["en-US"] = "Trial License", ["ja-JP"] = "試用ライセンス", ["pt-BR"] = "Licença de avaliação"
         },
-        ["Wpf|M016"] = new Dictionary<string, string>
+        ["Wpf|Msg_ActivationSuccessful"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "激活成功", ["en-US"] = "Activation Successful", ["ja-JP"] = "アクティベーション成功", ["pt-BR"] = "Ativação bem-sucedida"
         },
-        ["Wpf|M017"] = new Dictionary<string, string>
+        ["Wpf|Msg_MachineCodeCopiedClipboard"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "机器码已复制到剪贴板", ["en-US"] = "Machine code copied to clipboard", ["ja-JP"] = "マシンコードをクリップボードにコピーしました", ["pt-BR"] = "Código da máquina copiado para a área de transferência"
         },
-        ["Wpf|M018"] = new Dictionary<string, string>
+        ["Wpf|Msg_CopyFailedRecordMachineCodeManually"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复制失败，请手动记录机器码", ["en-US"] = "Copy failed; record the machine code manually", ["ja-JP"] = "コピー失敗。マシンコードを手動で記録してください", ["pt-BR"] = "Falha ao copiar; anote o código da máquina manualmente"
         },
-        ["Wpf|M019"] = new Dictionary<string, string>
+        ["Wpf|Msg_ActivatedNoLicenseKeyCopy"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前未激活，无激活码可复制", ["en-US"] = "Not activated; no license key to copy", ["ja-JP"] = "未アクティベーション。コピーするコードがありません", ["pt-BR"] = "Não ativado; sem chave de ativação para copiar"
         },
-        ["Wpf|M020"] = new Dictionary<string, string>
+        ["Wpf|Msg_LicenseKeyCopiedClipboard"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "激活码已复制到剪贴板", ["en-US"] = "License key copied to clipboard", ["ja-JP"] = "アクティベーションコードをコピーしました", ["pt-BR"] = "Chave de ativação copiada para a área de transferência"
         },
-        ["Wpf|M021"] = new Dictionary<string, string>
+        ["Wpf|Msg_CopyFailedRecordLicenseKeyManually"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复制失败，请手动记录激活码", ["en-US"] = "Copy failed; record the license key manually", ["ja-JP"] = "コピー失敗。コードを手動で記録してください", ["pt-BR"] = "Falha ao copiar; anote a chave de ativação manualmente"
         },
-        ["Wpf|M022"] = new Dictionary<string, string>
+        ["Wpf|Msg_KeepLeastOneShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "至少保留一个班次", ["en-US"] = "Keep at least one shift", ["ja-JP"] = "シフトは少なくとも1つ必要です", ["pt-BR"] = "Mantenha pelo menos um turno"
         },
-        ["Wpf|M023"] = new Dictionary<string, string>
+        ["Wpf|Msg_SettingsSaved"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设置已保存", ["en-US"] = "Settings saved", ["ja-JP"] = "設定を保存しました", ["pt-BR"] = "Configurações salvas"
         },
-        ["Wpf|M024"] = new Dictionary<string, string>
+        ["Wpf|Msg_CollectorParametersSyncedPollingShiftsPLC"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集服务参数已同步（轮询/班次/PLC 连接已对采集进程生效）", ["en-US"] = "Collector parameters synced (polling/shifts/PLC connection now active)", ["ja-JP"] = "収集サービスパラメータを同期しました（ポーリング/シフト/PLC接続が有効）", ["pt-BR"] = "Parâmetros do serviço de coleta sincronizados (varredura/turnos/conexão PLC já ativos na coleta)"
         },
-        ["Wpf|M025"] = new Dictionary<string, string>
+        ["Wpf|Msg_UnsavedChangesDiscarded"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已取消未保存修改", ["en-US"] = "Unsaved changes discarded", ["ja-JP"] = "未保存の変更を破棄しました", ["pt-BR"] = "Alterações não salvas descartadas"
         },
-        ["Wpf|M026"] = new Dictionary<string, string>
+        ["Wpf|Msg_RestoreDefaultSettingsUnsavedChangesOverwritten"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确定恢复设置默认值吗？当前未保存修改将被覆盖。", ["en-US"] = "Restore default settings? Unsaved changes will be overwritten.", ["ja-JP"] = "設定を既定値に戻しますか？未保存の変更は上書きされます。", ["pt-BR"] = "Restaurar os padrões? As alterações não salvas serão sobrescritas."
         },
-        ["Wpf|M027"] = new Dictionary<string, string>
+        ["Wpf|Msg_DefaultsRestoredClickSaveSettingsApply"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已恢复默认值，请点击保存设置后生效", ["en-US"] = "Defaults restored; click Save Settings to apply", ["ja-JP"] = "既定値に戻しました。「設定を保存」をクリックして適用", ["pt-BR"] = "Padrões restaurados; clique em Salvar configurações para aplicar"
         },
-        ["Wpf|M028"] = new Dictionary<string, string>
+        ["Wpf|Msg_DashboardTitleCannotEmpty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "看板标题不能为空", ["en-US"] = "Dashboard title cannot be empty", ["ja-JP"] = "看板タイトルは空にできません", ["pt-BR"] = "O título do painel não pode ficar vazio"
         },
-        ["Wpf|M029"] = new Dictionary<string, string>
+        ["Wpf|Msg_IPAddressCannotEmpty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "IP 地址不能为空", ["en-US"] = "IP address cannot be empty", ["ja-JP"] = "IPアドレスは空にできません", ["pt-BR"] = "O endereço IP não pode ficar vazio"
         },
-        ["Wpf|M030"] = new Dictionary<string, string>
+        ["Wpf|Msg_InvalidPLCDataFormat"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 数据格式无效", ["en-US"] = "Invalid PLC data format", ["ja-JP"] = "PLCデータ形式が無効です", ["pt-BR"] = "Formato de dados do PLC inválido"
         },
-        ["Wpf|M031"] = new Dictionary<string, string>
+        ["Wpf|Msg_Aborted"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已中止", ["en-US"] = "Aborted", ["ja-JP"] = "中止済み", ["pt-BR"] = "Abortada"
         },
-        ["Wpf|M032"] = new Dictionary<string, string>
+        ["Wpf|Msg_MetPending"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已达标待完成", ["en-US"] = "Met, Pending", ["ja-JP"] = "達成済み・未完了", ["pt-BR"] = "Atingida, pendente"
         },
-        ["Wpf|M033"] = new Dictionary<string, string>
+        ["Wpf|Msg_OverdueIncomplete"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已超期未完成", ["en-US"] = "Overdue, Incomplete", ["ja-JP"] = "期限超過・未完了", ["pt-BR"] = "Atrasada, incompleta"
         },
-        ["Wpf|M034"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoWorkOrdersMatchCurrentFilter"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前筛选结果为空，无可导出的工单", ["en-US"] = "No work orders match the current filter", ["ja-JP"] = "現在の絞り込みに一致する工単がありません", ["pt-BR"] = "Nenhuma ordem corresponde ao filtro atual"
         },
-        ["Wpf|M035"] = new Dictionary<string, string>
+        ["Wpf|Msg_AddDevicesDeviceManagementFirst"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请先在设备管理页添加设备", ["en-US"] = "Add devices in Device Management first", ["ja-JP"] = "先に設備管理ページで設備を追加してください", ["pt-BR"] = "Adicione dispositivos na gestão de dispositivos primeiro"
         },
-        ["Wpf|M036"] = new Dictionary<string, string>
+        ["Wpf|Msg_Tip"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "提示", ["en-US"] = "Tip", ["ja-JP"] = "ヒント", ["pt-BR"] = "Dica"
         },
-        ["Wpf|M040"] = new Dictionary<string, string>
+        ["Wpf|Msg_All"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "全部", ["en-US"] = "All", ["ja-JP"] = "すべて", ["pt-BR"] = "Todos"
         },
-        ["Wpf|M041"] = new Dictionary<string, string>
+        ["Wpf|Msg_Pending"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "待开始", ["en-US"] = "Pending", ["ja-JP"] = "未開始", ["pt-BR"] = "Pendente"
         },
-        ["Wpf|M042"] = new Dictionary<string, string>
+        ["Wpf|Msg_Progress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "进行中", ["en-US"] = "In Progress", ["ja-JP"] = "進行中", ["pt-BR"] = "Em andamento"
         },
-        ["Wpf|M043"] = new Dictionary<string, string>
+        ["Wpf|Msg_Completed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已完成", ["en-US"] = "Completed", ["ja-JP"] = "完了", ["pt-BR"] = "Concluída"
         },
-        ["Wpf|M044"] = new Dictionary<string, string>
+        ["Wpf|Msg_AllDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "全部设备", ["en-US"] = "All Devices", ["ja-JP"] = "全設備", ["pt-BR"] = "Todos os dispositivos"
         },
-        ["Wpf|M045"] = new Dictionary<string, string>
+        ["Wpf|Msg_Status"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态", ["en-US"] = "Status", ["ja-JP"] = "状態", ["pt-BR"] = "Status"
         },
-        ["Wpf|M046"] = new Dictionary<string, string>
+        ["Wpf|Msg_CQualityRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "C良品率", ["en-US"] = "C: Quality Rate", ["ja-JP"] = "C:良品率", ["pt-BR"] = "C: Taxa de qualidade"
         },
-        ["Wpf|M047"] = new Dictionary<string, string>
+        ["Wpf|Msg_BPerformanceRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "B性能达标率", ["en-US"] = "B: Performance Rate", ["ja-JP"] = "B:性能達成率", ["pt-BR"] = "B: Taxa de desempenho"
         },
-        ["Wpf|M048"] = new Dictionary<string, string>
+        ["Wpf|Msg_TimeAvailability"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "A时间稼动率", ["en-US"] = "A: Time Availability", ["ja-JP"] = "A:時間稼働率", ["pt-BR"] = "A: Disponibilidade de tempo"
         },
-        ["Wpf|F001"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CSVHasRowsTotalRowsFailed"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "CSV 共 {0} 行，{1} 行校验失败将跳过。\n", ["en-US"] = "CSV has {0} rows in total; {1} rows failed validation and will be skipped.\n", ["ja-JP"] = "CSV 合計 {0} 行、{1} 行が検証に失敗しスキップされます。\n", ["pt-BR"] = "O CSV tem {0} linhas no total; {1} linhas falharam na validação e serão ignoradas.\\n"
+            ["zh-CN"] = "CSV 共 {0} 行，{1} 行校验失败将跳过。\r\n", ["en-US"] = "CSV has {0} rows in total; {1} rows failed validation and will be skipped.\r\n", ["ja-JP"] = "CSV 合計 {0} 行、{1} 行が検証に失敗しスキップされます。\r\n", ["pt-BR"] = "O CSV tem {0} linhas no total; {1} linhas falharam na validação e serão ignoradas.\\n"
         },
-        ["Wpf|F002"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DWordMsMBitMsDefect"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "DWord {0} ms · M位 {1} ms · 缺陷 {2} ms · 计数器报警 {3} ms · 历史 {4} ms", ["en-US"] = "DWord {0} ms · M-bit {1} ms · Defect {2} ms · Count alarm {3} ms · History {4} ms", ["ja-JP"] = "DWord {0} ms · Mビット {1} ms · 不良 {2} ms · カカカウンタアラーム {3} ms · 履歴 {4} ms", ["pt-BR"] = "DWord {0} ms · Bit M {1} ms · Defeito {2} ms · Alarme de contador {3} ms · Histórico {4} ms"
         },
-        ["Wpf|F003"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ModbusUnitIdMustBetween1247"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Modbus UnitId 必须在 1-247 之间，当前值: {0}", ["en-US"] = "Modbus UnitId must be between 1-247, current: {0}", ["ja-JP"] = "Modbus UnitId は 1〜247 の範囲である必要があります。現在値: {0}", ["pt-BR"] = "O UnitId do Modbus deve estar entre 1-247; atual: {0}"
         },
-        ["Wpf|F004"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ModbusBitFunctionCodeMust1"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Modbus 位功能码必须为 1 或 2，当前值: {0}", ["en-US"] = "Modbus bit function code must be 1 or 2, current: {0}", ["ja-JP"] = "Modbus ビット機能コードは 1 または 2 である必要があります。現在値: {0}", ["pt-BR"] = "O código de função de bit do Modbus deve ser 1 ou 2; atual: {0}"
         },
-        ["Wpf|F005"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ModbusRegisterFunctionCodeMust3"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Modbus 寄存器功能码必须为 3 或 4，当前值: {0}", ["en-US"] = "Modbus register function code must be 3 or 4, current: {0}", ["ja-JP"] = "Modbus レジスタ機能コードは 3 または 4 である必要があります。現在値: {0}", ["pt-BR"] = "O código de função de registro do Modbus deve ser 3 ou 4; atual: {0}"
         },
-        ["Wpf|F006"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OEETarget"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 为 {0:P1}，{1} {2:P0} 目标", ["en-US"] = "OEE is {0:P1}, {1} the {2:P0} target", ["ja-JP"] = "OEE は {0:P1}、目標 {2:P0} を{1}", ["pt-BR"] = "O OEE é {0:P1}, {1} a meta de {2:P0}"
         },
-        ["Wpf|F007"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedQueryOEEHistory"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 历史查询失败：{0}", ["en-US"] = "Failed to query OEE history: {0}", ["ja-JP"] = "OEE 履歴の取得に失敗しました: {0}", ["pt-BR"] = "Falha ao consultar histórico de OEE: {0}"
         },
-        ["Wpf|F008"] = new Dictionary<string, string>
+        ["Wpf|Prompt_InvalidOEEResetAddressDWord"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 清零地址格式无效（需要 D 字地址）: {0}", ["en-US"] = "Invalid OEE reset address (D-word address required): {0}", ["ja-JP"] = "OEE リセットアドレスの形式が無効です（D ワードアドレスが必要）: {0}", ["pt-BR"] = "Endereço de zeramento do OEE inválido (requer endereço D-word): {0}"
         },
-        ["Wpf|F009"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PDFExportFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PDF 导出失败：{0}", ["en-US"] = "PDF export failed: {0}", ["ja-JP"] = "PDF エクスポートに失敗しました: {0}", ["pt-BR"] = "Falha na exportação de PDF: {0}"
         },
-        ["Wpf|F010"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PLCDisconnected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 已断开 · {0}", ["en-US"] = "PLC disconnected · {0}", ["ja-JP"] = "PLC 切断 · {0}", ["pt-BR"] = "PLC desconectado · {0}"
         },
-        ["Wpf|F011"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PLCDisconnectedIPRetry"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 已断开（IP:{0}）· 第 {1} 次重试", ["en-US"] = "PLC disconnected (IP: {0}) · retry {1}", ["ja-JP"] = "PLC 切断（IP:{0}）· {1} 回目の再試行", ["pt-BR"] = "PLC desconectado (IP: {0}) · tentativa {1}"
         },
-        ["Wpf|F012"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PLCReconnectedDowntime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 已重连，断线时长 {0}", ["en-US"] = "PLC reconnected, downtime {0}", ["ja-JP"] = "PLC 再接続、切断時間 {0}", ["pt-BR"] = "PLC reconectado, tempo de parada {0}"
         },
-        ["Wpf|F013"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PLCBatchReadAddressGapMust"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 批量读取地址空洞必须在 0-16 之间，当前值: {0}", ["en-US"] = "PLC batch read address gap must be between 0-16, current: {0}", ["ja-JP"] = "PLC バッチ読み取りアドレスホールは 0〜16 の範囲である必要があります。現在値: {0}", ["pt-BR"] = "A lacuna de endereços da leitura em lote do PLC deve estar entre 0-16; atual: {0}"
         },
-        ["Wpf|F014"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PLCBatchReadCountMustBetween"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 批量读取数量必须在 1-1024 之间，当前值: {0}", ["en-US"] = "PLC batch read count must be between 1-1024, current: {0}", ["ja-JP"] = "PLC バッチ読み取り数は 1〜1024 の範囲である必要があります。現在値: {0}", ["pt-BR"] = "A contagem da leitura em lote do PLC deve estar entre 1-1024; atual: {0}"
         },
-        ["Wpf|F015"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PLCConnecting"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 正在连接 · {0}", ["en-US"] = "PLC connecting · {0}", ["ja-JP"] = "PLC 接続中 · {0}", ["pt-BR"] = "PLC conectando · {0}"
         },
-        ["Wpf|F016"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PLCTimeoutMustBetween10060000"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 超时必须在 100-60000 毫秒之间，当前值: {0}", ["en-US"] = "PLC timeout must be between 100-60000 ms, current: {0}", ["ja-JP"] = "PLC タイムアウトは 100〜60000 ミリ秒の範囲である必要があります。現在値: {0}", ["pt-BR"] = "O timeout do PLC deve estar entre 100-60000 ms; atual: {0}"
         },
-        ["Wpf|F017"] = new Dictionary<string, string>
+        ["Wpf|Prompt_SiemensRackMustBetween07"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Siemens Rack 必须在 0-7 之间，当前值: {0}", ["en-US"] = "Siemens Rack must be between 0-7, current: {0}", ["ja-JP"] = "Siemens Rack は 0〜7 の範囲である必要があります。現在値: {0}", ["pt-BR"] = "O Rack Siemens deve estar entre 0-7; atual: {0}"
         },
-        ["Wpf|F018"] = new Dictionary<string, string>
+        ["Wpf|Prompt_SiemensSlotMustBetween031"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Siemens Slot 必须在 0-31 之间，当前值: {0}", ["en-US"] = "Siemens Slot must be between 0-31, current: {0}", ["ja-JP"] = "Siemens Slot は 0〜31 の範囲である必要があります。現在値: {0}", ["pt-BR"] = "O Slot Siemens deve estar entre 0-31; atual: {0}"
         },
-        ["Wpf|F019"] = new Dictionary<string, string>
+        ["Wpf|Prompt_SiemensBatchInt32LimitMustBetween"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Siemens 批量 Int32 上限必须在 1-55 之间，当前值: {0}", ["en-US"] = "Siemens batch Int32 limit must be between 1-55, current: {0}", ["ja-JP"] = "Siemens バッチ Int32 上限は 1〜55 の範囲である必要があります。現在値: {0}", ["pt-BR"] = "O limite Int32 em lote Siemens deve estar entre 1-55; atual: {0}"
         },
-        ["Wpf|F020"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Total"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "\n  ...（共 {0} 条）", ["en-US"] = "\n  ... ({0} in total)", ["ja-JP"] = "\n  ...（計 {0} 件）", ["pt-BR"] = "\\n  ... ({0} no total)"
+            ["zh-CN"] = "\r\n  ...（共 {0} 条）", ["en-US"] = "\r\n  ... ({0} in total)", ["ja-JP"] = "\r\n  ...（計 {0} 件）", ["pt-BR"] = "\\n  ... ({0} no total)"
         },
-        ["Wpf|F021"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OutputPcsQualityRateOEE"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}：产量 {1} 件 · 良品率 {2} · OEE {3}", ["en-US"] = "{0}: Output {1} pcs · Quality rate {2} · OEE {3}", ["ja-JP"] = "{0}: 生産数 {1} 個 · 良品率 {2} · OEE {3}", ["pt-BR"] = "{0}: produção {1} pçs · taxa de qualidade {2} · OEE {3}"
         },
-        ["Wpf|F022"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Addresses"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} 个地址", ["en-US"] = "{0} addresses", ["ja-JP"] = "{0} 個のアドレス", ["pt-BR"] = "{0} endereços"
         },
-        ["Wpf|F023"] = new Dictionary<string, string>
+        ["Wpf|Prompt_UnitsRunningAlarmPausedOffline"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} 台 · 运行 {1} · 报警 {2} · 待机 {3} · 离线 {4}", ["en-US"] = "{0} units · Running {1} · Alarm {2} · Paused {3} · Offline {4}", ["ja-JP"] = "{0} 台 · 稼働 {1} · アラーム {2} · 待機 {3} · オフライン {4}", ["pt-BR"] = "{0} dispositivos · Em execução {1} · Alarme {2} · Em espera {3} · Offline {4}"
         },
-        ["Wpf|F024"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Addresses2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} / {1} 个地址", ["en-US"] = "{0} / {1} addresses", ["ja-JP"] = "{0} / {1} 個のアドレス", ["pt-BR"] = "{0} / {1} endereços"
         },
-        ["Wpf|F025"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MustEmpty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}不能为空", ["en-US"] = "{0} must not be empty", ["ja-JP"] = "{0} は空にできません", ["pt-BR"] = "{0} não pode ficar vazio"
         },
-        ["Wpf|F026"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MustBetween"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}必须在 {1}-{2} 之间", ["en-US"] = "{0} must be between {1}-{2}", ["ja-JP"] = "{0} は {1}〜{2} の範囲である必要があります", ["pt-BR"] = "{0} deve estar entre {1}-{2}"
         },
-        ["Wpf|F027"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MustInteger"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}必须是整数", ["en-US"] = "{0} must be an integer", ["ja-JP"] = "{0} は整数である必要があります", ["pt-BR"] = "{0} deve ser um número inteiro"
         },
-        ["Wpf|F028"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Pcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0:N0} 件", ["en-US"] = "{0:N0} pcs", ["ja-JP"] = "{0:N0} 個", ["pt-BR"] = "{0:N0} pçs"
         },
-        ["Wpf|F029"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Pcs2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0:N0} / {1:N0} 件", ["en-US"] = "{0:N0} / {1:N0} pcs", ["ja-JP"] = "{0:N0} / {1:N0} 個", ["pt-BR"] = "{0:N0} / {1:N0} pçs"
         },
-        ["Wpf|F030"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Pcs3"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0:N0} 件", ["en-US"] = "{0:N0} pcs", ["ja-JP"] = "{0:N0} 個", ["pt-BR"] = "{0:N0} pçs"
         },
-        ["Wpf|F031"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CurrentValue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} 当前值: {1}", ["en-US"] = "{0} current value: {1}", ["ja-JP"] = "{0} 現在値: {1}", ["pt-BR"] = "Valor atual de {0}: {1}"
         },
-        ["Wpf|F032"] = new Dictionary<string, string>
+        ["Wpf|Prompt_LevelTriggeredDuration"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "{0} · {1}\n级别：{2}\n触发时间：{3:yyyy-MM-dd HH:mm:ss}\n持续时间：{4}", ["en-US"] = "{0} · {1}\nLevel: {2}\nTriggered: {3:yyyy-MM-dd HH:mm:ss}\nDuration: {4}", ["ja-JP"] = "{0} · {1}\nレベル: {2}\n発生時刻: {3:yyyy-MM-dd HH:mm:ss}\n継続時間: {4}", ["pt-BR"] = "{0} · {1}\\nNível: {2}\\nDisparado: {3:yyyy-MM-dd HH:mm:ss}\\nDuração: {4}"
+            ["zh-CN"] = "{0} · {1}\r\n级别：{2}\r\n触发时间：{3:yyyy-MM-dd HH:mm:ss}\r\n持续时间：{4}", ["en-US"] = "{0} · {1}\r\nLevel: {2}\r\nTriggered: {3:yyyy-MM-dd HH:mm:ss}\r\nDuration: {4}", ["ja-JP"] = "{0} · {1}\r\nレベル: {2}\r\n発生時刻: {3:yyyy-MM-dd HH:mm:ss}\r\n継続時間: {4}", ["pt-BR"] = "{0} · {1}\\nNível: {2}\\nDisparado: {3:yyyy-MM-dd HH:mm:ss}\\nDuração: {4}"
         },
-        ["Wpf|F033"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Times"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}（{1}次）", ["en-US"] = "{0} ({1} times)", ["ja-JP"] = "{0}（{1} 回）", ["pt-BR"] = "{0} ({1} vezes)"
         },
-        ["Wpf|F034"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Since"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}（{1}，自 {2:MM-dd HH:mm}）", ["en-US"] = "{0} ({1}, since {2:MM-dd HH:mm})", ["ja-JP"] = "{0}（{1}、{2:MM-dd HH:mm} から）", ["pt-BR"] = "{0} ({1}, desde {2:MM-dd HH:mm})"
         },
-        ["Wpf|F035"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Min"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} {1:F0} 分钟（{2:HH:mm}–{3:HH:mm}）", ["en-US"] = "{0} {1:F0} min ({2:HH:mm}–{3:HH:mm})", ["ja-JP"] = "{0} {1:F0} 分（{2:HH:mm}–{3:HH:mm}）", ["pt-BR"] = "{0} {1:F0} min ({2:HH:mm}–{3:HH:mm})"
         },
-        ["Wpf|F036"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Pcs4"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} 件 / {1} 件", ["en-US"] = "{0} / {1} pcs", ["ja-JP"] = "{0} 個 / {1} 個", ["pt-BR"] = "{0} / {1} pçs"
         },
-        ["Wpf|F037"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Pcs5"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}+{1} / {2:F0} 件", ["en-US"] = "{0}+{1} / {2:F0} pcs", ["ja-JP"] = "{0}+{1} / {2:F0} 個", ["pt-BR"] = "{0}+{1} / {2:F0} pçs"
         },
-        ["Wpf|F038"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TargetPcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} · 目标 {1:N0} 件", ["en-US"] = "{0} · Target {1:N0} pcs", ["ja-JP"] = "{0} · 目標 {1:N0} 個", ["pt-BR"] = "{0} · Meta {1:N0} pçs"
         },
-        ["Wpf|F039"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Copy"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} 副本", ["en-US"] = "{0} copy", ["ja-JP"] = "{0} のコピー", ["pt-BR"] = "Cópia {0}"
         },
-        ["Wpf|F040"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Times2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}（{1}次，{2:P0}）", ["en-US"] = "{0} ({1} times, {2:P0})", ["ja-JP"] = "{0}（{1} 回、{2:P0}）", ["pt-BR"] = "{0} ({1} vezes, {2:P0})"
         },
-        ["Wpf|F041"] = new Dictionary<string, string>
+        ["Wpf|Prompt_HasHighestOutputPcsTotalQuality"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}产量最高，共 {1:N0} 件，良品率 {2:P1}", ["en-US"] = "{0} has the highest output, {1:N0} pcs in total, quality rate {2:P1}", ["ja-JP"] = "{0} が生産数最多、合計 {1:N0} 個、良品率 {2:P1}", ["pt-BR"] = "{0} tem a maior produção, {1:N0} pçs no total, taxa de qualidade {2:P1}"
         },
-        ["Wpf|F042"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Expires"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "· 到期 {0:yyyy-MM-dd}", ["en-US"] = "· Expires {0:yyyy-MM-dd}", ["ja-JP"] = "· 有効期限 {0:yyyy-MM-dd}", ["pt-BR"] = "· Expira em {0:yyyy-MM-dd}"
         },
-        ["Wpf|F043"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Drop"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "↓突降 {0:HH:mm}", ["en-US"] = "↓ Drop at {0:HH:mm}", ["ja-JP"] = "↓ {0:HH:mm} に急減", ["pt-BR"] = "↓ Queda às {0:HH:mm}"
         },
-        ["Wpf|F044"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TopPendingDuration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "⏳ 待恢复时长 Top：{0}", ["en-US"] = "⏳ Top pending duration: {0}", ["ja-JP"] = "⏳ 未復旧時間 Top：{0}", ["pt-BR"] = "⏳ Maior tempo aguardando recuperação: {0}"
         },
-        ["Wpf|F045"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PausedRatioAboveThreshold"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "⏸ 待机占比 {0:P0}，高于阈值 {1:P0}", ["en-US"] = "⏸ Paused ratio {0:P0}, above threshold {1:P0}", ["ja-JP"] = "⏸ 待機比率 {0:P0}、しきい値 {1:P0} を超過", ["pt-BR"] = "⏸ Proporção em espera {0:P0}, acima do limiar {1:P0}"
         },
-        ["Wpf|F046"] = new Dictionary<string, string>
+        ["Wpf|Prompt_SFaster"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "▲ 快 {0:F2}s", ["en-US"] = "▲ {0:F2}s faster", ["ja-JP"] = "▲ {0:F2}s 速い", ["pt-BR"] = "▲ {0:F2}s mais rápido"
         },
-        ["Wpf|F047"] = new Dictionary<string, string>
+        ["Wpf|Prompt_SSlower"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "▼ 慢 {0:F2}s", ["en-US"] = "▼ {0:F2}s slower", ["ja-JP"] = "▼ {0:F2}s 遅い", ["pt-BR"] = "▼ {0:F2}s mais lento"
         },
-        ["Wpf|F048"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OutputDroppedPcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "⚠ {0:HH:mm} 产量突降 {1:P0}（{2} 件 → {3} 件）", ["en-US"] = "⚠ Output dropped {1:P0} at {0:HH:mm} ({2} → {3} pcs)", ["ja-JP"] = "⚠ {0:HH:mm} 生産数が {1:P0} 急減（{2} 個 → {3} 個）", ["pt-BR"] = "⚠ Produção caiu {1:P0} às {0:HH:mm} ({2} → {3} pçs)"
         },
-        ["Wpf|F049"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AlarmRatioAboveThreshold"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "⚠ 报警占比 {0:P0}，高于阈值 {1:P0}", ["en-US"] = "⚠ Alarm ratio {0:P0}, above threshold {1:P0}", ["ja-JP"] = "⚠ アラーム比率 {0:P0}、しきい値 {1:P0} を超過", ["pt-BR"] = "⚠ Proporção de alarmes {0:P0}, acima do limiar {1:P0}"
         },
-        ["Wpf|F050"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DropsDetectedWorstDownPcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "⚠ 检测到 {0} 次突降，最严重 @ {1:HH:mm} 降 {2:P0}（{3} 件 → {4} 件）", ["en-US"] = "⚠ {0} drops detected, worst @ {1:HH:mm} down {2:P0} ({3} → {4} pcs)", ["ja-JP"] = "⚠ {0} 回の急減を検出、最悪 @ {1:HH:mm} {2:P0} 減（{3} 個 → {4} 個）", ["pt-BR"] = "⚠ {0} quedas detectadas, a pior às {1:HH:mm} com queda de {2:P0} ({3} → {4} pçs)"
         },
-        ["Wpf|F051"] = new Dictionary<string, string>
+        ["Wpf|Prompt_BottleneckFactorOnlyMainDragOEE"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "⚠ 瓶颈因子：{0} 仅 {1:P1}，是 OEE 的主要拖累项", ["en-US"] = "⚠ Bottleneck factor: {0} at only {1:P1}, the main drag on OEE", ["ja-JP"] = "⚠ ボトルネック要因: {0} は {1:P1} のみ、OEE の主な足枷", ["pt-BR"] = "⚠ Fator de gargalo: {0} com apenas {1:P1}, o maior arrasto do OEE"
         },
-        ["Wpf|F052"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ChainTriggerTimesWithin5Minute"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "⚡ 连锁触发：{0}（在 5 分钟窗口内出现 {1} 次）", ["en-US"] = "⚡ Chain trigger: {0} ({1} times within a 5-minute window)", ["ja-JP"] = "⚡ 連鎖発生: {0}（5 分間のウィンドウ内で {1} 回）", ["pt-BR"] = "⚡ Disparo em cadeia: {0} ({1} vezes numa janela de 5 minutos)"
         },
-        ["Wpf|F053"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ThreeMetricsBalancedOEE"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "✓ 三项指标均衡（{0:P0} / {1:P0} / {2:P0}），OEE = {3:P1}", ["en-US"] = "✓ Three metrics balanced ({0:P0} / {1:P0} / {2:P0}), OEE = {3:P1}", ["ja-JP"] = "✓ 3 指標は均衡（{0:P0} / {1:P0} / {2:P0}）、OEE = {3:P1}", ["pt-BR"] = "✓ Três indicadores equilibrados ({0:P0} / {1:P0} / {2:P0}), OEE = {3:P1}"
         },
-        ["Wpf|F054"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Major"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "一般{0}", ["en-US"] = "Major{0}", ["ja-JP"] = "一般{0}", ["pt-BR"] = "Médio{0}"
         },
-        ["Wpf|F055"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PreviousShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "上一班次（{0}）", ["en-US"] = "Previous shift ({0})", ["ja-JP"] = "前の班（{0}）", ["pt-BR"] = "Turno anterior ({0})"
         },
-        ["Wpf|F056"] = new Dictionary<string, string>
+        ["Wpf|Prompt_UnsupportedPLCBrand"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "不支持的 PLC 品牌: {0}", ["en-US"] = "Unsupported PLC brand: {0}", ["ja-JP"] = "未対応の PLC ブランド: {0}", ["pt-BR"] = "Marca de PLC sem suporte: {0}"
         },
-        ["Wpf|F057"] = new Dictionary<string, string>
+        ["Wpf|Prompt_UnsupportedSiemensModel"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "不支持的 Siemens 型号: {0}", ["en-US"] = "Unsupported Siemens model: {0}", ["ja-JP"] = "未対応の Siemens モデル: {0}", ["pt-BR"] = "Modelo Siemens sem suporte: {0}"
         },
-        ["Wpf|F058"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Critical"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "严重{0}", ["en-US"] = "Critical{0}", ["ja-JP"] = "重大{0}", ["pt-BR"] = "Crítico{0}"
         },
-        ["Wpf|F059"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MainDefectCumulativePcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "主要缺陷为 {0}（{1}），当前累计 {2:N0} 件，占当前缺陷 Top10 的 {3:F1}%", ["en-US"] = "Main defect is {0} ({1}), cumulative {2:N0} pcs, {3:F1}%", ["ja-JP"] = "主要不良は {0}（{1}）、累計 {2:N0} 個、現在の不良 Top10 の {3:F1}%", ["pt-BR"] = "Defeito principal: {0} ({1}), acumulado {2:N0} pcs, {3:F1}%"
         },
-        ["Wpf|F060"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OutputQualityRateOEE"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量 {0} · 良品率 {1} · OEE {2}", ["en-US"] = "Output {0} · Quality rate {1} · OEE {2}", ["ja-JP"] = "生産数 {0} · 良品率 {1} · OEE {2}", ["pt-BR"] = "Produção {0} · Taxa de qualidade {1} · OEE {2}"
         },
-        ["Wpf|F061"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OutputAlarmTimes"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量 {0:N0} · 报警 {1} 次", ["en-US"] = "Output {0:N0} · Alarm {1} times", ["ja-JP"] = "生産数 {0:N0} · アラーム {1} 回", ["pt-BR"] = "Produção {0:N0} · {1} alarmes"
         },
-        ["Wpf|F062"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OutputQualityRateOEE2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量 {0:N0} · 良品率 {1:P1} · OEE {2:P1}", ["en-US"] = "Output {0:N0} · Quality rate {1:P1} · OEE {2:P1}", ["ja-JP"] = "生産数 {0:N0} · 良品率 {1:P1} · OEE {2:P1}", ["pt-BR"] = "Produção {0:N0} · Taxa de qualidade {1:P1} · OEE {2:P1}"
         },
-        ["Wpf|F063"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedQueryOutputHistory"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量历史查询失败：{0}", ["en-US"] = "Failed to query output history: {0}", ["ja-JP"] = "生産数履歴の取得に失敗しました: {0}", ["pt-BR"] = "Falha ao consultar histórico de produção: {0}"
         },
-        ["Wpf|F064"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OutputFluctuatedSteadilyMeanOKPcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量平稳波动，均值 OK ≈ {0:F0} 件，峰值 {1} 件 @ {2:HH:mm}", ["en-US"] = "Output fluctuated steadily, mean OK ≈ {0:F0} pcs, peak {1} pcs @ {2:HH:mm}", ["ja-JP"] = "生産数は安定推移、平均 OK ≈ {0:F0} 個、ピーク {1} 個 @ {2:HH:mm}", ["pt-BR"] = "Produção oscilou de forma estável, média OK ≈ {0:F0} pçs, pico {1} pçs às {2:HH:mm}"
         },
-        ["Wpf|F065"] = new Dictionary<string, string>
+        ["Wpf|Prompt_BelowBestShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "低于最佳班次 {0:P0}{1}", ["en-US"] = "{1} below the best shift {0:P0}", ["ja-JP"] = "最良班 {0:P0} を下回る{1}", ["pt-BR"] = "{1} abaixo do melhor turno {0:P0}"
         },
-        ["Wpf|F066"] = new Dictionary<string, string>
+        ["Wpf|Prompt_SaveFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存失败: {0}", ["en-US"] = "Save failed: {0}", ["ja-JP"] = "保存に失敗しました: {0}", ["pt-BR"] = "Falha ao salvar: {0}"
         },
-        ["Wpf|F067"] = new Dictionary<string, string>
+        ["Wpf|Prompt_SaveFailedConfigurationIssuesFoundPlease"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存失败：发现 {0} 处配置问题，请在设备参数表单中修正", ["en-US"] = "Save failed: {0} configuration issues found, please fix them in the device parameter form", ["ja-JP"] = "保存に失敗しました: 設定問題が {0} 件あります。デバイスパラメータフォームで修正してください", ["pt-BR"] = "Falha ao salvar: {0} problemas de configuração encontrados; corrija-os no formulário de parâmetros do dispositivo"
         },
-        ["Wpf|F068"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedStopCollectionService"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "停止采集服务失败：{0}", ["en-US"] = "Failed to stop the collection service: {0}", ["ja-JP"] = "収集サービスの停止に失敗しました: {0}", ["pt-BR"] = "Falha ao interromper o serviço de coleta: {0}"
         },
-        ["Wpf|F069"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TotalsUseAllRowsPage"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "汇总按全部 {0:N0} 条 · 第 {1}/{2} 页", ["en-US"] = "Totals use all {0:N0} rows · page {1}/{2}", ["ja-JP"] = "集計は全 {0:N0} 件 · {1}/{2} ページ", ["pt-BR"] = "Totais usam todas as {0:N0} linhas · página {1}/{2}"
         },
-        ["Wpf|F070"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WriteFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "写入失败: {0}", ["en-US"] = "Write failed: {0}", ["ja-JP"] = "書き込みに失敗しました: {0}", ["pt-BR"] = "Falha na gravação: {0}"
         },
-        ["Wpf|F071"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WriteError"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "写入异常: {0}", ["en-US"] = "Write error: {0}", ["ja-JP"] = "書き込みエラー: {0}", ["pt-BR"] = "Erro de gravação: {0}"
         },
-        ["Wpf|F072"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WriteOK"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "写入成功 ({0:HH:mm:ss})", ["en-US"] = "Write OK ({0:HH:mm:ss})", ["ja-JP"] = "書き込み成功（{0:HH:mm:ss}）", ["pt-BR"] = "Gravação OK ({0:HH:mm:ss})"
         },
-        ["Wpf|F073"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedRefreshAlarmStatistics"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "刷新报警统计失败: {0}", ["en-US"] = "Failed to refresh alarm statistics: {0}", ["ja-JP"] = "アラーム統計の更新に失敗しました: {0}", ["pt-BR"] = "Falha ao atualizar estatísticas de alarmes: {0}"
         },
-        ["Wpf|F074"] = new Dictionary<string, string>
+        ["Wpf|Prompt_GBFree"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "剩余 {0:F1} GB", ["en-US"] = "{0:F1} GB free", ["ja-JP"] = "空き {0:F1} GB", ["pt-BR"] = "{0:F1} GB livres"
         },
-        ["Wpf|F075"] = new Dictionary<string, string>
+        ["Wpf|Prompt_HistoryWriteIntervalMustLess1"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "历史写入间隔不能小于 1，当前值: {0}", ["en-US"] = "History write interval must not be less than 1, current: {0}", ["ja-JP"] = "履歴書き込み間隔は 1 以上である必要があります。現在値: {0}", ["pt-BR"] = "O intervalo de gravação de histórico não pode ser menor que 1; atual: {0}"
         },
-        ["Wpf|F077"] = new Dictionary<string, string>
+        ["Wpf|Prompt_HistoryQueryFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "历史查询失败：{0}", ["en-US"] = "History query failed: {0}", ["ja-JP"] = "履歴クエリに失敗しました: {0}", ["pt-BR"] = "Falha na consulta de histórico: {0}"
         },
-        ["Wpf|F078"] = new Dictionary<string, string>
+        ["Wpf|Prompt_IssuesFound"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "发现 {0} 项问题", ["en-US"] = "{0} issues found", ["ja-JP"] = "{0} 件の問題を検出", ["pt-BR"] = "{0} problemas encontrados"
         },
-        ["Wpf|F079"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AvailabilityLoss"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "可用率 {0:P1}，损失 {1:P1}", ["en-US"] = "Availability {0:P1}, loss {1:P1}", ["ja-JP"] = "稼働率 {0:P1}、損失 {1:P1}", ["pt-BR"] = "Disponibilidade {0:P1}, perda {1:P1}"
         },
-        ["Wpf|F080"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AddressConflictSharedDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "地址冲突「{0}」被 {1} 台设备共用：", ["en-US"] = "Address conflict \"{0}\" is shared by {1} devices:", ["ja-JP"] = "アドレス競合「{0}」が {1} 台のデバイスで共有されています:", ["pt-BR"] = "Conflito de endereço \"{0}\" compartilhado por {1} dispositivos:"
         },
-        ["Wpf|F081"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AddressConflict"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "地址冲突：{0}", ["en-US"] = "Address conflict: {0}", ["ja-JP"] = "アドレス競合: {0}", ["pt-BR"] = "Conflito de endereço: {0}"
         },
-        ["Wpf|F082"] = new Dictionary<string, string>
+        ["Wpf|Prompt_InvalidAddressFormatDWordAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "地址格式无效（需要 D 字地址）: {0}", ["en-US"] = "Invalid address format (D-word address required): {0}", ["ja-JP"] = "アドレス形式が無効です（D ワードアドレスが必要）: {0}", ["pt-BR"] = "Formato de endereço inválido (requer endereço D-word): {0}"
         },
-        ["Wpf|F083"] = new Dictionary<string, string>
+        ["Wpf|Prompt_InvalidAddressFormatDWordAddress2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "地址格式无效（需要 D 字地址）: {0}", ["en-US"] = "Invalid address format (D-word address required): {0}", ["ja-JP"] = "アドレス形式が無効です（D ワードアドレスが必要）: {0}", ["pt-BR"] = "Formato de endereço inválido (requer endereço D-word): {0}"
         },
-        ["Wpf|F084"] = new Dictionary<string, string>
+        ["Wpf|Prompt_BackupFileReadParseFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "备份文件读取或解析失败: {0}", ["en-US"] = "Backup file read or parse failed: {0}", ["ja-JP"] = "バックアップファイルの読み取りまたは解析に失敗しました: {0}", ["pt-BR"] = "Falha ao ler ou analisar o arquivo de backup: {0}"
         },
-        ["Wpf|F085"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedLoadReviewData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复盘数据加载失败: {0}", ["en-US"] = "Failed to load review data: {0}", ["ja-JP"] = "レビューデータの読み込みに失敗しました: {0}", ["pt-BR"] = "Falha ao carregar dados da revisão: {0}"
         },
-        ["Wpf|F086"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedDetails"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "失败明细：\n  · {0}", ["en-US"] = "Failed details:\n  · {0}", ["ja-JP"] = "失敗の詳細:\n  · {0}", ["pt-BR"] = "Detalhes da falha:\\n  · {0}"
+            ["zh-CN"] = "失败明细：\r\n  · {0}", ["en-US"] = "Failed details:\r\n  · {0}", ["ja-JP"] = "失敗の詳細:\r\n  · {0}", ["pt-BR"] = "Detalhes da falha:\\n  · {0}"
         },
-        ["Wpf|F087"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Failed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "失败：{0}", ["en-US"] = "Failed: {0}", ["ja-JP"] = "失敗: {0}", ["pt-BR"] = "Falha: {0}"
         },
-        ["Wpf|F088"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Present"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "存在 · {0}", ["en-US"] = "Present · {0}", ["ja-JP"] = "あり · {0}", ["pt-BR"] = "Presente · {0}"
         },
-        ["Wpf|F089"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ImportReplaceCurrentDevicesDevicesFile"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入将用文件中的 {0} 台设备替换当前 {1} 台设备配置，且不会自动保存到磁盘。是否继续？", ["en-US"] = "Import will replace the current {1} devices with {0} devices from the file; changes are not saved to disk automatically. Continue?", ["ja-JP"] = "インポートでファイルの {0} 台のデバイスで現在の {1} 台の設定を置き換えます。ディスクには自動保存されません。続行しますか？", ["pt-BR"] = "A importação substituirá os {1} dispositivos atuais por {0} dispositivos do arquivo; as alterações não são salvas em disco automaticamente. Continuar?"
         },
-        ["Wpf|F090"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ExportFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出失败: {0}", ["en-US"] = "Export failed: {0}", ["ja-JP"] = "エクスポートに失敗しました: {0}", ["pt-BR"] = "Falha na exportação: {0}"
         },
-        ["Wpf|F091"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AlarmsImportedCurrentDeviceExisting"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "将导入 {0} 条报警到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} alarms will be imported to the current device ({1} existing).\n", ["ja-JP"] = "{0} 件のアラームを現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} alarmes serão importados para o dispositivo atual ({1} existentes).\\n"
+            ["zh-CN"] = "将导入 {0} 条报警到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} alarms will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "{0} 件のアラームを現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} alarmes serão importados para o dispositivo atual ({1} existentes).\\n"
         },
-        ["Wpf|F092"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ReplaceCurrentDeviceConfigs20Virtual"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "将用 20 台虚拟设备替换当前 {0} 台设备配置，当前未保存的改动会丢失。是否继续？\n（替换后请点击保存以持久化）", ["en-US"] = "Replace the current {0} device configs with 20 virtual devices; unsaved changes will be lost. Continue?\n(Save after replacement to persist)", ["ja-JP"] = "20 台の仮想デバイスで現在の {0} 台の設定を置き換えます。未保存の変更は失われます。続行しますか？\n（置き換え後に保存してください）", ["pt-BR"] = "Substituirá as {0} configurações de dispositivo atuais por 20 dispositivos virtuais; alterações não salvas serão perdidas. Continuar?\\n(Salve após a substituição para persistir)"
+            ["zh-CN"] = "将用 20 台虚拟设备替换当前 {0} 台设备配置，当前未保存的改动会丢失。是否继续？\r\n（替换后请点击保存以持久化）", ["en-US"] = "Replace the current {0} device configs with 20 virtual devices; unsaved changes will be lost. Continue?\r\n(Save after replacement to persist)", ["ja-JP"] = "20 台の仮想デバイスで現在の {0} 台の設定を置き換えます。未保存の変更は失われます。続行しますか？\r\n（置き換え後に保存してください）", ["pt-BR"] = "Substituirá as {0} configurações de dispositivo atuais por 20 dispositivos virtuais; alterações não salvas serão perdidas. Continuar?\\n(Salve após a substituição para persistir)"
         },
-        ["Wpf|F093"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WorkOrderReachedTargetPcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单 {0} 产量已达标（{1:N0} / {2:N0} 件）", ["en-US"] = "Work order {0} reached the target ({1:N0} / {2:N0} pcs)", ["ja-JP"] = "工単 {0} が目標に達しました（{1:N0} / {2:N0} 個）", ["pt-BR"] = "A ordem de produção {0} atingiu a meta ({1:N0} / {2:N0} pçs)"
         },
-        ["Wpf|F094"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WorkOrderAborted"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单 {0} 已中止", ["en-US"] = "Work order {0} aborted", ["ja-JP"] = "工単 {0} を中止しました", ["pt-BR"] = "A ordem de produção {0} foi abortada"
         },
-        ["Wpf|F095"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WorkOrderCompleted"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单 {0} 已完成", ["en-US"] = "Work order {0} completed", ["ja-JP"] = "工単 {0} を完了しました", ["pt-BR"] = "A ordem de produção {0} foi concluída"
         },
-        ["Wpf|F096"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WorkOrderStarted"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单 {0} 已开始", ["en-US"] = "Work order {0} started", ["ja-JP"] = "工単 {0} を開始しました", ["pt-BR"] = "A ordem de produção {0} foi iniciada"
         },
-        ["Wpf|F097"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OrderNumberAlreadyExistsOrderId"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单号「{0}」已存在（工单 Id={1}），请使用唯一工单号", ["en-US"] = "Order number \"{0}\" already exists (Order Id={1}); use a unique order number", ["ja-JP"] = "工単番号「{0}」は既に存在します（工単 Id={1}）。一意の工単番号を使用してください", ["pt-BR"] = "O nº de ordem \"{0}\" já existe (Id da ordem={1}); use um número de ordem único"
         },
-        ["Wpf|F098"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RefreshedOutputDataWorkOrders"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已刷新 {0} 条工单的产量数据", ["en-US"] = "Refreshed output data for {0} work orders", ["ja-JP"] = "{0} 件の工単の生産データを更新しました", ["pt-BR"] = "Dados de produção atualizados para {0} ordens de produção"
         },
-        ["Wpf|F099"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WorkOrderCopied"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已复制工单 {0}", ["en-US"] = "Work order {0} copied", ["ja-JP"] = "工単 {0} をコピーしました", ["pt-BR"] = "Ordem de produção {0} copiada"
         },
-        ["Wpf|F100"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeviceCopied"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已复制设备「{0}」为「{1}」", ["en-US"] = "Device \"{0}\" copied as \"{1}\"", ["ja-JP"] = "デバイス「{0}」を「{1}」としてコピーしました", ["pt-BR"] = "Dispositivo \"{0}\" copiado como \"{1}\""
         },
-        ["Wpf|F101"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DevicesImportedClickSavePersist"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导入 {0} 台设备，请点击保存以持久化", ["en-US"] = "{0} devices imported; click Save to persist", ["ja-JP"] = "{0} 台のデバイスをインポートしました。保存して永続化してください", ["pt-BR"] = "{0} dispositivos importados; clique em Salvar para persistir"
         },
-        ["Wpf|F102"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AlarmsImportedRowsSkipped"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "已导入 {0} 条报警（{1} 行跳过）。\n", ["en-US"] = "{0} alarms imported ({1} rows skipped).\n", ["ja-JP"] = "{0} 件のアラームをインポートしました（{1} 行スキップ）。\n", ["pt-BR"] = "{0} alarmes importados ({1} linhas ignoradas).\\n"
+            ["zh-CN"] = "已导入 {0} 条报警（{1} 行跳过）。\r\n", ["en-US"] = "{0} alarms imported ({1} rows skipped).\r\n", ["ja-JP"] = "{0} 件のアラームをインポートしました（{1} 行スキップ）。\r\n", ["pt-BR"] = "{0} alarmes importados ({1} linhas ignoradas).\\n"
         },
-        ["Wpf|F103"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AlarmsImportedClickSavePersist"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导入 {0} 条报警，请点击保存以持久化", ["en-US"] = "{0} alarms imported; click Save to persist", ["ja-JP"] = "{0} 件のアラームをインポートしました。保存して永続化してください", ["pt-BR"] = "{0} alarmes importados; clique em Salvar para persistir"
         },
-        ["Wpf|F105"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ExportedDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导出 {0} 台设备到 {1}", ["en-US"] = "Exported {0} devices to {1}", ["ja-JP"] = "{0} 台のデバイスを {1} にエクスポートしました", ["pt-BR"] = "{0} dispositivos exportados para {1}"
         },
-        ["Wpf|F106"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ExportedWorkOrders"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导出 {0} 条工单 → {1}", ["en-US"] = "Exported {0} work orders → {1}", ["ja-JP"] = "{0} 件の工単をエクスポートしました → {1}", ["pt-BR"] = "{0} ordens de produção exportadas → {1}"
         },
-        ["Wpf|F107"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ExportedAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导出 {0} 条报警 → {1}", ["en-US"] = "Exported {0} alarms → {1}", ["ja-JP"] = "{0} 件のアラームをエクスポートしました → {1}", ["pt-BR"] = "{0} alarmes exportados → {1}"
         },
-        ["Wpf|F108"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RestoredPreviousVersionDevicesClickSave"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已恢复上一版本（{0} 台设备），请点击保存以持久化", ["en-US"] = "Restored the previous version ({0} devices); click Save to persist", ["ja-JP"] = "前のバージョンを復元しました（{0} 台）。保存して永続化してください", ["pt-BR"] = "Versão anterior restaurada ({0} dispositivos); clique em Salvar para persistir"
         },
-        ["Wpf|F109"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WorkOrderAdded"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已新增工单 {0}", ["en-US"] = "Work order {0} added", ["ja-JP"] = "工単 {0} を追加しました", ["pt-BR"] = "Ordem de produção {0} adicionada"
         },
-        ["Wpf|F110"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WorkOrderUpdated"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已更新工单 {0}", ["en-US"] = "Work order {0} updated", ["ja-JP"] = "工単 {0} を更新しました", ["pt-BR"] = "Ordem de produção {0} atualizada"
         },
-        ["Wpf|F111"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ClearedCurrentValue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已清空「{0}」当前值", ["en-US"] = "Cleared the current value of \"{0}\"", ["ja-JP"] = "「{0}」の現在値をクリアしました", ["pt-BR"] = "Valor atual de \"{0}\" limpo"
         },
-        ["Wpf|F112"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Activated"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已激活 · {0:yyyy-MM-dd}", ["en-US"] = "Activated · {0:yyyy-MM-dd}", ["ja-JP"] = "有効 · {0:yyyy-MM-dd}", ["pt-BR"] = "Ativado · {0:yyyy-MM-dd}"
         },
-        ["Wpf|F113"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ActivatedExpires"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已激活 · 到期 {0:yyyy-MM-dd}", ["en-US"] = "Activated · expires {0:yyyy-MM-dd}", ["ja-JP"] = "有効 · 有効期限 {0:yyyy-MM-dd}", ["pt-BR"] = "Ativado · expira em {0:yyyy-MM-dd}"
         },
-        ["Wpf|F114"] = new Dictionary<string, string>
+        ["Wpf|Prompt_VirtualDevicesGeneratedClickSavePersist"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已生成 {0} 台虚拟设备，请点击保存以持久化", ["en-US"] = "{0} virtual devices generated; click Save to persist", ["ja-JP"] = "{0} 台の仮想デバイスを生成しました。保存して永続化してください", ["pt-BR"] = "{0} dispositivos virtuais gerados; clique em Salvar para persistir"
         },
-        ["Wpf|F115"] = new Dictionary<string, string>
+        ["Wpf|Prompt_SampleWorkOrdersGenerated"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已生成 {0} 条样本工单", ["en-US"] = "{0} sample work orders generated", ["ja-JP"] = "{0} 件のサンプル工単を生成しました", ["pt-BR"] = "{0} ordens de amostra geradas"
         },
-        ["Wpf|F116"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OEEResetTriggered"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已触发「{0}」OEE 清零", ["en-US"] = "OEE reset triggered for \"{0}\"", ["ja-JP"] = "「{0}」の OEE リセットを実行しました", ["pt-BR"] = "Zeramento de OEE acionado para \"{0}\""
         },
-        ["Wpf|F117"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RunningRemaining"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已运行 {0}  ·  剩余 {1}", ["en-US"] = "Running {0} · remaining {1}", ["ja-JP"] = "稼働 {0} · 残り {1}", ["pt-BR"] = "Em execução {0} · restante {1}"
         },
-        ["Wpf|F118"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DBWAL"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "库 {0} · WAL {1}", ["en-US"] = "DB {0} · WAL {1}", ["ja-JP"] = "DB {0} · WAL {1}", ["pt-BR"] = "Banco {0} · WAL {1}"
         },
-        ["Wpf|F119"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedSaveApplicationSettings"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "应用设置保存失败：{0}", ["en-US"] = "Failed to save application settings: {0}", ["ja-JP"] = "アプリケーション設定の保存に失敗しました: {0}", ["pt-BR"] = "Falha ao salvar configurações do aplicativo: {0}"
         },
-        ["Wpf|F120"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CurrentThreshold"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前 {0} / 阈值 {1}", ["en-US"] = "Current {0} / Threshold {1}", ["ja-JP"] = "現在 {0} / しきい値 {1}", ["pt-BR"] = "Atual {0} / Limiar {1}"
         },
-        ["Wpf|F121"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WorkOrdersAlreadyExistSampleWork"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前已有 {0} 条工单，将追加生成 {1} 条样本工单。是否继续？", ["en-US"] = "{0} work orders already exist; {1} sample work orders will be appended. Continue?", ["ja-JP"] = "既に {0} 件の工単があります。{1} 件のサンプル工単を追加生成します。続行しますか？", ["pt-BR"] = "Já existem {0} ordens de produção; {1} ordens de amostra serão acrescentadas. Continuar?"
         },
-        ["Wpf|F122"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CurrentShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前班次：{0}", ["en-US"] = "Current shift: {0}", ["ja-JP"] = "現在の班: {0}", ["pt-BR"] = "Turno atual: {0}"
         },
-        ["Wpf|F123"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AlarmsTriggeredCurrentRangeCheckTop"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前范围共触发 {0:N0} 次报警，请结合 Top 5 报警确认主要停机来源", ["en-US"] = "{0:N0} alarms triggered in the current range; check Top 5 alarms for main downtime sources", ["ja-JP"] = "現在の範囲で {0:N0} 回のアラームが発生しました。Top 5 アラームで主な停止要因を確認してください", ["pt-BR"] = "{0:N0} disparos de alarme no período; consulte o Top 5 de alarmes para as principais causas de parada"
         },
-        ["Wpf|F124"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PerformanceLoss"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "性能率 {0:P1}，损失 {1:P1}", ["en-US"] = "Performance {0:P1}, loss {1:P1}", ["ja-JP"] = "性能率 {0:P1}、損失 {1:P1}", ["pt-BR"] = "Desempenho {0:P1}, perda {1:P1}"
         },
-        ["Wpf|F125"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Success"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "成功：{0}", ["en-US"] = "Success: {0}", ["ja-JP"] = "成功: {0}", ["pt-BR"] = "Êxito: {0}"
         },
-        ["Wpf|F126"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ReportExportFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报表导出失败：{0}", ["en-US"] = "Report export failed: {0}", ["ja-JP"] = "レポートエクスポートに失敗しました: {0}", ["pt-BR"] = "Falha na exportação do relatório: {0}"
         },
-        ["Wpf|F127"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Alarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警{0}", ["en-US"] = "Alarm {0}", ["ja-JP"] = "アラーム {0}", ["pt-BR"] = "Alarme {0}"
         },
-        ["Wpf|F128"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AlarmAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警「{0}」地址", ["en-US"] = "Alarm \"{0}\" address", ["ja-JP"] = "アラーム「{0}」アドレス", ["pt-BR"] = "Endereço do alarme \"{0}\""
         },
-        ["Wpf|F129"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedQueryAlarmHistory"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警历史查询失败：{0}", ["en-US"] = "Failed to query alarm history: {0}", ["ja-JP"] = "アラーム履歴の取得に失敗しました: {0}", ["pt-BR"] = "Falha ao consultar histórico de alarmes: {0}"
         },
-        ["Wpf|F130"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AlarmSurgePeriodLastPeriod"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警突增：当前 {0} 次，上一周期 {1} 次", ["en-US"] = "Alarm surge: {0} this period, {1} last period", ["ja-JP"] = "アラーム急増: 今回 {0} 回、前回 {1} 回", ["pt-BR"] = "Surto de alarmes: {0} neste período, {1} no anterior"
         },
-        ["Wpf|F131"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DataStalledSPLCAcquisitionMay"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "数据已停滞 {0}s，PLC 采集可能卡死", ["en-US"] = "Data stalled for {0}s; PLC acquisition may be stuck", ["ja-JP"] = "データが {0}s 停滞しています。PLC 収集が停止している可能性があります", ["pt-BR"] = "Dados parados há {0}s; a coleta do PLC pode estar travada"
         },
-        ["Wpf|F132"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DataStalledSCollectionServiceMay"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "数据已停滞 {0}s，采集服务可能卡死", ["en-US"] = "Data stalled for {0}s; the collection service may be stuck", ["ja-JP"] = "データが {0}s 停滞しています。収集サービスが停止している可能性があります", ["pt-BR"] = "Dados parados há {0}s; o serviço de coleta pode estar travado"
         },
-        ["Wpf|F133"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DatabaseAcquisitionInitializationFailedSomeFeatu"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "数据库/采集初始化失败，部分功能可能不可用：\n\n{0}", ["en-US"] = "Database/acquisition initialization failed; some features may be unavailable:\n\n{0}", ["ja-JP"] = "データベース/収集の初期化に失敗しました。一部機能が利用できない可能性があります:\n\n{0}", ["pt-BR"] = "Falha na inicialização do banco/coleta; alguns recursos podem estar indisponíveis:\\n\\n{0}"
+            ["zh-CN"] = "数据库/采集初始化失败，部分功能可能不可用：\r\n\r\n{0}", ["en-US"] = "Database/acquisition initialization failed; some features may be unavailable:\r\n\r\n{0}", ["ja-JP"] = "データベース/収集の初期化に失敗しました。一部機能が利用できない可能性があります:\r\n\r\n{0}", ["pt-BR"] = "Falha na inicialização do banco/coleta; alguns recursos podem estar indisponíveis:\\n\\n{0}"
         },
-        ["Wpf|F134"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FileReadParseFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "文件读取或解析失败: {0}", ["en-US"] = "File read or parse failed: {0}", ["ja-JP"] = "ファイルの読み取りまたは解析に失敗しました: {0}", ["pt-BR"] = "Falha ao ler ou analisar o arquivo: {0}"
         },
-        ["Wpf|F135"] = new Dictionary<string, string>
+        ["Wpf|Prompt_NewDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "新设备{0}", ["en-US"] = "New device {0}", ["ja-JP"] = "新規デバイス {0}", ["pt-BR"] = "Novo dispositivo {0}"
         },
-        ["Wpf|F136"] = new Dictionary<string, string>
+        ["Wpf|Prompt_InvalidIPAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "无效的 IP 地址: {0}", ["en-US"] = "Invalid IP address: {0}", ["ja-JP"] = "無効な IP アドレス: {0}", ["pt-BR"] = "Endereço IP inválido: {0}"
         },
-        ["Wpf|F137"] = new Dictionary<string, string>
+        ["Wpf|Prompt_UnrecognizedAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "无法识别的 {0} 地址: {1}", ["en-US"] = "Unrecognized {0} address: {1}", ["ja-JP"] = "認識できない {0} アドレス: {1}", ["pt-BR"] = "Endereço {0} não reconhecido: {1}"
         },
-        ["Wpf|F138"] = new Dictionary<string, string>
+        ["Wpf|Prompt_LongestDowntimeHoursDeviceAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最长停机为 {0:F1} 小时，设备：{1}，报警：{2}", ["en-US"] = "Longest downtime {0:F1} hours, device: {1}, alarm: {2}", ["ja-JP"] = "最長停止 {0:F1} 時間、デバイス: {1}、アラーム: {2}", ["pt-BR"] = "Maior parada de {0:F1} horas, dispositivo: {1}, alarme: {2}"
         },
-        ["Wpf|F139"] = new Dictionary<string, string>
+        ["Wpf|Prompt_LongestPauseMin"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最长待机 {0:F0} 分钟（{1:HH:mm}–{2:HH:mm}）", ["en-US"] = "Longest pause {0:F0} min ({1:HH:mm}–{2:HH:mm})", ["ja-JP"] = "最長待機 {0:F0} 分（{1:HH:mm}–{2:HH:mm}）", ["pt-BR"] = "Maior espera de {0:F0} min ({1:HH:mm}–{2:HH:mm})"
         },
-        ["Wpf|F140"] = new Dictionary<string, string>
+        ["Wpf|Prompt_LongestRunMin"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最长运行 {0:F0} 分钟（{1:HH:mm}–{2:HH:mm}）", ["en-US"] = "Longest run {0:F0} min ({1:HH:mm}–{2:HH:mm})", ["ja-JP"] = "最長稼働 {0:F0} 分（{1:HH:mm}–{2:HH:mm}）", ["pt-BR"] = "Maior execução de {0:F0} min ({1:HH:mm}–{2:HH:mm})"
         },
-        ["Wpf|F141"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AlarmsImportedCurrentDeviceExisting2"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "有效 {0} 条报警将导入到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} alarms will be imported to the current device ({1} existing).\n", ["ja-JP"] = "{0} 件のアラームを現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} alarmes válidos serão importados para o dispositivo atual ({1} existentes).\\n"
+            ["zh-CN"] = "有效 {0} 条报警将导入到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} alarms will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "{0} 件のアラームを現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} alarmes válidos serão importados para o dispositivo atual ({1} existentes).\\n"
         },
-        ["Wpf|F142"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ExpectedTypeAddressCurrent"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "期望 {0} 类型地址，当前为 {1}", ["en-US"] = "Expected {0} type address, current is {1}", ["ja-JP"] = "{0} タイプのアドレスが必要です。現在は {1}", ["pt-BR"] = "Esperava endereço do tipo {0}; atual é {1}"
         },
-        ["Wpf|F143"] = new Dictionary<string, string>
+        ["Wpf|Prompt_NoAlarmsImported"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "未导入任何报警：\n  · {0}", ["en-US"] = "No alarms imported:\n  · {0}", ["ja-JP"] = "アラームはインポートされませんでした:\n  · {0}", ["pt-BR"] = "Nenhum alarme importado:\\n  · {0}"
+            ["zh-CN"] = "未导入任何报警：\r\n  · {0}", ["en-US"] = "No alarms imported:\r\n  · {0}", ["ja-JP"] = "アラームはインポートされませんでした:\r\n  · {0}", ["pt-BR"] = "Nenhum alarme importado:\\n  · {0}"
         },
-        ["Wpf|F144"] = new Dictionary<string, string>
+        ["Wpf|Prompt_UnknownQueryTab"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未知查询 Tab：{0}", ["en-US"] = "Unknown query tab: {0}", ["ja-JP"] = "不明なクエリタブ: {0}", ["pt-BR"] = "Aba de consulta desconhecida: {0}"
         },
-        ["Wpf|F145"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MachineCode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "机器码：{0}", ["en-US"] = "Machine code: {0}", ["ja-JP"] = "マシンコード: {0}", ["pt-BR"] = "Código da máquina: {0}"
         },
-        ["Wpf|F146"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MachineCodeLicenseDoesMatchMachine"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\n授权与当前机器不匹配", ["en-US"] = "Machine code: {0}\nLicense does not match this machine", ["ja-JP"] = "マシンコード: {0}\nこのマシンとライセンスが一致しません", ["pt-BR"] = "Código da máquina: {0}\\nA licença não corresponde a esta máquina"
+            ["zh-CN"] = "机器码：{0}\r\n授权与当前机器不匹配", ["en-US"] = "Machine code: {0}\r\nLicense does not match this machine", ["ja-JP"] = "マシンコード: {0}\r\nこのマシンとライセンスが一致しません", ["pt-BR"] = "Código da máquina: {0}\\nA licença não corresponde a esta máquina"
         },
-        ["Wpf|F147"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MachineCodeLicenseExpiredPleaseActivate"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\n授权已过期，请重新激活", ["en-US"] = "Machine code: {0}\nLicense expired; please activate again", ["ja-JP"] = "マシンコード: {0}\nライセンスの有効期限が切れています。再アクティベーションしてください", ["pt-BR"] = "Código da máquina: {0}\\nLicença expirada; ative novamente"
+            ["zh-CN"] = "机器码：{0}\r\n授权已过期，请重新激活", ["en-US"] = "Machine code: {0}\r\nLicense expired; please activate again", ["ja-JP"] = "マシンコード: {0}\r\nライセンスの有効期限が切れています。再アクティベーションしてください", ["pt-BR"] = "Código da máquina: {0}\\nLicença expirada; ative novamente"
         },
-        ["Wpf|F148"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MachineCodeSystemTimeAnomalyDetected"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\n检测到系统时间异常", ["en-US"] = "Machine code: {0}\nSystem time anomaly detected", ["ja-JP"] = "マシンコード: {0}\nシステム時刻の異常を検出しました", ["pt-BR"] = "Código da máquina: {0}\\nAnomalia no horário do sistema detectada"
+            ["zh-CN"] = "机器码：{0}\r\n检测到系统时间异常", ["en-US"] = "Machine code: {0}\r\nSystem time anomaly detected", ["ja-JP"] = "マシンコード: {0}\r\nシステム時刻の異常を検出しました", ["pt-BR"] = "Código da máquina: {0}\\nAnomalia no horário do sistema detectada"
         },
-        ["Wpf|F149"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MachineCodePermanentLicense"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\n永久授权", ["en-US"] = "Machine code: {0}\nPermanent license", ["ja-JP"] = "マシンコード: {0}\n永久ライセンス", ["pt-BR"] = "Código da máquina: {0}\\nLicença permanente"
+            ["zh-CN"] = "机器码：{0}\r\n永久授权", ["en-US"] = "Machine code: {0}\r\nPermanent license", ["ja-JP"] = "マシンコード: {0}\r\n永久ライセンス", ["pt-BR"] = "Código da máquina: {0}\\nLicença permanente"
         },
-        ["Wpf|F150"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MachineCodeProductKeyExpires"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\n激活码：{1}\n到期：{2:yyyy-MM-dd}", ["en-US"] = "Machine code: {0}\nProduct key: {1}\nExpires: {2:yyyy-MM-dd}", ["ja-JP"] = "マシンコード: {0}\nプロダクトキー: {1}\n有効期限: {2:yyyy-MM-dd}", ["pt-BR"] = "Código da máquina: {0}\\nChave do produto: {1}\\nExpira em: {2:yyyy-MM-dd}"
+            ["zh-CN"] = "机器码：{0}\r\n激活码：{1}\r\n到期：{2:yyyy-MM-dd}", ["en-US"] = "Machine code: {0}\r\nProduct key: {1}\r\nExpires: {2:yyyy-MM-dd}", ["ja-JP"] = "マシンコード: {0}\r\nプロダクトキー: {1}\r\n有効期限: {2:yyyy-MM-dd}", ["pt-BR"] = "Código da máquina: {0}\\nChave do produto: {1}\\nExpira em: {2:yyyy-MM-dd}"
         },
-        ["Wpf|F151"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MachineCodeTrialDaysRemaining"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\n试用期剩余 {1} 天", ["en-US"] = "Machine code: {0}\n{1} trial days remaining", ["ja-JP"] = "マシンコード: {0}\n試用残り {1} 日", ["pt-BR"] = "Código da máquina: {0}\\nRestam {1} dias de avaliação"
+            ["zh-CN"] = "机器码：{0}\r\n试用期剩余 {1} 天", ["en-US"] = "Machine code: {0}\r\n{1} trial days remaining", ["ja-JP"] = "マシンコード: {0}\r\n試用残り {1} 日", ["pt-BR"] = "Código da máquina: {0}\\nRestam {1} dias de avaliação"
         },
-        ["Wpf|F152"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MachineCodeTrialExpiredPleaseActivate"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\n试用期已过期，请激活", ["en-US"] = "Machine code: {0}\nTrial expired; please activate", ["ja-JP"] = "マシンコード: {0}\n試用期間が終了しました。アクティベーションしてください", ["pt-BR"] = "Código da máquina: {0}\\nAvaliação expirada; ative o produto"
+            ["zh-CN"] = "机器码：{0}\r\n试用期已过期，请激活", ["en-US"] = "Machine code: {0}\r\nTrial expired; please activate", ["ja-JP"] = "マシンコード: {0}\r\n試用期間が終了しました。アクティベーションしてください", ["pt-BR"] = "Código da máquina: {0}\\nAvaliação expirada; ative o produto"
         },
-        ["Wpf|F153"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedQueryOutputData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询产量数据失败: {0}", ["en-US"] = "Failed to query output data: {0}", ["ja-JP"] = "生産データの取得に失敗しました: {0}", ["pt-BR"] = "Falha ao consultar dados de produção: {0}"
         },
-        ["Wpf|F154"] = new Dictionary<string, string>
+        ["Wpf|Prompt_QueryFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询失败: {0}", ["en-US"] = "Query failed: {0}", ["ja-JP"] = "クエリに失敗しました: {0}", ["pt-BR"] = "Falha na consulta: {0}"
         },
-        ["Wpf|F155"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedQueryAlarmEvents"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询报警事件失败: {0}", ["en-US"] = "Failed to query alarm events: {0}", ["ja-JP"] = "アラームイベントの取得に失敗しました: {0}", ["pt-BR"] = "Falha ao consultar eventos de alarme: {0}"
         },
-        ["Wpf|F156"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OmronFINSReadSplitLengthMust"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "欧姆龙 FINS 读取切割长度必须在 1-999 之间，当前值: {0}", ["en-US"] = "Omron FINS read split length must be between 1-999, current: {0}", ["ja-JP"] = "オムロン FINS 読み取り分割長は 1〜999 の範囲である必要があります。現在値: {0}", ["pt-BR"] = "O comprimento de divisão de leitura FINS Omron deve estar entre 1-999; atual: {0}"
         },
-        ["Wpf|F157"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Connecting"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正在连接 {0}:{1} …", ["en-US"] = "Connecting to {0}:{1} …", ["ja-JP"] = "{0}:{1} に接続中 …", ["pt-BR"] = "Conectando a {0}:{1} …"
         },
-        ["Wpf|F158"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Connecting2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正在连接 {0} …", ["en-US"] = "Connecting to {0} …", ["ja-JP"] = "{0} に接続中 …", ["pt-BR"] = "Conectando a {0} …"
         },
-        ["Wpf|F159"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ConnectingCollectionService"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正在连接采集服务 · {0}", ["en-US"] = "Connecting to collection service · {0}", ["ja-JP"] = "収集サービスに接続中 · {0}", ["pt-BR"] = "Conectando ao serviço de coleta · {0}"
         },
-        ["Wpf|F160"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ClearFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "清空失败: {0}", ["en-US"] = "Clear failed: {0}", ["ja-JP"] = "クリアに失敗しました: {0}", ["pt-BR"] = "Falha na limpeza: {0}"
         },
-        ["Wpf|F161"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ClearError"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "清空异常: {0}", ["en-US"] = "Clear error: {0}", ["ja-JP"] = "クリアエラー: {0}", ["pt-BR"] = "Erro de limpeza: {0}"
         },
-        ["Wpf|F162"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ResetError"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "清零异常: {0}", ["en-US"] = "Reset error: {0}", ["ja-JP"] = "リセットエラー: {0}", ["pt-BR"] = "Erro de zeramento: {0}"
         },
-        ["Wpf|F163"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ActivatedSuccessfully"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "激活成功{0}。", ["en-US"] = "Activated successfully{0}.", ["ja-JP"] = "アクティベーション成功{0}。", ["pt-BR"] = "Ativação bem-sucedida{0}."
         },
-        ["Wpf|F164"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Status"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态 {0}", ["en-US"] = "Status {0}", ["ja-JP"] = "状態 {0}", ["pt-BR"] = "Status {0}"
         },
-        ["Wpf|F165"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedQueryStatusHistory"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态历史查询失败：{0}", ["en-US"] = "Failed to query status history: {0}", ["ja-JP"] = "状態履歴の取得に失敗しました: {0}", ["pt-BR"] = "Falha ao consultar histórico de estados: {0}"
         },
-        ["Wpf|F166"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Shift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次{0}", ["en-US"] = "Shift {0}", ["ja-JP"] = "班 {0}", ["pt-BR"] = "Turno {0}"
         },
-        ["Wpf|F167"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ReviewPDFExported"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生产复盘 PDF 已导出：{0}", ["en-US"] = "Review PDF exported: {0}", ["ja-JP"] = "レビュー PDF をエクスポートしました: {0}", ["pt-BR"] = "PDF da revisão exportado: {0}"
         },
-        ["Wpf|F168"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ReviewReportExported"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生产复盘报表已导出：{0}", ["en-US"] = "Review report exported: {0}", ["ja-JP"] = "レビューレポートをエクスポートしました: {0}", ["pt-BR"] = "Relatório de revisão exportado: {0}"
         },
-        ["Wpf|F170"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Target"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标 {0:P0}", ["en-US"] = "Target {0:P0}", ["ja-JP"] = "目標 {0:P0}", ["pt-BR"] = "Meta {0:P0}"
         },
-        ["Wpf|F171"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Target2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标 {0:P2}", ["en-US"] = "Target {0:P2}", ["ja-JP"] = "目標 {0:P2}", ["pt-BR"] = "Meta {0:P2}"
         },
-        ["Wpf|F172"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TargetPcsH"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标 {0} 件/h", ["en-US"] = "Target {0} pcs/h", ["ja-JP"] = "目標 {0} 個/h", ["pt-BR"] = "Meta {0} pçs/h"
         },
-        ["Wpf|F173"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AbortWorkOrderCannotRestoredRunning"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确定中止工单「{0}」吗？中止后不可恢复为 Running。", ["en-US"] = "Abort work order \"{0}\"? It cannot be restored to Running after abort.", ["ja-JP"] = "工単「{0}」を中止しますか？中止後は Running に戻せません。", ["pt-BR"] = "Abortar a ordem de produção \"{0}\"? Não é possível voltar a Em execução após o aborto."
         },
-        ["Wpf|F174"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeleteWorkOrderCannotUndone"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确定删除工单「{0}」（{1}）吗？此操作不可恢复。", ["en-US"] = "Delete work order \"{0}\" ({1})? This cannot be undone.", ["ja-JP"] = "工単「{0}」（{1}）を削除しますか？この操作は元に戻せません。", ["pt-BR"] = "Excluir a ordem de produção \"{0}\" ({1})? Esta ação não pode ser desfeita."
         },
-        ["Wpf|F175"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeleteDeviceAlarmsDefectsCounterAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确定删除设备「{0}」吗？关联的报警、缺陷和计数器报警将一并移除。此操作不可撤销。", ["en-US"] = "Delete device \"{0}\"? Its alarms, defects and counter alarms will be removed too. This cannot be undone.", ["ja-JP"] = "デバイス「{0}」を削除しますか？関連するアラーム、不良、カカカウンタアラームも削除されます。この操作は元に戻せません。", ["pt-BR"] = "Excluir o dispositivo \"{0}\"? Os alarmes, defeitos e alarmes de contador associados também serão removidos. Não é possível desfazer."
         },
-        ["Wpf|F176"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ManuallyResetOEEOKNGOutput"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "确定手动清零「{0}」的 OEE 吗？\n将清零该设备的 OK/NG 产量、运行/报警/待机累计时间及报警状态，且无法撤销。", ["en-US"] = "Manually reset OEE for \"{0}\"?\nOK/NG output, accumulated run/alarm/pause time and alarm status will be cleared; this cannot be undone.", ["ja-JP"] = "「{0}」の OEE を手動リセットしますか？\nOK/NG 生産数、稼働/アラーム/待機の累計時間、アラーム状態がクリアされます。元に戻せません。", ["pt-BR"] = "Zerar manualmente o OEE de \"{0}\"?\\nA produção OK/NG, o tempo acumulado de execução/alarme/espera e o status de alarmes serão limpos; não é possível desfazer."
+            ["zh-CN"] = "确定手动清零「{0}」的 OEE 吗？\r\n将清零该设备的 OK/NG 产量、运行/报警/待机累计时间及报警状态，且无法撤销。", ["en-US"] = "Manually reset OEE for \"{0}\"?\r\nOK/NG output, accumulated run/alarm/pause time and alarm status will be cleared; this cannot be undone.", ["ja-JP"] = "「{0}」の OEE を手動リセットしますか？\r\nOK/NG 生産数、稼働/アラーム/待機の累計時間、アラーム状態がクリアされます。元に戻せません。", ["pt-BR"] = "Zerar manualmente o OEE de \"{0}\"?\\nA produção OK/NG, o tempo acumulado de execução/alarme/espera e o status de alarmes serão limpos; não é possível desfazer."
         },
-        ["Wpf|F177"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ClearCurrentValueCounterAlarmReset"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "确定清空计数器报警「{0}」的当前值吗？\n将向 PLC 写入复位指令并清零软件侧当前值，操作不可撤销。", ["en-US"] = "Clear the current value of counter alarm \"{0}\"?\nA reset command will be written to the PLC and the software-side value cleared; this cannot be undone.", ["ja-JP"] = "カカカウンタアラーム「{0}」の現在値をクリアしますか？\nPLC にリセット指令を書き込み、ソフトウェア側の現在値をクリアします。元に戻せません。", ["pt-BR"] = "Limpar o valor atual do alarme de contador \"{0}\"?\\nUm comando de reset será gravado no PLC e o valor do software limpo; não é possível desfazer."
+            ["zh-CN"] = "确定清空计数器报警「{0}」的当前值吗？\r\n将向 PLC 写入复位指令并清零软件侧当前值，操作不可撤销。", ["en-US"] = "Clear the current value of counter alarm \"{0}\"?\r\nA reset command will be written to the PLC and the software-side value cleared; this cannot be undone.", ["ja-JP"] = "カカカウンタアラーム「{0}」の現在値をクリアしますか？\r\nPLC にリセット指令を書き込み、ソフトウェア側の現在値をクリアします。元に戻せません。", ["pt-BR"] = "Limpar o valor atual do alarme de contador \"{0}\"?\\nUm comando de reset será gravado no PLC e o valor do software limpo; não é possível desfazer."
         },
-        ["Wpf|F501"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeleteAlarmActionCannotUndone"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确定删除报警「{0}」吗？此操作不可撤销。", ["en-US"] = "Delete alarm \"{0}\"? This action cannot be undone.", ["ja-JP"] = "アラーム「{0}」を削除しますか？この操作は元に戻せません。", ["pt-BR"] = "Excluir o alarme \"{0}\"? Esta ação não pode ser desfeita."
         },
-        ["Wpf|F502"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeleteDefectActionCannotUndone"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确定删除缺陷「{0}」吗？此操作不可撤销。", ["en-US"] = "Delete defect \"{0}\"? This action cannot be undone.", ["ja-JP"] = "不良項目「{0}」を削除しますか？この操作は元に戻せません。", ["pt-BR"] = "Excluir o defeito \"{0}\"? Esta ação não pode ser desfeita."
         },
-        ["Wpf|F503"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeleteCounterAlarmActionCannotUndone"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确定删除计数器报警「{0}」吗？此操作不可撤销。", ["en-US"] = "Delete counter alarm \"{0}\"? This action cannot be undone.", ["ja-JP"] = "カウンタアラーム「{0}」を削除しますか？この操作は元に戻せません。", ["pt-BR"] = "Excluir o alarme de contador \"{0}\"? Esta ação não pode ser desfeita."
         },
-        ["Wpf|F504"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PrimaryAddressDeviceReusedMultipleFields"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备「{0}」的主地址「{1}」被多个字段重复使用，可能导致产量/状态数据串台。", ["en-US"] = "The primary address \"{1}\" of device \"{0}\" is reused by multiple fields, which may mix production/status data.", ["ja-JP"] = "設備「{0}」のメインアドレス「{1}」が複数の項目で重複しています。生産/状態データが混在する可能性があります。", ["pt-BR"] = "O endereço principal \"{1}\" do dispositivo \"{0}\" é reutilizado por vários campos, o que pode misturar dados de produção/estado."
         },
-        ["Wpf|F178"] = new Dictionary<string, string>
+        ["Wpf|Prompt_StartupFailedAppExit"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "程序启动失败，即将退出：\n\n{0}", ["en-US"] = "Startup failed; the app will exit:\n\n{0}", ["ja-JP"] = "起動に失敗しました。アプリを終了します:\n\n{0}", ["pt-BR"] = "Falha na inicialização; o aplicativo será encerrado:\\n\\n{0}"
+            ["zh-CN"] = "程序启动失败，即将退出：\r\n\r\n{0}", ["en-US"] = "Startup failed; the app will exit:\r\n\r\n{0}", ["ja-JP"] = "起動に失敗しました。アプリを終了します:\r\n\r\n{0}", ["pt-BR"] = "Falha na inicialização; o aplicativo será encerrado:\\n\\n{0}"
         },
-        ["Wpf|F179"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PortMustBetween165535Current"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "端口号必须在 1-65535 之间，当前: {0}", ["en-US"] = "Port must be between 1-65535, current: {0}", ["ja-JP"] = "ポート番号は 1〜65535 の範囲である必要があります。現在: {0}", ["pt-BR"] = "A porta deve estar entre 1-65535; atual: {0}"
         },
-        ["Wpf|F180"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PortMustBetween165535Current2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "端口号必须在 1-65535 之间，当前值: {0}", ["en-US"] = "Port must be between 1-65535, current: {0}", ["ja-JP"] = "ポート番号は 1〜65535 の範囲である必要があります。現在値: {0}", ["pt-BR"] = "A porta deve estar entre 1-65535; atual: {0}"
         },
-        ["Wpf|F181"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowPLCAddressShouldMBit"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：PLC 地址 '{1}' 应为 M 位类型，当前为 {2}", ["en-US"] = "Row {0}: PLC address '{1}' should be M-bit type, current is {2}", ["ja-JP"] = "{0} 行目: PLC アドレス '{1}' は M ビットタイプである必要があります。現在は {2}", ["pt-BR"] = "Linha {0}: o endereço PLC '{1}' deve ser do tipo bit M; atual é {2}"
         },
-        ["Wpf|F182"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowPLCAddressInvalid"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：PLC 地址 '{1}' 无效 - {2}", ["en-US"] = "Row {0}: PLC address '{1}' invalid - {2}", ["ja-JP"] = "{0} 行目: PLC アドレス '{1}' が無効です - {2}", ["pt-BR"] = "Linha {0}: endereço PLC '{1}' inválido - {2}"
         },
-        ["Wpf|F183"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowPLCAddressEmpty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：PLC 地址为空", ["en-US"] = "Row {0}: PLC address is empty", ["ja-JP"] = "{0} 行目: PLC アドレスが空です", ["pt-BR"] = "Linha {0}: endereço PLC vazio"
         },
-        ["Wpf|F184"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowAlarmNameEmpty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：报警名称为空", ["en-US"] = "Row {0}: alarm name is empty", ["ja-JP"] = "{0} 行目: アラーム名が空です", ["pt-BR"] = "Linha {0}: nome do alarme vazio"
         },
-        ["Wpf|F185"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowAlarmLevelInvalidExpectLow"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：报警级别 '{1}' 无效（应为 Low/Medium/High）", ["en-US"] = "Row {0}: alarm level '{1}' invalid (expect Low/Medium/High)", ["ja-JP"] = "{0} 行目: アラームレベル '{1}' が無効です（Low/Medium/High が必要）", ["pt-BR"] = "Linha {0}: nível de alarme '{1}' inválido (esperado Low/Medium/High)"
         },
-        ["Wpf|F186"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ThreadsHandles"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "线程 {0} · 句柄 {1:N0}", ["en-US"] = "Threads {0} · Handles {1:N0}", ["ja-JP"] = "スレッド {0} · ハンドル {1:N0}", ["pt-BR"] = "Threads {0} · Handles {1:N0}"
         },
-        ["Wpf|F187"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Range"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "统计范围：{0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}", ["en-US"] = "Range: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}", ["ja-JP"] = "範囲: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}", ["pt-BR"] = "Período: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}"
         },
-        ["Wpf|F188"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Defect"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷{0}", ["en-US"] = "Defect {0}", ["ja-JP"] = "不良 {0}", ["pt-BR"] = "Defeito {0}"
         },
-        ["Wpf|F189"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DefectAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷「{0}」地址", ["en-US"] = "Defect \"{0}\" address", ["ja-JP"] = "不良「{0}」アドレス", ["pt-BR"] = "Endereço do defeito \"{0}\""
         },
-        ["Wpf|F190"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DefectRateSurgePeriodLastPeriod"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷率突增：当前 {0} 个，上一周期 {1} 个", ["en-US"] = "Defect rate surge: {0} this period, {1} last period", ["ja-JP"] = "不良率急増: 今回 {0} 個、前回 {1} 個", ["pt-BR"] = "Surto de defeitos: {0} neste período, {1} no anterior"
         },
-        ["Wpf|F191"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedStopAutoDailyReportService"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "自动日报服务停止失败：{0}", ["en-US"] = "Failed to stop the auto daily report service: {0}", ["ja-JP"] = "自動日報サービスの停止に失敗しました: {0}", ["pt-BR"] = "Falha ao interromper o serviço de relatório diário automático: {0}"
         },
-        ["Wpf|F192"] = new Dictionary<string, string>
+        ["Wpf|Prompt_QualityRateTargetOEETarget"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "良品率 {0:P1} / 目标 {1:P0} · OEE {2:P1} / 目标 {3:P0}", ["en-US"] = "Quality rate {0:P1} / Target {1:P0} · OEE {2:P1} / Target {3:P0}", ["ja-JP"] = "良品率 {0:P1} / 目標 {1:P0} · OEE {2:P1} / 目標 {3:P0}", ["pt-BR"] = "Taxa de qualidade {0:P1} / Meta {1:P0} · OEE {2:P1} / Meta {3:P0}"
         },
-        ["Wpf|F193"] = new Dictionary<string, string>
+        ["Wpf|Prompt_QualityRateLoss"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "良品率 {0:P1}，损失 {1:P1}", ["en-US"] = "Quality rate {0:P1}, loss {1:P1}", ["ja-JP"] = "良品率 {0:P1}、損失 {1:P1}", ["pt-BR"] = "Taxa de qualidade {0:P1}, perda {1:P1}"
         },
-        ["Wpf|F194"] = new Dictionary<string, string>
+        ["Wpf|Prompt_QualityRateTarget"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "良品率为 {0:P1}，{1} {2:P0} 目标", ["en-US"] = "Quality rate is {0:P1}, {1} the {2:P0} target", ["ja-JP"] = "良品率は {0:P1}、目標 {2:P0} を{1}", ["pt-BR"] = "A taxa de qualidade é {0:P1}, {1} a meta de {2:P0}"
         },
-        ["Wpf|F195"] = new Dictionary<string, string>
+        ["Wpf|Prompt_LowOutputActualPcsHourTarget"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产能偏低：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%", ["en-US"] = "Low output: actual {0:F1} pcs/hour, target {1:F0} pcs/hour, below 80%", ["ja-JP"] = "能力低下: 実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%", ["pt-BR"] = "Produção baixa: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%"
         },
-        ["Wpf|F196"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Triggered"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "触发于 {0:HH:mm:ss} · {1}", ["en-US"] = "Triggered at {0:HH:mm:ss} · {1}", ["ja-JP"] = "{0:HH:mm:ss} に発生 · {1}", ["pt-BR"] = "Disparado às {0:HH:mm:ss} · {1}"
         },
-        ["Wpf|F197"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Warning"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "警告：{0}", ["en-US"] = "Warning: {0}", ["ja-JP"] = "警告: {0}", ["pt-BR"] = "Aviso: {0}"
         },
-        ["Wpf|F198"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CountAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计数器报警{0}", ["en-US"] = "Count alarm {0}", ["ja-JP"] = "カカカウンタアラーム {0}", ["pt-BR"] = "Alarme de contador {0}"
         },
-        ["Wpf|F199"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CountAlarmAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计数器报警「{0}」地址", ["en-US"] = "Count alarm \"{0}\" address", ["ja-JP"] = "カカカウンタアラーム「{0}」アドレス", ["pt-BR"] = "Endereço do alarme de contador \"{0}\""
         },
-        ["Wpf|F200"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeviceScheduledTimeOverlapsWorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备「{0}」的计划时间与工单 {1} 重叠（{2:MM-dd HH:mm} ~ {3:MM-dd HH:mm}）", ["en-US"] = "Device \"{0}\" scheduled time overlaps work order {1} ({2:MM-dd HH:mm} ~ {3:MM-dd HH:mm})", ["ja-JP"] = "デバイス「{0}」の予定時間が工単 {1} と重複しています（{2:MM-dd HH:mm} ~ {3:MM-dd HH:mm}）", ["pt-BR"] = "O horário planejado do dispositivo \"{0}\" se sobrepõe à ordem {1} ({2:MM-dd HH:mm} ~ {3:MM-dd HH:mm})"
         },
-        ["Wpf|F201"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeviceInvalid"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备「{0}」{1}无效：{2}", ["en-US"] = "Device \"{0}\": {1} invalid: {2}", ["ja-JP"] = "デバイス「{0}」: {1} が無効です: {2}", ["pt-BR"] = "Dispositivo \"{0}\": {1} inválido: {2}"
         },
-        ["Wpf|F202"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeviceDuplicateAlarmName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备「{0}」报警名重复：「{1}」", ["en-US"] = "Device \"{0}\": duplicate alarm name \"{1}\"", ["ja-JP"] = "デバイス「{0}」: アラーム名「{1}」が重複しています", ["pt-BR"] = "Dispositivo \"{0}\": nome de alarme duplicado \"{1}\""
         },
-        ["Wpf|F203"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeviceConfigured"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备「{0}」未配置：{1}", ["en-US"] = "Device \"{0}\" not configured: {1}", ["ja-JP"] = "デバイス「{0}」が未設定です: {1}", ["pt-BR"] = "Dispositivo \"{0}\" não configurado: {1}"
         },
-        ["Wpf|F204"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeviceTargetOutputMust0Current"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备「{0}」目标产能必须 > 0（当前 {1}）", ["en-US"] = "Device \"{0}\" target output must be > 0 (current {1})", ["ja-JP"] = "デバイス「{0}」の目標能力は 0 より大きい必要があります（現在 {1}）", ["pt-BR"] = "A capacidade alvo do dispositivo \"{0}\" deve ser > 0 (atual {1})"
         },
-        ["Wpf|F205"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeviceDuplicateDefectName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备「{0}」缺陷名重复：「{1}」", ["en-US"] = "Device \"{0}\": duplicate defect name \"{1}\"", ["ja-JP"] = "デバイス「{0}」: 不良名「{1}」が重複しています", ["pt-BR"] = "Dispositivo \"{0}\": nome de defeito duplicado \"{1}\""
         },
-        ["Wpf|F207"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeviceDuplicateAlarmPLCAddressAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备「{0}」重复报警 PLC 地址：「{1}」，同一设备内报警地址必须唯一", ["en-US"] = "Device \"{0}\": duplicate alarm PLC address \"{1}\"; alarm addresses must be unique within a device", ["ja-JP"] = "デバイス「{0}」: アラーム PLC アドレス「{1}」が重複しています。同一デバイス内で一意である必要があります", ["pt-BR"] = "Dispositivo \"{0}\": endereço PLC de alarme duplicado \"{1}\"; endereços de alarme devem ser únicos por dispositivo"
         },
-        ["Wpf|F208"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeviceAlreadyHasProgressWorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备「{0}」已有进行中工单 {1}，请先完成或中止", ["en-US"] = "Device \"{0}\" already has an in-progress work order {1}; finish or abort it first", ["ja-JP"] = "デバイス「{0}」には進行中の工単 {1} があります。先に完了または中止してください", ["pt-BR"] = "O dispositivo \"{0}\" já tem a ordem em andamento {1}; conclua ou aborte primeiro"
         },
-        ["Wpf|F209"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DuplicateDeviceNameUnitsDeviceNames"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备名重复：「{0}」（{1} 台），设备名必须唯一", ["en-US"] = "Duplicate device name \"{0}\" ({1} units); device names must be unique", ["ja-JP"] = "デバイス名「{0}」が重複しています（{1} 台）。デバイス名は一意である必要があります", ["pt-BR"] = "Nome de dispositivo duplicado \"{0}\" ({1} unidades); nomes devem ser únicos"
         },
-        ["Wpf|F210"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedSaveDeviceData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备数据保存失败：{0}", ["en-US"] = "Failed to save device data: {0}", ["ja-JP"] = "デバイスデータの保存に失敗しました: {0}", ["pt-BR"] = "Falha ao salvar dados do dispositivo: {0}"
         },
-        ["Wpf|F211"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TrialDaysLeft"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "试用 · 剩 {0} 天", ["en-US"] = "Trial · {0} days left", ["ja-JP"] = "試用 · 残り {0} 日", ["pt-BR"] = "Avaliação · restam {0} dias"
         },
-        ["Wpf|F212"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TrialDaysLeft2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "试用期内 · 剩 {0} 天", ["en-US"] = "Trial · {0} days left", ["ja-JP"] = "試用期間中 · 残り {0} 日", ["pt-BR"] = "Em avaliação · restam {0} dias"
         },
-        ["Wpf|F213"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TrialPeriodDaysRemainingEnterActivation"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "试用期内，剩余 {0} 天。输入激活码以完成授权。", ["en-US"] = "Trial period; {0} days remaining. Enter an activation code to complete authorization.", ["ja-JP"] = "試用期間中、残り {0} 日。アクティベーションコードを入力して認証を完了してください。", ["pt-BR"] = "Período de avaliação; restam {0} dias. Digite uma chave de ativação para concluir a autorização."
         },
-        ["Wpf|F214"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TrialPeriodDaysRemainingEnterActivation2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "试用期内，剩余 {0} 天。请在设置页输入激活码完成授权。", ["en-US"] = "Trial period; {0} days remaining. Enter an activation code on the settings page.", ["ja-JP"] = "試用期間中、残り {0} 日。設定ページでアクティベーションコードを入力してください。", ["pt-BR"] = "Período de avaliação; restam {0} dias. Digite uma chave de ativação na página de configurações."
         },
-        ["Wpf|F215"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TrialExpiredDaysEnterActivationCode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "试用期已过期（{0} 天），请输入激活码继续使用。", ["en-US"] = "Trial expired ({0} days); enter an activation code to continue.", ["ja-JP"] = "試用期間が終了しました（{0} 日）。アクティベーションコードを入力して続行してください。", ["pt-BR"] = "Avaliação expirada ({0} dias); digite uma chave de ativação para continuar."
         },
-        ["Wpf|F216"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ReadFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "读取失败: {0}", ["en-US"] = "Read failed: {0}", ["ja-JP"] = "読み取りに失敗しました: {0}", ["pt-BR"] = "Falha na leitura: {0}"
         },
-        ["Wpf|F217"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ReadError"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "读取异常: {0}", ["en-US"] = "Read error: {0}", ["ja-JP"] = "読み取りエラー: {0}", ["pt-BR"] = "Erro de leitura: {0}"
         },
-        ["Wpf|F218"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PollIntervalMustLess50Ms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "轮询间隔不能小于 50ms，当前值: {0}", ["en-US"] = "Poll interval must not be less than 50 ms, current: {0}", ["ja-JP"] = "ポーリング間隔は 50ms 以上である必要があります。現在値: {0}", ["pt-BR"] = "O intervalo de varredura não pode ser menor que 50 ms; atual: {0}"
         },
-        ["Wpf|F219"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Minor"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "轻微{0}", ["en-US"] = "Minor{0}", ["ja-JP"] = "軽微{0}", ["pt-BR"] = "Leve{0}"
         },
-        ["Wpf|F220"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RunningWithoutOutputLastedMin"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行无产量：{0:HH:mm:ss}-{1:HH:mm:ss} 持续 {2:F0} min", ["en-US"] = "Running without output: {0:HH:mm:ss}-{1:HH:mm:ss} lasted {2:F0} min", ["ja-JP"] = "稼働中に生産なし: {0:HH:mm:ss}-{1:HH:mm:ss} 継続 {2:F0} 分", ["pt-BR"] = "Em execução sem produção: {0:HH:mm:ss}-{1:HH:mm:ss} durou {2:F0} min"
         },
-        ["Wpf|F221"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ProcessMBAvailableMB"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "进程 {0:F0} MB · 可用 {1:F0} MB", ["en-US"] = "Process {0:F0} MB · Available {1:F0} MB", ["ja-JP"] = "プロセス {0:F0} MB · 利用可能 {1:F0} MB", ["pt-BR"] = "Processo {0:F0} MB · Disponível {1:F0} MB"
         },
-        ["Wpf|F222"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ConnectionFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连接失败：{0}", ["en-US"] = "Connection failed: {0}", ["ja-JP"] = "接続に失敗しました: {0}", ["pt-BR"] = "Falha na conexão: {0}"
         },
-        ["Wpf|F223"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ConnectionFailed2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连接失败：{0}", ["en-US"] = "Connection failed: {0}", ["ja-JP"] = "接続に失敗しました: {0}", ["pt-BR"] = "Falha na conexão: {0}"
         },
-        ["Wpf|F224"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ConnectionError"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连接异常：{0}", ["en-US"] = "Connection error: {0}", ["ja-JP"] = "接続エラー: {0}", ["pt-BR"] = "Erro de conexão: {0}"
         },
-        ["Wpf|F225"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Connected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连接成功（{0}:{1}）", ["en-US"] = "Connected ({0}:{1})", ["ja-JP"] = "接続成功（{0}:{1}）", ["pt-BR"] = "Conectado ({0}:{1})"
         },
-        ["Wpf|F226"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ConnectionTimedOutNoResponse5"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连接超时（5 秒无响应），请检查 IP 和端口", ["en-US"] = "Connection timed out (no response in 5 seconds); check the IP and port", ["ja-JP"] = "接続がタイムアウトしました（5 秒応答なし）。IP とポートを確認してください", ["pt-BR"] = "Timeout de conexão (sem resposta em 5 segundos); verifique o IP e a porta"
         },
-        ["Wpf|F227"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ConsecutiveFailures"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连续失败 {0} 次", ["en-US"] = "{0} consecutive failures", ["ja-JP"] = "連続 {0} 回失敗", ["pt-BR"] = "{0} falhas consecutivas"
         },
-        ["Wpf|F228"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ChooseImportModeYesReplaceClear"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "选择导入方式：\n  · 是 = 替换（清空现有后导入）\n  · 否 = 追加（保留现有，同地址覆盖）\n  · 取消 = 放弃导入", ["en-US"] = "Choose import mode:\n  · Yes = Replace (clear existing then import)\n  · No = Append (keep existing, overwrite same address)\n  · Cancel = Abort import", ["ja-JP"] = "インポート方法を選択:\n  · はい = 置き換え（既存をクリアしてインポート）\n  · いいえ = 追加（既存を保持、同一アドレスは上書き）\n  · キャンセル = インポート中止", ["pt-BR"] = "Escolha o modo de importação:\\n  · Sim = Substituir (limpa o existente e importa)\\n  · Não = Anexar (mantém o existente, sobrescreve o mesmo endereço)\\n  · Cancelar = abortar a importação"
+            ["zh-CN"] = "选择导入方式：\r\n  · 是 = 替换（清空现有后导入）\r\n  · 否 = 追加（保留现有，同地址覆盖）\r\n  · 取消 = 放弃导入", ["en-US"] = "Choose import mode:\r\n  · Yes = Replace (clear existing then import)\r\n  · No = Append (keep existing, overwrite same address)\r\n  · Cancel = Abort import", ["ja-JP"] = "インポート方法を選択:\r\n  · はい = 置き換え（既存をクリアしてインポート）\r\n  · いいえ = 追加（既存を保持、同一アドレスは上書き）\r\n  · キャンセル = インポート中止", ["pt-BR"] = "Escolha o modo de importação:\\n  · Sim = Substituir (limpa o existente e importa)\\n  · Não = Anexar (mantém o existente, sobrescreve o mesmo endereço)\\n  · Cancelar = abortar a importação"
         },
-        ["Wpf|F229"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RecipeValueOutReasonableRange0"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方值 {0} 超出合理范围（0-999999）", ["en-US"] = "Recipe value {0} out of reasonable range (0-999999)", ["ja-JP"] = "レシピ値 {0} が妥当な範囲外です（0〜999999）", ["pt-BR"] = "Valor da receita {0} fora da faixa razoável (0-999999)"
         },
-        ["Wpf|F230"] = new Dictionary<string, string>
+        ["Wpf|Prompt_InvalidRecipeAddressFormat"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方地址格式无效: {0}", ["en-US"] = "Invalid recipe address format: {0}", ["ja-JP"] = "レシピアドレスの形式が無効です: {0}", ["pt-BR"] = "Formato de endereço de receita inválido: {0}"
         },
-        ["Wpf|F231"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CollectionServiceParameterSyncFailedSaved"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集服务参数同步失败（本地已保存）：{0}", ["en-US"] = "Collection service parameter sync failed (saved locally): {0}", ["ja-JP"] = "収集サービスのパラメータ同期に失敗しました（ローカルに保存済み）: {0}", ["pt-BR"] = "Falha na sincronização de parâmetros do serviço de coleta (salvo localmente): {0}"
         },
-        ["Wpf|F232"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CollectionServiceDisconnected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集服务已断开 · {0}", ["en-US"] = "Collection service disconnected · {0}", ["ja-JP"] = "収集サービス切断 · {0}", ["pt-BR"] = "Serviço de coleta desconectado · {0}"
         },
-        ["Wpf|F233"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CollectionServiceDisconnectedRetry"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集服务已断开（{0}）· 第 {1} 次重试", ["en-US"] = "Collection service disconnected ({0}) · retry {1}", ["ja-JP"] = "収集サービス切断（{0}）· {1} 回目の再試行", ["pt-BR"] = "Serviço de coleta desconectado ({0}) · tentativa {1}"
         },
-        ["Wpf|F234"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CollectionServiceReconnectedDowntime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集服务已重连，断线时长 {0}", ["en-US"] = "Collection service reconnected, downtime {0}", ["ja-JP"] = "収集サービス再接続、切断時間 {0}", ["pt-BR"] = "Serviço de coleta reconectado, tempo de parada {0}"
         },
-        ["Wpf|F236"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RebuildsLastMs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "重建 {0} 次 · 最近 {1} ms", ["en-US"] = "Rebuilds {0} · Last {1} ms", ["ja-JP"] = "再構築 {0} 回 · 直近 {1} ms", ["pt-BR"] = "Reconstruções {0} · Última {1} ms"
         },
-        ["Wpf|F237"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Error"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "错误：{0}", ["en-US"] = "Error: {0}", ["ja-JP"] = "エラー: {0}", ["pt-BR"] = "Erro: {0}"
         },
-        ["Wpf|F238"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MainDragVs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "，{0} 是主要拖累项（{1:P0} vs {2:P0}）", ["en-US"] = ", {0} is the main drag ({1:P0} vs {2:P0})", ["ja-JP"] = "、{0} が主な足枷（{1:P0} vs {2:P0}）", ["pt-BR"] = ", {0} é o maior arrasto ({1:P0} vs {2:P0})"
         },
-        ["Wpf|F239"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PeakOKPcsAboveMean"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "📈 峰值出现在 {0:HH:mm}（OK={1} 件，高于均值 {2:P0}）", ["en-US"] = "📈 Peak at {0:HH:mm} (OK={1} pcs, {2:P0} above mean)", ["ja-JP"] = "📈 ピークは {0:HH:mm}（OK={1} 個、平均より {2:P0} 上）", ["pt-BR"] = "📈 Pico às {0:HH:mm} (OK={1} pçs, {2:P0} acima da média)"
         },
-        ["Wpf|F240"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TroughOKPcsBelowMean"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "📉 谷值出现在 {0:HH:mm}（OK={1} 件，低于均值 {2:P0}）", ["en-US"] = "📉 Trough at {0:HH:mm} (OK={1} pcs, {2:P0} below mean)", ["ja-JP"] = "📉 谷は {0:HH:mm}（OK={1} 個、平均より {2:P0} 下）", ["pt-BR"] = "📉 Vale às {0:HH:mm} (OK={1} pçs, {2:P0} abaixo da média)"
         },
-        ["Wpf|F241"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PerformsBestLow"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "📊 {0} 表现最佳 ({1:P1})，{2} 偏低 ({3:P1})", ["en-US"] = "📊 {0} performs best ({1:P1}), {2} is low ({3:P1})", ["ja-JP"] = "📊 {0} が最良（{1:P1}）、{2} は低調（{3:P1}）", ["pt-BR"] = "📊 {0} com o melhor desempenho ({1:P1}), {2} abaixo ({3:P1})"
         },
-        ["Wpf|F242"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TopAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "🔥 Top 报警：{0}", ["en-US"] = "🔥 Top alarms: {0}", ["ja-JP"] = "🔥 Top アラーム: {0}", ["pt-BR"] = "🔥 Principais alarmes: {0}"
         },
-        ["Wpf|F243"] = new Dictionary<string, string>
+        ["Wpf|Prompt_WorstShiftOEE"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "🔻 差班次：{0} @ {1}（OEE {2:P0}），", ["en-US"] = "🔻 Worst shift: {0} @ {1} (OEE {2:P0}),", ["ja-JP"] = "🔻 最悪班: {0} @ {1}（OEE {2:P0}）、", ["pt-BR"] = "🔻 Pior turno: {0} @ {1} (OEE {2:P0}),"
         },
-        ["Wpf|F244"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Pcs6"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0:N0} 件", ["en-US"] = "{0:N0} pcs", ["ja-JP"] = "{0:N0} 個", ["pt-BR"] = "{0:N0} pçs"
         },
-        ["Wpf|F245"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Pcs7"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} 件", ["en-US"] = "{0} pcs", ["ja-JP"] = "{0} 個", ["pt-BR"] = "{0} pçs"
         },
-        ["Wpf|F246"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PcsH"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} 件/h", ["en-US"] = "{0} pcs/h", ["ja-JP"] = "{0} 個/h", ["pt-BR"] = "{0} pçs/h"
         },
-        ["Wpf|F247"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Times3"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0:N0} 次", ["en-US"] = "{0:N0} times", ["ja-JP"] = "{0:N0} 回", ["pt-BR"] = "{0:N0} vezes"
         },
-        ["Wpf|F248"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DevicesTotal"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "共 {0} 台设备", ["en-US"] = "{0} devices total", ["ja-JP"] = "計 {0} 台", ["pt-BR"] = "{0} dispositivos no total"
         },
-        ["Wpf|F249"] = new Dictionary<string, string>
+        ["Wpf|Prompt_LastRefresh"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最后刷新 {0:HH:mm:ss}", ["en-US"] = "Last refresh {0:HH:mm:ss}", ["ja-JP"] = "最終更新 {0:HH:mm:ss}", ["pt-BR"] = "Última atualização {0:HH:mm:ss}"
         },
-        ["Wpf|F715"] = new Dictionary<string, string>
+        ["Wpf|Prompt_StatsRefresh"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "统计刷新 {0:HH:mm:ss}", ["en-US"] = "Stats refresh {0:HH:mm:ss}", ["ja-JP"] = "統計更新 {0:HH:mm:ss}", ["pt-BR"] = "Estatísticas atualizadas {0:HH:mm:ss}"
         },
-        ["Wpf|F716"] = new Dictionary<string, string>
+        ["Wpf|Prompt_LiveRefresh"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "实时刷新 {0:HH:mm:ss}", ["en-US"] = "Live refresh {0:HH:mm:ss}", ["ja-JP"] = "リアルタイム更新 {0:HH:mm:ss}", ["pt-BR"] = "Atualização em tempo real {0:HH:mm:ss}"
         },
-        ["Wpf|F250"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Updated"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "更新于 {0:HH:mm:ss}", ["en-US"] = "Updated {0:HH:mm:ss}", ["ja-JP"] = "更新 {0:HH:mm:ss}", ["pt-BR"] = "Atualizado às {0:HH:mm:ss}"
         },
-        ["Wpf|F251"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Achievement"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "达成率 {0:P0}", ["en-US"] = "Achievement {0:P0}", ["ja-JP"] = "達成率 {0:P0}", ["pt-BR"] = "Realização {0:P0}"
         },
-        ["Wpf|F252"] = new Dictionary<string, string>
+        ["Wpf|Prompt_TargetMet"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标达成 {0:P1}", ["en-US"] = "Target met {0:P1}", ["ja-JP"] = "目標達成 {0:P1}", ["pt-BR"] = "Meta atingida {0:P1}"
         },
-        ["Wpf|F253"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Status2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态: {0}", ["en-US"] = "Status: {0}", ["ja-JP"] = "状態: {0}", ["pt-BR"] = "Status: {0}"
         },
-        ["Wpf|F254"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RunningH"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行 {0:F1}h", ["en-US"] = "Running {0:F1}h", ["ja-JP"] = "稼働 {0:F1}時間", ["pt-BR"] = "Em execução {0:F1}h"
         },
-        ["Wpf|F255"] = new Dictionary<string, string>
+        ["Wpf|Prompt_IdleH"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "待机 {0:F1}h", ["en-US"] = "Idle {0:F1}h", ["ja-JP"] = "待機 {0:F1}時間", ["pt-BR"] = "Em espera {0:F1}h"
         },
-        ["Wpf|F256"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AlarmH"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警 {0:F1}h", ["en-US"] = "Alarm {0:F1}h", ["ja-JP"] = "警報 {0:F1}時間", ["pt-BR"] = "Alarmes {0:F1}h"
         },
-        ["Wpf|F257"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OK"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "合格 {0:N0}", ["en-US"] = "OK {0:N0}", ["ja-JP"] = "良品 {0:N0}", ["pt-BR"] = "OK {0:N0}"
         },
-        ["Wpf|F258"] = new Dictionary<string, string>
+        ["Wpf|Prompt_NG"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "不合格 {0:N0}", ["en-US"] = "NG {0:N0}", ["ja-JP"] = "不良 {0:N0}", ["pt-BR"] = "NG {0:N0}"
         },
-        ["Wpf|F259"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ShowingItems"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "显示 {0} 条", ["en-US"] = "Showing {0} items", ["ja-JP"] = "{0} 件を表示", ["pt-BR"] = "Exibindo {0} itens"
         },
-        ["Wpf|F263"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Conflict"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计划冲突 {0}", ["en-US"] = "Conflict {0}", ["ja-JP"] = "計画競合 {0}", ["pt-BR"] = "Conflito {0}"
         },
-        ["Wpf|F265"] = new Dictionary<string, string>
+        ["Wpf|Prompt_LastShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "上班次·{0}", ["en-US"] = "Last shift {0}", ["ja-JP"] = "前シフト·{0}", ["pt-BR"] = "Turno anterior {0}"
         },
-        ["Wpf|F266"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Total2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "总数 {0}", ["en-US"] = "Total {0}", ["ja-JP"] = "合計 {0}", ["pt-BR"] = "Total {0}"
         },
-        ["Wpf|F267"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PcsH2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0:F1} 件/h", ["en-US"] = "{0:F1} pcs/h", ["ja-JP"] = "{0:F1} 個/h", ["pt-BR"] = "{0:F1} pçs/h"
         },
-        ["Wpf|F268"] = new Dictionary<string, string>
+        ["Wpf|Prompt_HourlyOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "按小时产量（{0}）", ["en-US"] = "Hourly Output ({0})", ["ja-JP"] = "時間別生産量（{0}）", ["pt-BR"] = "Produção por hora ({0})"
         },
-        ["Wpf|F269"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Type"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "类型 {0}", ["en-US"] = "Type {0}", ["ja-JP"] = "タイプ {0}", ["pt-BR"] = "Tipo {0}"
         },
-        ["Wpf|F270"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Main"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "主要 {0}", ["en-US"] = "Main {0}", ["ja-JP"] = "主要 {0}", ["pt-BR"] = "Principal {0}"
         },
-        ["Wpf|F277"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Recovered"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已恢复 {0}", ["en-US"] = "Recovered {0}", ["ja-JP"] = "復旧 {0}", ["pt-BR"] = "Recuperado {0}"
         },
-        ["Wpf|F278"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Pending"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "/ 待处理 {0}", ["en-US"] = "/ Pending {0}", ["ja-JP"] = "/ 処理待ち {0}", ["pt-BR"] = "/ Pendente {0}"
         },
-        ["Wpf|F279"] = new Dictionary<string, string>
+        ["Wpf|Prompt_LastOccurred"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近发生：{0:HH:mm:ss}", ["en-US"] = "Last occurred: {0:HH:mm:ss}", ["ja-JP"] = "最終発生：{0:HH:mm:ss}", ["pt-BR"] = "Última ocorrência: {0:HH:mm:ss}"
         },
-        ["Wpf|F280"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CollectorRunning"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集服务运行：{0}", ["en-US"] = "Collector running: {0}", ["ja-JP"] = "収集サービス稼働：{0}", ["pt-BR"] = "Serviço de coleta em execução: {0}"
         },
-        ["Wpf|F281"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AvgMs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "平均 {0:F1} ms", ["en-US"] = "Avg {0:F1} ms", ["ja-JP"] = "平均 {0:F1} ms", ["pt-BR"] = "Média {0:F1} ms"
         },
-        ["Wpf|F282"] = new Dictionary<string, string>
+        ["Wpf|Prompt_FailedPolls"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "失败轮询 {0:N0} 次", ["en-US"] = "Failed polls {0:N0}", ["ja-JP"] = "失敗ポーリング {0:N0} 回", ["pt-BR"] = "Varreduras com falha {0:N0}"
         },
-        ["Wpf|F283"] = new Dictionary<string, string>
+        ["Wpf|Prompt_EveryPolls"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "每 {0} 次轮询", ["en-US"] = "Every {0} polls", ["ja-JP"] = "{0} 回ごとポーリング", ["pt-BR"] = "A cada {0} varreduras"
         },
-        ["Wpf|F284"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Refreshed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "刷新于 {0:HH:mm:ss}", ["en-US"] = "Refreshed {0:HH:mm:ss}", ["ja-JP"] = "更新 {0:HH:mm:ss}", ["pt-BR"] = "Atualizado às {0:HH:mm:ss}"
         },
-        ["Wpf|F285"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Current"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前 {0}", ["en-US"] = "Current {0}", ["ja-JP"] = "現在 {0}", ["pt-BR"] = "Atual {0}"
         },
-        ["Wpf|F286"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Limit"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "上限 {0}", ["en-US"] = "Limit {0}", ["ja-JP"] = "上限 {0}", ["pt-BR"] = "Limite {0}"
         },
-        ["Wpf|F288"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DeleteShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "删除班次 {0}", ["en-US"] = "Delete shift {0}", ["ja-JP"] = "シフト {0} 削除", ["pt-BR"] = "Excluir turno {0}"
         },
-        ["Wpf|F289"] = new Dictionary<string, string>
+        ["Wpf|Prompt_StatusWord"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态字: {0}", ["en-US"] = "Status word: {0}", ["ja-JP"] = "状態語: {0}", ["pt-BR"] = "Palavra de status: {0}"
         },
-        ["Wpf|F290"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AddressConflictsDetected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "检测到 {0} 处跨设备地址冲突，保存时将提示定位", ["en-US"] = "{0} address conflicts detected", ["ja-JP"] = "{0} 件のクロスデバイスアドレス競合を検出", ["pt-BR"] = "{0} conflitos de endereço entre dispositivos detectados; haverá aviso de localização ao salvar"
         },
-        ["Wpf|F291"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Times4"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} 次", ["en-US"] = "{0} times", ["ja-JP"] = "{0} 回", ["pt-BR"] = "{0} vezes"
         },
-        ["Wpf|F292"] = new Dictionary<string, string>
+        ["Wpf|Prompt_PcsHS"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}件/h · {1:F1}s", ["en-US"] = "{0}pcs/h {1:F1}s", ["ja-JP"] = "{0}個/h · {1:F1}秒", ["pt-BR"] = "{0} pçs/h · {1:F1}s"
         },
-        ["Wpf|F293"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ExportedDefects"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导出 {0} 条缺陷 → {1}", ["en-US"] = "Exported {0} defects → {1}", ["ja-JP"] = "{0} 件の欠陥をエクスポート → {1}", ["pt-BR"] = "{0} defeitos exportados → {1}"
         },
-        ["Wpf|F294"] = new Dictionary<string, string>
+        ["Wpf|Prompt_DefectsImportedCurrentDeviceExisting"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "将导入 {0} 条缺陷到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} defects will be imported to the current device ({1} existing).\n", ["ja-JP"] = "{0} 件の欠陥を現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} defeitos serão importados para o dispositivo atual ({1} existentes).\\n"
+            ["zh-CN"] = "将导入 {0} 条缺陷到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} defects will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "{0} 件の欠陥を現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} defeitos serão importados para o dispositivo atual ({1} existentes).\\n"
         },
-        ["Wpf|F295"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ValidDefectsImportedCurrentDeviceExisting"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "有效 {0} 条缺陷将导入到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} valid defects will be imported to the current device ({1} existing).\n", ["ja-JP"] = "有効な {0} 件の欠陥を現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} defeitos válidos serão importados para o dispositivo atual ({1} existentes).\\n"
+            ["zh-CN"] = "有效 {0} 条缺陷将导入到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} valid defects will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "有効な {0} 件の欠陥を現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} defeitos válidos serão importados para o dispositivo atual ({1} existentes).\\n"
         },
-        ["Wpf|F296"] = new Dictionary<string, string>
+        ["Wpf|Prompt_NoDefectsImported"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "未导入任何缺陷：\n  · {0}", ["en-US"] = "No defects imported:\n  · {0}", ["ja-JP"] = "欠陥はインポートされませんでした：\n  · {0}", ["pt-BR"] = "Nenhum defeito importado:\\n  · {0}"
+            ["zh-CN"] = "未导入任何缺陷：\r\n  · {0}", ["en-US"] = "No defects imported:\r\n  · {0}", ["ja-JP"] = "欠陥はインポートされませんでした：\r\n  · {0}", ["pt-BR"] = "Nenhum defeito importado:\\n  · {0}"
         },
-        ["Wpf|F297"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ImportedDefectsRowsSkipped"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "已导入 {0} 条缺陷（{1} 行跳过）。\n", ["en-US"] = "Imported {0} defects ({1} rows skipped).\n", ["ja-JP"] = "{0} 件の欠陥をインポート（{1} 行スキップ）。\n", ["pt-BR"] = "{0} defeitos importados ({1} linhas ignoradas).\\n"
+            ["zh-CN"] = "已导入 {0} 条缺陷（{1} 行跳过）。\r\n", ["en-US"] = "Imported {0} defects ({1} rows skipped).\r\n", ["ja-JP"] = "{0} 件の欠陥をインポート（{1} 行スキップ）。\r\n", ["pt-BR"] = "{0} defeitos importados ({1} linhas ignoradas).\\n"
         },
-        ["Wpf|F298"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ImportedDefectsClickSavePersist"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导入 {0} 条缺陷，请点击保存以持久化", ["en-US"] = "Imported {0} defects, click Save to persist", ["ja-JP"] = "{0} 件の欠陥をインポートしました。保存をクリックして永続化してください", ["pt-BR"] = "{0} defeitos importados; clique em Salvar para persistir"
         },
-        ["Wpf|F299"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowDefectNameEmpty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：缺陷名称为空", ["en-US"] = "Row {0}: defect name is empty", ["ja-JP"] = "行 {0}：欠陥名が空です", ["pt-BR"] = "Linha {0}: nome do defeito vazio"
         },
-        ["Wpf|F300"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowDefectSeverityInvalidExpectedMinor"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：缺陷严重等级 '{1}' 无效（应为 Minor/Major/Critical）", ["en-US"] = "Row {0}: defect severity '{1}' is invalid (expected Minor/Major/Critical)", ["ja-JP"] = "行 {0}：欠陥深刻度 '{1}' が無効です（Minor/Major/Critical のいずれか）", ["pt-BR"] = "Linha {0}: severidade do defeito '{1}' inválida (esperado Minor/Major/Critical)"
         },
-        ["Wpf|F301"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowDefectCategoryInvalidExpectedAppearance"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：缺陷类别 '{1}' 无效（应为 Appearance/Dimension/Function/Packaging/Other）", ["en-US"] = "Row {0}: defect category '{1}' is invalid (expected Appearance/Dimension/Function/Packaging/Other)", ["ja-JP"] = "行 {0}：欠陥カテゴリ '{1}' が無効です（Appearance/Dimension/Function/Packaging/Other のいずれか）", ["pt-BR"] = "Linha {0}: categoria do defeito '{1}' inválida (esperado Appearance/Dimension/Function/Packaging/Other)"
         },
-        ["Wpf|F302"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowPLCAddressShouldDWordType"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：PLC 地址 '{1}' 应为 DWord 类型，当前为 {2}", ["en-US"] = "Row {0}: PLC address '{1}' should be DWord type, got {2}", ["ja-JP"] = "行 {0}：PLC アドレス '{1}' は DWord 型である必要があります（現在 {2}）", ["pt-BR"] = "Linha {0}: o endereço PLC '{1}' deve ser do tipo DWord; obtido {2}"
         },
-        ["Wpf|F303"] = new Dictionary<string, string>
+        ["Wpf|Prompt_NoDefectDataCSVFile"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "CSV 文件中没有缺陷数据", ["en-US"] = "No defect data in CSV file", ["ja-JP"] = "CSV ファイルに欠陥データがありません", ["pt-BR"] = "Sem dados de defeitos no arquivo CSV"
         },
-        ["Wpf|F304"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ExportedCounterAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导出 {0} 条计数器报警 → {1}", ["en-US"] = "Exported {0} counter alarms → {1}", ["ja-JP"] = "{0} 件のカカカウンタアラームをエクスポート → {1}", ["pt-BR"] = "{0} alarmes de contador exportados → {1}"
         },
-        ["Wpf|F305"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CounterAlarmsImportedCurrentDeviceExisting"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "将导入 {0} 条计数器报警到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} counter alarms will be imported to the current device ({1} existing).\n", ["ja-JP"] = "{0} 件のカカカウンタアラームを現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} alarmes de contador serão importados para o dispositivo atual ({1} existentes).\\n"
+            ["zh-CN"] = "将导入 {0} 条计数器报警到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} counter alarms will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "{0} 件のカカカウンタアラームを現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} alarmes de contador serão importados para o dispositivo atual ({1} existentes).\\n"
         },
-        ["Wpf|F306"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ValidCounterAlarmsImportedCurrentDevice"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "有效 {0} 条计数器报警将导入到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} valid counter alarms will be imported to the current device ({1} existing).\n", ["ja-JP"] = "有効な {0} 件のカカカウンタアラームを現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} alarmes de contador válidos serão importados para o dispositivo atual ({1} existentes).\\n"
+            ["zh-CN"] = "有效 {0} 条计数器报警将导入到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} valid counter alarms will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "有効な {0} 件のカカカウンタアラームを現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} alarmes de contador válidos serão importados para o dispositivo atual ({1} existentes).\\n"
         },
-        ["Wpf|F307"] = new Dictionary<string, string>
+        ["Wpf|Prompt_NoCounterAlarmsImported"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "未导入任何计数器报警：\n  · {0}", ["en-US"] = "No counter alarms imported:\n  · {0}", ["ja-JP"] = "カカカウンタアラームはインポートされませんでした：\n  · {0}", ["pt-BR"] = "Nenhum alarme de contador importado:\\n  · {0}"
+            ["zh-CN"] = "未导入任何计数器报警：\r\n  · {0}", ["en-US"] = "No counter alarms imported:\r\n  · {0}", ["ja-JP"] = "カカカウンタアラームはインポートされませんでした：\r\n  · {0}", ["pt-BR"] = "Nenhum alarme de contador importado:\\n  · {0}"
         },
-        ["Wpf|F308"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ImportedCounterAlarmsRowsSkipped"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "已导入 {0} 条计数器报警（{1} 行跳过）。\n", ["en-US"] = "Imported {0} counter alarms ({1} rows skipped).\n", ["ja-JP"] = "{0} 件のカカカウンタアラームをインポート（{1} 行スキップ）。\n", ["pt-BR"] = "{0} alarmes de contador importados ({1} linhas ignoradas).\\n"
+            ["zh-CN"] = "已导入 {0} 条计数器报警（{1} 行跳过）。\r\n", ["en-US"] = "Imported {0} counter alarms ({1} rows skipped).\r\n", ["ja-JP"] = "{0} 件のカカカウンタアラームをインポート（{1} 行スキップ）。\r\n", ["pt-BR"] = "{0} alarmes de contador importados ({1} linhas ignoradas).\\n"
         },
-        ["Wpf|F309"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ImportedCounterAlarmsClickSavePersist"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导入 {0} 条计数器报警，请点击保存以持久化", ["en-US"] = "Imported {0} counter alarms, click Save to persist", ["ja-JP"] = "{0} 件のカカカウンタアラームをインポートしました。保存をクリックして永続化してください", ["pt-BR"] = "{0} alarmes de contador importados; clique em Salvar para persistir"
         },
-        ["Wpf|F310"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowCounterAlarmNameEmpty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：计数器报警名称为空", ["en-US"] = "Row {0}: counter alarm name is empty", ["ja-JP"] = "行 {0}：カカカウンタアラーム名が空です", ["pt-BR"] = "Linha {0}: nome do alarme de contador vazio"
         },
-        ["Wpf|F312"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowEnabledInvalidExpectedTrueFalse"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：启用状态 '{1}' 无效（应为 True/False）", ["en-US"] = "Row {0}: enabled '{1}' is invalid (expected True/False)", ["ja-JP"] = "行 {0}：有効状態 '{1}' が無効です（True/False のいずれか）", ["pt-BR"] = "Linha {0}: estado de habilitação '{1}' inválido (esperado True/False)"
         },
-        ["Wpf|F313"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowPLCAddressShouldDWordType2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：PLC 地址 '{1}' 应为 DWord 类型，当前为 {2}", ["en-US"] = "Row {0}: PLC address '{1}' should be DWord type, got {2}", ["ja-JP"] = "行 {0}：PLC アドレス '{1}' は DWord 型である必要があります（現在 {2}）", ["pt-BR"] = "Linha {0}: o endereço PLC '{1}' deve ser do tipo DWord; obtido {2}"
         },
-        ["Wpf|F314"] = new Dictionary<string, string>
+        ["Wpf|Prompt_NoCounterAlarmDataCSVFile"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "CSV 文件中没有计数器报警数据", ["en-US"] = "No counter alarm data in CSV file", ["ja-JP"] = "CSV ファイルにカカカウンタアラームデータがありません", ["pt-BR"] = "Sem dados de alarmes de contador no arquivo CSV"
         },
-        ["Wpf|F315"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Text"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0:N0}", ["en-US"] = "{0:N0}", ["ja-JP"] = "{0:N0}", ["pt-BR"] = "{0:N0}"
         },
-        ["Wpf|F316"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Text2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}", ["en-US"] = "{0}", ["ja-JP"] = "{0}", ["pt-BR"] = "{0}"
         },
-        ["Wpf|K583"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无数据", ["en-US"] = "No data", ["ja-JP"] = "データなし", ["pt-BR"] = "Sem dados"
         },
-        ["Wpf|M049"] = new Dictionary<string, string>
+        ["Wpf|Msg_Disconnected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未断线", ["en-US"] = "Not Disconnected", ["ja-JP"] = "断線なし", ["pt-BR"] = "Não conectado"
         },
-        ["Wpf|M050"] = new Dictionary<string, string>
+        ["Wpf|Msg_CollectorConnected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Collector 未连接", ["en-US"] = "Collector Not Connected", ["ja-JP"] = "Collector未接続", ["pt-BR"] = "Coletor não conectado"
         },
-        ["Wpf|M052"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoBacklog"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "无积压", ["en-US"] = "No Backlog", ["ja-JP"] = "バックログなし", ["pt-BR"] = "Sem acúmulo pendente"
         },
-        ["Wpf|M053"] = new Dictionary<string, string>
+        ["Wpf|Msg_ConfigurationOK"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配置正常", ["en-US"] = "Configuration OK", ["ja-JP"] = "設定正常", ["pt-BR"] = "Configuração OK"
         },
-        ["Wpf|M054"] = new Dictionary<string, string>
+        ["Wpf|Msg_Unavailable"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "不可用", ["en-US"] = "Unavailable", ["ja-JP"] = "利用不可", ["pt-BR"] = "Indisponível"
         },
-        ["Wpf|M055"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoActiveWorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无运行工单", ["en-US"] = "No Active Work Order", ["ja-JP"] = "稼働中の作業指示なし", ["pt-BR"] = "Sem ordem em execução"
         },
-        ["Wpf|M056"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoProductInfo"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无产品信息", ["en-US"] = "No Product Info", ["ja-JP"] = "製品情報なし", ["pt-BR"] = "Sem informações do produto"
         },
-        ["Wpf|M057"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoRecipeInfo"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无配方信息", ["en-US"] = "No Recipe Info", ["ja-JP"] = "レシピ情報なし", ["pt-BR"] = "Sem informações da receita"
         },
-        ["Wpf|M058"] = new Dictionary<string, string>
+        ["Wpf|Msg_PreviousPeriod"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "上一周期", ["en-US"] = "Previous Period", ["ja-JP"] = "前期間", ["pt-BR"] = "Período anterior"
         },
-        ["Wpf|M060"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoMatchingAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前筛选无匹配报警", ["en-US"] = "No matching alarms", ["ja-JP"] = "現在のフィルタに一致する警報なし", ["pt-BR"] = "Nenhum alarme corresponde ao filtro atual"
         },
-        ["Wpf|M061"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoActiveFaults"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无活跃故障", ["en-US"] = "No active faults", ["ja-JP"] = "アクティブな故障なし", ["pt-BR"] = "Nenhuma falha ativa"
         },
-        ["Wpf|M062"] = new Dictionary<string, string>
+        ["Wpf|Msg_Ready"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "就绪", ["en-US"] = "Ready", ["ja-JP"] = "準備完了", ["pt-BR"] = "Pronto"
         },
-        ["Wpf|M063"] = new Dictionary<string, string>
+        ["Wpf|Msg_LiveDataTodayAlarms24hOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "实时数据 · 今日报警 · 近24小时产量", ["en-US"] = "Live Data - Today Alarms - 24h Output", ["ja-JP"] = "リアルタイム · 本日の警報 · 24時間生産量", ["pt-BR"] = "Dados em tempo real · Alarmes de hoje · Produção 24 h"
         },
-        ["Wpf|M064"] = new Dictionary<string, string>
+        ["Wpf|Msg_PleaseEnterCollectorAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请输入采集服务地址", ["en-US"] = "Please enter collector address", ["ja-JP"] = "収集サービスアドレスを入力してください", ["pt-BR"] = "Digite o endereço do serviço de coleta"
         },
-        ["Wpf|M065"] = new Dictionary<string, string>
+        ["Wpf|Msg_ConnectionSuccessful"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "连接成功（采集服务可达）", ["en-US"] = "Connection successful", ["ja-JP"] = "接続成功（収集サービス到達可能）", ["pt-BR"] = "Conexão bem-sucedida (serviço de coleta acessível)"
         },
-        ["Wpf|M066"] = new Dictionary<string, string>
+        ["Wpf|Msg_Hours"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "小时", ["en-US"] = "Hours", ["ja-JP"] = "時間", ["pt-BR"] = "Horas"
         },
-        ["Wpf|M067"] = new Dictionary<string, string>
+        ["Wpf|Msg_HourlyOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "按小时产量", ["en-US"] = "Hourly Output", ["ja-JP"] = "時間別生産量", ["pt-BR"] = "Produção por hora"
         },
-        ["Wpf|M070"] = new Dictionary<string, string>
+        ["Wpf|Msg_ServiceDisconnected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "服务断开", ["en-US"] = "Service Disconnected", ["ja-JP"] = "サービス切断", ["pt-BR"] = "Serviço desconectado"
         },
-        ["Wpf|M071"] = new Dictionary<string, string>
+        ["Wpf|Msg_PLCDisconnected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC断开", ["en-US"] = "PLC Disconnected", ["ja-JP"] = "PLC切断", ["pt-BR"] = "PLC desconectado"
         },
-        ["Wpf|M072"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "无数据", ["en-US"] = "No Data", ["ja-JP"] = "データなし", ["pt-BR"] = "Sem dados"
         },
-        ["Wpf|M074"] = new Dictionary<string, string>
+        ["Wpf|Msg_UnsavedChanges"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "有未保存修改", ["en-US"] = "Unsaved Changes", ["ja-JP"] = "未保存の変更あり", ["pt-BR"] = "Há alterações não salvas"
         },
-        ["Wpf|M075"] = new Dictionary<string, string>
+        ["Wpf|Msg_Saved"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已保存", ["en-US"] = "Saved", ["ja-JP"] = "保存済み", ["pt-BR"] = "Salvo"
         },
-        ["Wpf|M076"] = new Dictionary<string, string>
+        ["Wpf|Msg_Testing"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "测试中...", ["en-US"] = "Testing...", ["ja-JP"] = "テスト中...", ["pt-BR"] = "Testando..."
         },
-        ["Wpf|M077"] = new Dictionary<string, string>
+        ["Wpf|Msg_TestConnection"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "测试连接", ["en-US"] = "Test Connection", ["ja-JP"] = "接続テスト", ["pt-BR"] = "Testar conexão"
         },
-        ["Wpf|M078"] = new Dictionary<string, string>
+        ["Wpf|Msg_Saving"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存中...", ["en-US"] = "Saving...", ["ja-JP"] = "保存中...", ["pt-BR"] = "Salvando..."
         },
-        ["Wpf|M079"] = new Dictionary<string, string>
+        ["Wpf|Msg_SaveSettings"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存设置", ["en-US"] = "Save Settings", ["ja-JP"] = "設定を保存", ["pt-BR"] = "Salvar configurações"
         },
-        ["Wpf|M080"] = new Dictionary<string, string>
+        ["Wpf|Msg_PlannedStart"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计划开始时间", ["en-US"] = "Planned Start", ["ja-JP"] = "計画開始時間", ["pt-BR"] = "Início planejado"
         },
-        ["Wpf|M081"] = new Dictionary<string, string>
+        ["Wpf|Msg_PlannedEnd"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计划结束时间", ["en-US"] = "Planned End", ["ja-JP"] = "計画終了時間", ["pt-BR"] = "Fim planejado"
         },
-        ["Wpf|M082"] = new Dictionary<string, string>
+        ["Wpf|Msg_StatusTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态 + 计划时间", ["en-US"] = "Status + Time", ["ja-JP"] = "状態 + 計画時間", ["pt-BR"] = "Status + hora planejada"
         },
-        ["Wpf|M083"] = new Dictionary<string, string>
+        ["Wpf|Msg_Created"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "创建时间", ["en-US"] = "Created", ["ja-JP"] = "作成日時", ["pt-BR"] = "Criado em"
         },
-        ["Wpf|M084"] = new Dictionary<string, string>
+        ["Wpf|Msg_SelectWorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请选择工单", ["en-US"] = "Select a work order", ["ja-JP"] = "作業指示を選択してください", ["pt-BR"] = "Selecione uma ordem de produção"
         },
-        ["Wpf|M085"] = new Dictionary<string, string>
+        ["Wpf|Msg_OnlyPendingOrdersCanStart"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "仅待开始工单可启动", ["en-US"] = "Only pending orders can start", ["ja-JP"] = "未開始の作業指示のみ起動可能", ["pt-BR"] = "Somente ordens pendentes podem ser iniciadas"
         },
-        ["Wpf|M086"] = new Dictionary<string, string>
+        ["Wpf|Msg_DeviceHasActiveOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "该设备已有进行中工单", ["en-US"] = "Device has an active order", ["ja-JP"] = "この設備には進行中の作業指示があります", ["pt-BR"] = "O dispositivo já tem uma ordem em andamento"
         },
-        ["Wpf|M087"] = new Dictionary<string, string>
+        ["Wpf|Msg_StartOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "启动工单", ["en-US"] = "Start Order", ["ja-JP"] = "作業指示を開始", ["pt-BR"] = "Iniciar ordem"
         },
-        ["Wpf|M088"] = new Dictionary<string, string>
+        ["Wpf|Msg_OnlyActiveOrdersCanComplete"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "仅进行中工单可完成", ["en-US"] = "Only active orders can complete", ["ja-JP"] = "進行中の作業指示のみ完了可能", ["pt-BR"] = "Somente ordens em andamento podem ser concluídas"
         },
-        ["Wpf|M089"] = new Dictionary<string, string>
+        ["Wpf|Msg_CompleteSaveSnapshotPickNextOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "完成工单并保存产量快照。随后可选择下一张工单", ["en-US"] = "Complete and save snapshot; then pick the next order", ["ja-JP"] = "完了してスナップショットを保存し次の工単を選べます", ["pt-BR"] = "Conclui a ordem salva o snapshot e permite escolher a próxima"
         },
-        ["Wpf|M090"] = new Dictionary<string, string>
+        ["Wpf|Msg_CannotAbortCompletedOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已完成或已中止工单不可中止", ["en-US"] = "Cannot abort completed order", ["ja-JP"] = "完了/中止済みの作業指示は中止不可", ["pt-BR"] = "Ordem concluída ou abortada não pode ser abortada"
         },
-        ["Wpf|M091"] = new Dictionary<string, string>
+        ["Wpf|Msg_CannotResumeAbortedOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "中止后不可恢复为进行中", ["en-US"] = "Cannot resume aborted order", ["ja-JP"] = "中止後は進行中に戻せません", ["pt-BR"] = "Após abortar não é possível voltar a Em andamento"
         },
-        ["Wpf|M092"] = new Dictionary<string, string>
+        ["Wpf|Msg_TargetMet"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已达标完成", ["en-US"] = "Target Met", ["ja-JP"] = "目標達成で完了", ["pt-BR"] = "Meta atingida"
         },
-        ["Wpf|M093"] = new Dictionary<string, string>
+        ["Wpf|Msg_BelowTarget"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未达标完成", ["en-US"] = "Below Target", ["ja-JP"] = "目標未達で完了", ["pt-BR"] = "Abaixo da meta"
         },
-        ["Wpf|M094"] = new Dictionary<string, string>
+        ["Wpf|Msg_BehindSchedule"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "进度落后", ["en-US"] = "Behind Schedule", ["ja-JP"] = "進捗遅延", ["pt-BR"] = "Atrasada"
         },
-        ["Wpf|M095"] = new Dictionary<string, string>
+        ["Wpf|Msg_Track"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正常生产", ["en-US"] = "On Track", ["ja-JP"] = "生産順調", ["pt-BR"] = "Produção normal"
         },
-        ["Wpf|M096"] = new Dictionary<string, string>
+        ["Wpf|Msg_Queried"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "尚未查询", ["en-US"] = "Not Queried", ["ja-JP"] = "未検索", ["pt-BR"] = "Ainda não consultado"
         },
-        ["Wpf|M097"] = new Dictionary<string, string>
+        ["Wpf|Msg_QueryFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询失败", ["en-US"] = "Query Failed", ["ja-JP"] = "検索失敗", ["pt-BR"] = "Falha na consulta"
         },
-        ["Wpf|M098"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoDataFound"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未找到数据", ["en-US"] = "No Data Found", ["ja-JP"] = "データが見つかりません", ["pt-BR"] = "Nenhum dado encontrado"
         },
-        ["Wpf|M099"] = new Dictionary<string, string>
+        ["Wpf|Msg_AllShifts"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "全部班次", ["en-US"] = "All Shifts", ["ja-JP"] = "全シフト", ["pt-BR"] = "Todos os turnos"
         },
-        ["Wpf|M100"] = new Dictionary<string, string>
+        ["Wpf|Msg_AllDevices2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "全部设备", ["en-US"] = "All Devices", ["ja-JP"] = "全設備", ["pt-BR"] = "Todos os dispositivos"
         },
-        ["Wpf|M101"] = new Dictionary<string, string>
+        ["Wpf|Msg_StartCannotEnd"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "起始时间不能晚于结束时间", ["en-US"] = "Start cannot be after end", ["ja-JP"] = "開始時刻は終了時刻より後に設定できません", ["pt-BR"] = "O início não pode ser posterior ao fim"
         },
-        ["Wpf|M102"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoHistoryDataRange"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前范围未采集到历史数据", ["en-US"] = "No history data in range", ["ja-JP"] = "この範囲に履歴データがありません", ["pt-BR"] = "Sem dados históricos no período"
         },
-        ["Wpf|M103"] = new Dictionary<string, string>
+        ["Wpf|Msg_OnlyStatusDataNoOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前范围仅有状态数据，暂无产量记录", ["en-US"] = "Only status data, no output", ["ja-JP"] = "状態データのみ、生産記録はありません", ["pt-BR"] = "Apenas dados de estado, sem produção"
         },
-        ["Wpf|M104"] = new Dictionary<string, string>
+        ["Wpf|Msg_OutputDataNoAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前范围有产量记录，暂无报警记录", ["en-US"] = "Output data, no alarms", ["ja-JP"] = "生産記録のみ、警報記録はありません", ["pt-BR"] = "Dados de produção, sem alarmes"
         },
-        ["Wpf|M105"] = new Dictionary<string, string>
+        ["Wpf|Msg_AllDataCollected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量、状态和报警数据均已采集", ["en-US"] = "All data collected", ["ja-JP"] = "生産・状態・警報データが揃っています", ["pt-BR"] = "Produção, estado e alarmes coletados"
         },
-        ["Wpf|M106"] = new Dictionary<string, string>
+        ["Wpf|Msg_CurrentShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前班次", ["en-US"] = "Current Shift", ["ja-JP"] = "現在のシフト", ["pt-BR"] = "Turno atual"
         },
-        ["Wpf|M107"] = new Dictionary<string, string>
+        ["Wpf|Msg_PreviousShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "上一班次", ["en-US"] = "Previous Shift", ["ja-JP"] = "前シフト", ["pt-BR"] = "Turno anterior"
         },
-        ["Wpf|M108"] = new Dictionary<string, string>
+        ["Wpf|Msg_Today"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "今日", ["en-US"] = "Today", ["ja-JP"] = "本日", ["pt-BR"] = "Hoje"
         },
-        ["Wpf|M109"] = new Dictionary<string, string>
+        ["Wpf|Msg_Last8Hours"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "近8小时", ["en-US"] = "Last 8 Hours", ["ja-JP"] = "直近8時間", ["pt-BR"] = "Últimas 8 horas"
         },
-        ["Wpf|M110"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoShiftsConfigured"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未配置班次", ["en-US"] = "No Shifts Configured", ["ja-JP"] = "シフト未設定", ["pt-BR"] = "Turnos não configurados"
         },
-        ["Wpf|M111"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoMatchingShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未匹配班次", ["en-US"] = "No Matching Shift", ["ja-JP"] = "該当シフトなし", ["pt-BR"] = "Turno não correspondente"
         },
-        ["Wpf|M112"] = new Dictionary<string, string>
+        ["Wpf|Msg_Reached"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "达到", ["en-US"] = "Reached", ["ja-JP"] = "達成", ["pt-BR"] = "Atingiu"
         },
-        ["Wpf|M113"] = new Dictionary<string, string>
+        ["Wpf|Msg_Below"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "低于", ["en-US"] = "Below", ["ja-JP"] = "未達", ["pt-BR"] = "Abaixo"
         },
-        ["Wpf|M114"] = new Dictionary<string, string>
+        ["Wpf|Msg_InsufficientDataReview"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前时间范围没有足够的产量或报警数据生成复盘结论", ["en-US"] = "Insufficient data for review", ["ja-JP"] = "この範囲ではレビュー結論を生成するデータが不足しています", ["pt-BR"] = "Dados insuficientes para a revisão"
         },
-        ["Wpf|M115"] = new Dictionary<string, string>
+        ["Wpf|Msg_OffShiftPeriod"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "非班次时段", ["en-US"] = "Off-shift Period", ["ja-JP"] = "シフト外時間", ["pt-BR"] = "Período fora do turno"
         },
-        ["Wpf|M116"] = new Dictionary<string, string>
+        ["Wpf|Msg_ExportReviewReport"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出生产复盘报表", ["en-US"] = "Export Review Report", ["ja-JP"] = "生産レビュー帳票をエクスポート", ["pt-BR"] = "Exportar relatório de revisão"
         },
-        ["Wpf|M117"] = new Dictionary<string, string>
+        ["Wpf|Msg_ExportReviewPDF"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出生产复盘 PDF", ["en-US"] = "Export Review PDF", ["ja-JP"] = "生産レビューPDFをエクスポート", ["pt-BR"] = "Exportar PDF da revisão"
         },
-        ["Wpf|M118"] = new Dictionary<string, string>
+        ["Wpf|Msg_ConfirmDelete"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确认删除", ["en-US"] = "Confirm Delete", ["ja-JP"] = "削除確認", ["pt-BR"] = "Confirmar exclusão"
         },
-        ["Wpf|M119"] = new Dictionary<string, string>
+        ["Wpf|Msg_ConfirmImport"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确认导入", ["en-US"] = "Confirm Import", ["ja-JP"] = "インポート確認", ["pt-BR"] = "Confirmar importação"
         },
-        ["Wpf|M120"] = new Dictionary<string, string>
+        ["Wpf|Msg_ConfirmImportAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确认导入报警", ["en-US"] = "Confirm Import Alarms", ["ja-JP"] = "警報インポート確認", ["pt-BR"] = "Confirmar importação de alarmes"
         },
-        ["Wpf|M121"] = new Dictionary<string, string>
+        ["Wpf|Msg_ConfigValidationWarning"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配置验证警告", ["en-US"] = "Config Validation Warning", ["ja-JP"] = "設定検証警告", ["pt-BR"] = "Aviso de validação de configuração"
         },
-        ["Wpf|M122"] = new Dictionary<string, string>
+        ["Wpf|Msg_ConfigFileCorrupted"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配置文件损坏", ["en-US"] = "Config File Corrupted", ["ja-JP"] = "設定ファイル破損", ["pt-BR"] = "Arquivo de configuração corrompido"
         },
-        ["Wpf|M123"] = new Dictionary<string, string>
+        ["Wpf|Msg_LoadingConfiguration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正在加载配置", ["en-US"] = "Loading Configuration", ["ja-JP"] = "設定を読み込み中", ["pt-BR"] = "Carregando configuração"
         },
-        ["Wpf|M124"] = new Dictionary<string, string>
+        ["Wpf|Msg_StartingDataCollection"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正在启动数据采集", ["en-US"] = "Starting Data Collection", ["ja-JP"] = "データ収集を起動中", ["pt-BR"] = "Iniciando coleta de dados"
         },
-        ["Wpf|M125"] = new Dictionary<string, string>
+        ["Wpf|Msg_RunningRemote"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行中（远程采集）", ["en-US"] = "Running (Remote)", ["ja-JP"] = "稼働中（リモート）", ["pt-BR"] = "Em execução (remoto)"
         },
-        ["Wpf|M126"] = new Dictionary<string, string>
+        ["Wpf|Msg_DatabaseReady"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "数据库已就绪", ["en-US"] = "Database Ready", ["ja-JP"] = "データベース準備完了", ["pt-BR"] = "Banco de dados pronto"
         },
-        ["Wpf|M127"] = new Dictionary<string, string>
+        ["Wpf|Msg_UpgradingHistoryDB"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正在升级历史数据库", ["en-US"] = "Upgrading History DB", ["ja-JP"] = "履歴DBを更新中", ["pt-BR"] = "Atualizando banco de histórico"
         },
-        ["Wpf|M128"] = new Dictionary<string, string>
+        ["Wpf|Msg_PartialFunctionality"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "部分功能不可用", ["en-US"] = "Partial Functionality", ["ja-JP"] = "一部機能が利用不可", ["pt-BR"] = "Funcionalidade parcial"
         },
-        ["Wpf|M129"] = new Dictionary<string, string>
+        ["Wpf|Msg_Running"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行中", ["en-US"] = "Running", ["ja-JP"] = "稼働中", ["pt-BR"] = "Em execução"
         },
-        ["Wpf|M130"] = new Dictionary<string, string>
+        ["Wpf|Msg_StartupFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "启动失败", ["en-US"] = "Startup Failed", ["ja-JP"] = "起動失敗", ["pt-BR"] = "Falha na inicialização"
         },
-        ["Wpf|M131"] = new Dictionary<string, string>
+        ["Wpf|Msg_ConfigIssuesDetectedSomeFeaturesUnavailable"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配置文件存在以下问题，部分功能可能不可用", ["en-US"] = "Config issues detected, some features unavailable", ["ja-JP"] = "設定ファイルに問題があり、一部機能が利用できない可能性があります", ["pt-BR"] = "Problemas de configuração detectados; alguns recursos podem estar indisponíveis"
         },
-        ["Wpf|M132"] = new Dictionary<string, string>
+        ["Wpf|Msg_PleaseFixSettingsPage"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "建议进入「设置」页修改后保存", ["en-US"] = "Please fix in Settings page", ["ja-JP"] = "設定ページで修正して保存してください", ["pt-BR"] = "Corrija na página Configurações e salve"
         },
-        ["Wpf|M133"] = new Dictionary<string, string>
+        ["Wpf|Msg_Starting"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正在启动", ["en-US"] = "Starting", ["ja-JP"] = "起動中", ["pt-BR"] = "Iniciando"
         },
-        ["Wpf|M134"] = new Dictionary<string, string>
+        ["Wpf|Msg_CollectorConnected2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集服务已连接", ["en-US"] = "Collector Connected", ["ja-JP"] = "収集サービス接続済み", ["pt-BR"] = "Serviço de coleta conectado"
         },
-        ["Wpf|M135"] = new Dictionary<string, string>
+        ["Wpf|Msg_ActivatedPermanentLicense"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已激活 · 永久授权", ["en-US"] = "Activated - Permanent License", ["ja-JP"] = "有効 · 永久ライセンス", ["pt-BR"] = "Ativado · Licença permanente"
         },
-        ["Wpf|M136"] = new Dictionary<string, string>
+        ["Wpf|Msg_TrialExpired"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "试用期已过期", ["en-US"] = "Trial Expired", ["ja-JP"] = "試用期間終了", ["pt-BR"] = "Avaliação expirada"
         },
-        ["Wpf|M137"] = new Dictionary<string, string>
+        ["Wpf|Msg_TrialAnomaly"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "试用期异常（检测到时间篡改）", ["en-US"] = "Trial Anomaly", ["ja-JP"] = "試用期間異常（時刻改ざん検出）", ["pt-BR"] = "Anomalia na avaliação (detecção de adulteração de horário)"
         },
-        ["Wpf|M138"] = new Dictionary<string, string>
+        ["Wpf|Msg_LicenseExpired"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "授权已过期", ["en-US"] = "License Expired", ["ja-JP"] = "ライセンス期限切れ", ["pt-BR"] = "Licença expirada"
         },
-        ["Wpf|M139"] = new Dictionary<string, string>
+        ["Wpf|Msg_LicenseMachineMismatch"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "授权与当前机器不匹配", ["en-US"] = "License Machine Mismatch", ["ja-JP"] = "ライセンスが現在のマシンと一致しません", ["pt-BR"] = "Licença não corresponde a esta máquina"
         },
-        ["Wpf|M140"] = new Dictionary<string, string>
+        ["Wpf|Msg_Activated"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未激活", ["en-US"] = "Not Activated", ["ja-JP"] = "未アクティブ化", ["pt-BR"] = "Não ativado"
         },
-        ["Wpf|M141"] = new Dictionary<string, string>
+        ["Wpf|Msg_EnterNewActivationCodeReplaceCurrent"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "输入新的激活码以替换当前授权。", ["en-US"] = "Enter a new activation code to replace current license.", ["ja-JP"] = "新しいアクティベーションコードを入力して現在のライセンスを置き換えます。", ["pt-BR"] = "Digite uma nova chave de ativação para substituir a licença atual."
         },
-        ["Wpf|M142"] = new Dictionary<string, string>
+        ["Wpf|Msg_TrialExpiredEnterActivationCodeContinue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "试用期已过期，请输入激活码继续使用。", ["en-US"] = "Trial expired; enter an activation code to continue.", ["ja-JP"] = "試用期間が終了しました。アクティベーションコードを入力して続行してください。", ["pt-BR"] = "Avaliação expirada; digite uma chave de ativação para continuar."
         },
-        ["Wpf|M143"] = new Dictionary<string, string>
+        ["Wpf|Msg_LicenseExpiredEnterNewActivationCode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "授权已过期，请输入新的激活码。", ["en-US"] = "License expired; enter a new activation code.", ["ja-JP"] = "ライセンスが期限切れです。新しいアクティベーションコードを入力してください。", ["pt-BR"] = "Licença expirada; digite uma nova chave de ativação."
         },
-        ["Wpf|M144"] = new Dictionary<string, string>
+        ["Wpf|Msg_LicenseDoesMatchMachinePleaseReactivate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "授权与当前机器不匹配，请重新激活。", ["en-US"] = "License does not match this machine; please reactivate.", ["ja-JP"] = "ライセンスがマシンと一致しないため再アクティブ化してください。", ["pt-BR"] = "A licença não corresponde a esta máquina; reative."
         },
-        ["Wpf|M145"] = new Dictionary<string, string>
+        ["Wpf|Msg_EnterActivationCodeContinue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请输入激活码以继续使用。", ["en-US"] = "Enter an activation code to continue.", ["ja-JP"] = "アクティベーションコードを入力してください。", ["pt-BR"] = "Digite uma chave de ativação para continuar."
         },
-        ["Wpf|M146"] = new Dictionary<string, string>
+        ["Wpf|Msg_ShiftConfigurationChanged"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次配置变更提示", ["en-US"] = "Shift Configuration Changed", ["ja-JP"] = "シフト設定変更のお知らせ", ["pt-BR"] = "Aviso de alteração na configuração de turnos"
         },
-        ["Wpf|M148"] = new Dictionary<string, string>
+        ["Wpf|Msg_UpShifts"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最多 {0} 个班次", ["en-US"] = "Up to {0} shifts", ["ja-JP"] = "最大 {0} シフト", ["pt-BR"] = "Até {0} turnos"
         },
-        ["Wpf|M150"] = new Dictionary<string, string>
+        ["Wpf|Msg_AvailabilityRateRunTimePlannedTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时间稼动率 = 实际运行时间 / 计划运行时间", ["en-US"] = "Availability Rate = Run Time / Planned Time", ["ja-JP"] = "時間稼働率 = 実稼働時間 / 計画稼働時間", ["pt-BR"] = "Disponibilidade de tempo = tempo real de execução / tempo planejado"
         },
-        ["Wpf|M151"] = new Dictionary<string, string>
+        ["Wpf|Msg_PerformanceRateActualOutputTheoreticalOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "性能达标率 = 实际产量 / 理论产量", ["en-US"] = "Performance Rate = Actual Output / Theoretical Output", ["ja-JP"] = "性能達成率 = 実生産量 / 理論生産量", ["pt-BR"] = "Taxa de desempenho = produção real / produção teórica"
         },
-        ["Wpf|M152"] = new Dictionary<string, string>
+        ["Wpf|Msg_QualityRateOKOKNG"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "良品率 = 合格品 / 总产量", ["en-US"] = "Quality Rate = OK / (OK + NG)", ["ja-JP"] = "良品率 = 良品 / 総生産量", ["pt-BR"] = "Taxa de qualidade = OK / (OK + NG)"
         },
-        ["Wpf|M153"] = new Dictionary<string, string>
+        ["Wpf|Msg_OEEAvailabilityXPerformanceXQuality"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE = 时间稼动率 × 性能达标率 × 良品率", ["en-US"] = "OEE = Availability x Performance x Quality", ["ja-JP"] = "OEE = 時間稼働率 × 性能達成率 × 良品率", ["pt-BR"] = "OEE = Disponibilidade × Desempenho × Qualidade"
         },
-        ["Wpf|M154"] = new Dictionary<string, string>
+        ["Wpf|Msg_LoadComplete"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "加载完成", ["en-US"] = "Load Complete", ["ja-JP"] = "読み込み完了", ["pt-BR"] = "Carregamento concluído"
         },
-        ["Wpf|M155"] = new Dictionary<string, string>
+        ["Wpf|Msg_RefreshComplete"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "刷新完成", ["en-US"] = "Refresh Complete", ["ja-JP"] = "更新完了", ["pt-BR"] = "Atualização concluída"
         },
-        ["Wpf|M156"] = new Dictionary<string, string>
+        ["Wpf|Msg_Refreshing"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正在刷新", ["en-US"] = "Refreshing", ["ja-JP"] = "更新中", ["pt-BR"] = "Atualizando"
         },
-        ["Wpf|M157"] = new Dictionary<string, string>
+        ["Wpf|Msg_RefreshFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "刷新失败", ["en-US"] = "Refresh Failed", ["ja-JP"] = "更新失敗", ["pt-BR"] = "Falha na atualização"
         },
-        ["Wpf|M158"] = new Dictionary<string, string>
+        ["Wpf|Msg_LoadFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "加载失败", ["en-US"] = "Load Failed", ["ja-JP"] = "読み込み失敗", ["pt-BR"] = "Falha no carregamento"
         },
-        ["Wpf|M159"] = new Dictionary<string, string>
+        ["Wpf|Msg_Loading"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正在加载", ["en-US"] = "Loading", ["ja-JP"] = "読み込み中", ["pt-BR"] = "Carregando"
         },
-        ["Wpf|M160"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无设备", ["en-US"] = "No Device", ["ja-JP"] = "設備なし", ["pt-BR"] = "Sem dispositivos"
         },
-        ["Wpf|M161"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoAddressConfigured"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未配置地址", ["en-US"] = "No address configured", ["ja-JP"] = "アドレス未設定", ["pt-BR"] = "Nenhum endereço configurado"
         },
-        ["Wpf|M162"] = new Dictionary<string, string>
+        ["Wpf|Msg_Configured"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未配置", ["en-US"] = "Not configured", ["ja-JP"] = "未設定", ["pt-BR"] = "Não configurado"
         },
-        ["Wpf|M163"] = new Dictionary<string, string>
+        ["Wpf|Msg_CycleSucceeded"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "本轮成功", ["en-US"] = "Cycle succeeded", ["ja-JP"] = "今回成功", ["pt-BR"] = "Ciclo bem-sucedido"
         },
-        ["Wpf|M164"] = new Dictionary<string, string>
+        ["Wpf|Msg_CycleFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "本轮失败", ["en-US"] = "Cycle failed", ["ja-JP"] = "今回失敗", ["pt-BR"] = "Ciclo com falha"
         },
-        ["Wpf|M165"] = new Dictionary<string, string>
+        ["Wpf|Msg_OfflineDisconnected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "离线/未连接", ["en-US"] = "Offline/Disconnected", ["ja-JP"] = "オフライン/未接続", ["pt-BR"] = "Offline/Desconectado"
         },
-        ["Wpf|M166"] = new Dictionary<string, string>
+        ["Wpf|Msg_AddressConflict"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "地址冲突「", ["en-US"] = "Address conflict「", ["ja-JP"] = "アドレス競合「", ["pt-BR"] = "Conflito de endereço「"
         },
-        ["Wpf|M167"] = new Dictionary<string, string>
+        ["Wpf|Msg_EnterPasswordRestore"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "恢复上一版本将覆盖当前未保存的设备配置，请输入密码以继续：", ["en-US"] = "Enter password to restore:", ["ja-JP"] = "前バージョンを復元すると未保存の設備設定が上書きされます。パスワードを入力して続行：", ["pt-BR"] = "Digite a senha para restaurar:"
         },
-        ["Wpf|M169"] = new Dictionary<string, string>
+        ["Wpf|Msg_GenerateDemoDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生成虚拟设备", ["en-US"] = "Generate Demo Devices", ["ja-JP"] = "仮想設備を生成", ["pt-BR"] = "Executando operação no PLC..."
         },
-        ["Wpf|M170"] = new Dictionary<string, string>
+        ["Wpf|Msg_ExecutingPLCOperation"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正在执行 PLC 操作...", ["en-US"] = "Executing PLC operation...", ["ja-JP"] = "PLC操作を実行中...", ["pt-BR"] = "Confirmar zeramento do OEE"
         },
-        ["Wpf|M171"] = new Dictionary<string, string>
+        ["Wpf|Msg_ConfirmOEEReset"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确认 OEE 清零", ["en-US"] = "Confirm OEE Reset", ["ja-JP"] = "OEE クリア確認", ["pt-BR"] = "Cancelado"
         },
-        ["Wpf|M172"] = new Dictionary<string, string>
+        ["Wpf|Msg_Cancelled"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已取消", ["en-US"] = "Cancelled", ["ja-JP"] = "キャンセル済み", ["pt-BR"] = "Confirmar zeramento do OEE"
         },
-        ["Wpf|M173"] = new Dictionary<string, string>
+        ["Wpf|Msg_UnsavedChangesExistExitAnyway"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备配置有未保存的修改，确定退出吗？\\n未保存的修改将在退出后丢失。", ["en-US"] = "Unsaved changes exist. Exit anyway?", ["ja-JP"] = "未保存の変更があります。終了しますか？\\n未保存の変更は失われます。", ["pt-BR"] = "Há alterações não salvas na configuração. Sair mesmo assim?\\nAlterações não salvas serão perdidas ao sair."
         },
-        ["Wpf|M174"] = new Dictionary<string, string>
+        ["Wpf|Msg_UnsavedChanges2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未保存的修改", ["en-US"] = "Unsaved Changes", ["ja-JP"] = "未保存の変更", ["pt-BR"] = "Alterações não salvas"
         },
-        ["Wpf|M175"] = new Dictionary<string, string>
+        ["Wpf|Msg_ConfirmClearCounterAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确认清空计数器报警", ["en-US"] = "Confirm Clear Counter Alarm", ["ja-JP"] = "カウント警報クリア確認", ["pt-BR"] = "Confirmar limpeza do alarme de contador"
         },
-        ["Wpf|M176"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoInsights"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "无洞察", ["en-US"] = "No Insights", ["ja-JP"] = "洞察なし", ["pt-BR"] = "Sem insights"
         },
-        ["Wpf|M177"] = new Dictionary<string, string>
+        ["Wpf|Msg_LongAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "🔴 长报警", ["en-US"] = "Long Alarm", ["ja-JP"] = "🔴 長時間警報", ["pt-BR"] = "🔴 Alarme longo"
         },
-        ["Wpf|M178"] = new Dictionary<string, string>
+        ["Wpf|Msg_LongestAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最长报警", ["en-US"] = "Longest Alarm", ["ja-JP"] = "最長警報", ["pt-BR"] = "Alarme mais longo"
         },
-        ["Wpf|M179"] = new Dictionary<string, string>
+        ["Wpf|Msg_PLCConnectedCannotWriteRecipe"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 未连接，无法写入配方", ["en-US"] = "PLC not connected, cannot write recipe", ["ja-JP"] = "PLC未接続のため、レシピを書き込めません", ["pt-BR"] = "PLC não conectado; não é possível gravar a receita"
         },
-        ["Wpf|M180"] = new Dictionary<string, string>
+        ["Wpf|Msg_RecipeAddressConfigured"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未配置配方地址", ["en-US"] = "Recipe address not configured", ["ja-JP"] = "レシピアドレス未設定", ["pt-BR"] = "Endereço de receita não configurado"
         },
-        ["Wpf|M181"] = new Dictionary<string, string>
+        ["Wpf|Msg_PLCConnectedCannotReset"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 未连接，无法执行清零", ["en-US"] = "PLC not connected, cannot reset", ["ja-JP"] = "PLC未接続のため、クリアを実行できません", ["pt-BR"] = "PLC não conectado; não é possível zerar"
         },
-        ["Wpf|M182"] = new Dictionary<string, string>
+        ["Wpf|Msg_OEEResetAddressConfigured"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未配置 OEE 清零地址", ["en-US"] = "OEE reset address not configured", ["ja-JP"] = "OEEクリアアドレス未設定", ["pt-BR"] = "Endereço de zeramento do OEE não configurado"
         },
-        ["Wpf|M183"] = new Dictionary<string, string>
+        ["Wpf|Msg_UserCancelled"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "用户取消", ["en-US"] = "User cancelled", ["ja-JP"] = "ユーザーがキャンセル", ["pt-BR"] = "Cancelado pelo usuário"
         },
-        ["Wpf|M184"] = new Dictionary<string, string>
+        ["Wpf|Msg_ResetFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "清零失败", ["en-US"] = "Reset failed", ["ja-JP"] = "クリア失敗", ["pt-BR"] = "Falha no zeramento"
         },
-        ["Wpf|M185"] = new Dictionary<string, string>
+        ["Wpf|Msg_AddressEmpty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "地址为空", ["en-US"] = "Address is empty", ["ja-JP"] = "アドレスが空です", ["pt-BR"] = "O endereço está vazio"
         },
-        ["Wpf|M186"] = new Dictionary<string, string>
+        ["Wpf|Msg_PLCConnectedCannotRead"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 未连接，无法读取", ["en-US"] = "PLC not connected, cannot read", ["ja-JP"] = "PLC未接続のため、読み取れません", ["pt-BR"] = "PLC não conectado; não é possível ler"
         },
-        ["Wpf|M188"] = new Dictionary<string, string>
+        ["Wpf|Msg_PLCConnectedCannotClear"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 未连接，无法清空", ["en-US"] = "PLC not connected, cannot clear", ["ja-JP"] = "PLC未接続のため、クリアできません", ["pt-BR"] = "PLC não conectado; não é possível limpar"
         },
-        ["Wpf|M189"] = new Dictionary<string, string>
+        ["Wpf|Msg_OutputTrend"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量趋势图", ["en-US"] = "Output Trend", ["ja-JP"] = "生産量トレンド図", ["pt-BR"] = "Gráfico de tendência de produção"
         },
-        ["Wpf|M190"] = new Dictionary<string, string>
+        ["Wpf|Msg_OutputPcs"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量(件)", ["en-US"] = "Output(pcs)", ["ja-JP"] = "生産量(個)", ["pt-BR"] = "Produção (pçs)"
         },
-        ["Wpf|M191"] = new Dictionary<string, string>
+        ["Wpf|Msg_OKOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OK 产量", ["en-US"] = "OK Output", ["ja-JP"] = "OK生産量", ["pt-BR"] = "Produção OK"
         },
-        ["Wpf|M192"] = new Dictionary<string, string>
+        ["Wpf|Msg_NGOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "NG 产量", ["en-US"] = "NG Output", ["ja-JP"] = "NG生産量", ["pt-BR"] = "Produção NG"
         },
-        ["Wpf|M193"] = new Dictionary<string, string>
+        ["Wpf|Msg_QualityRateTrend"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "良品率趋势图", ["en-US"] = "Quality Rate Trend", ["ja-JP"] = "良品率トレンド図", ["pt-BR"] = "Gráfico de tendência da taxa de qualidade"
         },
-        ["Wpf|M194"] = new Dictionary<string, string>
+        ["Wpf|Msg_PerformanceTrend"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "性能趋势图", ["en-US"] = "Performance Trend", ["ja-JP"] = "性能トレンド図", ["pt-BR"] = "Gráfico de tendência de desempenho"
         },
-        ["Wpf|M195"] = new Dictionary<string, string>
+        ["Wpf|Msg_AvailabilityTrend"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时间稼动率趋势图", ["en-US"] = "Availability Trend", ["ja-JP"] = "時間稼働率トレンド図", ["pt-BR"] = "Gráfico de tendência de disponibilidade de tempo"
         },
-        ["Wpf|M196"] = new Dictionary<string, string>
+        ["Wpf|Msg_DefectDistribution"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷分布图", ["en-US"] = "Defect Distribution", ["ja-JP"] = "不良分布図", ["pt-BR"] = "Gráfico de distribuição de defeitos"
         },
-        ["Wpf|M197"] = new Dictionary<string, string>
+        ["Wpf|Msg_ShiftOutputComparison"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次产量对比", ["en-US"] = "Shift Output Comparison", ["ja-JP"] = "シフト生産量比較", ["pt-BR"] = "Comparação de produção entre turnos"
         },
-        ["Wpf|M198"] = new Dictionary<string, string>
+        ["Wpf|Msg_Count"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "数量", ["en-US"] = "Count", ["ja-JP"] = "数量", ["pt-BR"] = "Quantidade"
         },
-        ["Wpf|M199"] = new Dictionary<string, string>
+        ["Wpf|Msg_AlarmDurationRanking"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警时长排行", ["en-US"] = "Alarm Duration Ranking", ["ja-JP"] = "警報時間ランキング", ["pt-BR"] = "Ranking de duração de alarmes"
         },
-        ["Wpf|M200"] = new Dictionary<string, string>
+        ["Wpf|Msg_DowntimeAnalysis"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "停机分析图", ["en-US"] = "Downtime Analysis", ["ja-JP"] = "停止分析図", ["pt-BR"] = "Gráfico de análise de paradas"
         },
-        ["Wpf|M201"] = new Dictionary<string, string>
+        ["Wpf|Msg_OEEMetrics"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 指标图", ["en-US"] = "OEE metrics", ["ja-JP"] = "OEE 指標図", ["pt-BR"] = "Gráfico de indicadores OEE"
         },
-        ["Wpf|M202"] = new Dictionary<string, string>
+        ["Wpf|Msg_Percentage"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "百分比", ["en-US"] = "Percentage", ["ja-JP"] = "生産量(個)", ["pt-BR"] = "Porcentagem"
         },
-        ["Wpf|M203"] = new Dictionary<string, string>
+        ["Wpf|Msg_Time"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时间", ["en-US"] = "Time", ["ja-JP"] = "時間", ["pt-BR"] = "Hora"
         },
-        ["Wpf|M204"] = new Dictionary<string, string>
+        ["Wpf|Msg_DurationMin"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "持续时间(分钟)", ["en-US"] = "Duration (min)", ["ja-JP"] = "継続時間(分)", ["pt-BR"] = "Duração (min)"
         },
-        ["Wpf|M205"] = new Dictionary<string, string>
+        ["Wpf|Msg_Device"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备", ["en-US"] = "Device", ["ja-JP"] = "設備", ["pt-BR"] = "Dispositivo"
         },
-        ["Wpf|M206"] = new Dictionary<string, string>
+        ["Wpf|Msg_Output"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量", ["en-US"] = "Output", ["ja-JP"] = "生産量", ["pt-BR"] = "Produção"
         },
-        ["Wpf|M207"] = new Dictionary<string, string>
+        ["Wpf|Msg_Alarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警", ["en-US"] = "Alarm", ["ja-JP"] = "警報", ["pt-BR"] = "Alarme"
         },
-        ["Wpf|M209"] = new Dictionary<string, string>
+        ["Wpf|Msg_AlarmCount"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警次数", ["en-US"] = "Alarm Count", ["ja-JP"] = "アラーム回数", ["pt-BR"] = "Nº de alarmes"
         },
-        ["Wpf|M210"] = new Dictionary<string, string>
+        ["Wpf|Msg_AlarmDurationMin"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警时长(分钟)", ["en-US"] = "Alarm Duration (min)", ["ja-JP"] = "警報時間(分)", ["pt-BR"] = "Duração de alarmes (min)"
         },
-        ["Wpf|M211"] = new Dictionary<string, string>
+        ["Wpf|Msg_DowntimeMin"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "停机时长(分钟)", ["en-US"] = "Downtime (min)", ["ja-JP"] = "停止時間(分)", ["pt-BR"] = "Paradas (min)"
         },
-        ["Wpf|M212"] = new Dictionary<string, string>
+        ["Wpf|Msg_SpeedPcsH"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "速度(件/小时)", ["en-US"] = "Speed (pcs/h)", ["ja-JP"] = "速度(個/時)", ["pt-BR"] = "Velocidade (pçs/h)"
         },
-        ["Wpf|M213"] = new Dictionary<string, string>
+        ["Wpf|Msg_Target"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标", ["en-US"] = "Target", ["ja-JP"] = "目標", ["pt-BR"] = "Meta"
         },
-        ["Wpf|M214"] = new Dictionary<string, string>
+        ["Wpf|Msg_Actual"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "实际", ["en-US"] = "Actual", ["ja-JP"] = "実績", ["pt-BR"] = "Real"
         },
-        ["Wpf|M215"] = new Dictionary<string, string>
+        ["Wpf|Msg_Gap"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "差距", ["en-US"] = "Gap", ["ja-JP"] = "差", ["pt-BR"] = "Diferença"
         },
-        ["Wpf|M216"] = new Dictionary<string, string>
+        ["Wpf|Msg_Count2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "数量", ["en-US"] = "Count", ["ja-JP"] = "数量", ["pt-BR"] = "Quantidade"
         },
-        ["Wpf|M220"] = new Dictionary<string, string>
+        ["Wpf|Msg_Hours2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "小时", ["en-US"] = "Hours", ["ja-JP"] = "時間", ["pt-BR"] = "Horas"
         },
-        ["Wpf|M221"] = new Dictionary<string, string>
+        ["Wpf|Msg_CSVFilesCsvCsvAllFiles"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "CSV 文件 (*.csv)|*.csv|所有文件 (*.*)|*.*", ["en-US"] = "CSV files (*.csv)|*.csv|All files (*.*)|*.*", ["ja-JP"] = "CSV ファイル (*.csv)|*.csv|すべてのファイル (*.*)|*.*", ["pt-BR"] = "Arquivos CSV (*.csv)|*.csv|Todos os arquivos (*.*)|*.*"
         },
-        ["Wpf|M222"] = new Dictionary<string, string>
+        ["Wpf|Msg_ExportAlarmConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出报警配置", ["en-US"] = "Export Alarm Config", ["ja-JP"] = "警報設定をエクスポート", ["pt-BR"] = "Exportar configuração de alarmes"
         },
-        ["Wpf|M223"] = new Dictionary<string, string>
+        ["Wpf|Msg_ImportAlarmConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入报警配置", ["en-US"] = "Import Alarm Config", ["ja-JP"] = "警報設定をインポート", ["pt-BR"] = "Importar configuração de alarmes"
         },
-        ["Wpf|M224"] = new Dictionary<string, string>
+        ["Wpf|Msg_ReplaceExistingAlarmsImport"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "替换现有报警并导入", ["en-US"] = "Replace Existing Alarms and Import", ["ja-JP"] = "既存警報を置き換えてインポート", ["pt-BR"] = "Substituir alarmes existentes e importar"
         },
-        ["Wpf|M225"] = new Dictionary<string, string>
+        ["Wpf|Msg_JSONFilesJsonJsonAllFiles"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "JSON 文件 (*.json)|*.json|所有文件 (*.*)|*.*", ["en-US"] = "JSON files (*.json)|*.json|All files (*.*)|*.*", ["ja-JP"] = "JSON ファイル (*.json)|*.json|すべてのファイル (*.*)|*.*", ["pt-BR"] = "Arquivos JSON (*.json)|*.json|Todos os arquivos (*.*)|*.*"
         },
-        ["Wpf|M226"] = new Dictionary<string, string>
+        ["Wpf|Msg_ExportDeviceConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出设备配置", ["en-US"] = "Export Device Config", ["ja-JP"] = "設備設定をエクスポート", ["pt-BR"] = "Exportar configuração do dispositivo"
         },
-        ["Wpf|M227"] = new Dictionary<string, string>
+        ["Wpf|Msg_ImportDeviceConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入设备配置", ["en-US"] = "Import Device Config", ["ja-JP"] = "設備設定をインポート", ["pt-BR"] = "Importar configuração do dispositivo"
         },
-        ["Wpf|M228"] = new Dictionary<string, string>
+        ["Wpf|Msg_OKCountAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OK 数量地址", ["en-US"] = "OK Count Address", ["ja-JP"] = "OK数量アドレス", ["pt-BR"] = "Endereço de contagem OK"
         },
-        ["Wpf|M229"] = new Dictionary<string, string>
+        ["Wpf|Msg_NGCountAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "NG 数量地址", ["en-US"] = "NG Count Address", ["ja-JP"] = "NG数量アドレス", ["pt-BR"] = "Endereço de contagem NG"
         },
-        ["Wpf|M230"] = new Dictionary<string, string>
+        ["Wpf|Msg_StatusAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态地址", ["en-US"] = "Status Address", ["ja-JP"] = "状態アドレス", ["pt-BR"] = "Endereço de estado"
         },
-        ["Wpf|M231"] = new Dictionary<string, string>
+        ["Wpf|Msg_OEEResetAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 清零地址", ["en-US"] = "OEE Reset Address", ["ja-JP"] = "OEEクリアアドレス", ["pt-BR"] = "Endereço de zeramento do OEE"
         },
-        ["Wpf|M232"] = new Dictionary<string, string>
+        ["Wpf|Msg_OKCountAddress2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OK 数量地址", ["en-US"] = "OK Count Address", ["ja-JP"] = "OK数量アドレス", ["pt-BR"] = "Endereço de contagem OK"
         },
-        ["Wpf|M233"] = new Dictionary<string, string>
+        ["Wpf|Msg_NGCountAddress2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "NG 数量地址", ["en-US"] = "NG Count Address", ["ja-JP"] = "NG数量アドレス", ["pt-BR"] = "Endereço de contagem NG"
         },
-        ["Wpf|M234"] = new Dictionary<string, string>
+        ["Wpf|Msg_OEEResetAddress2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 清零地址", ["en-US"] = "OEE Reset Address", ["ja-JP"] = "OEEクリアアドレス", ["pt-BR"] = "Endereço de zeramento do OEE"
         },
-        ["Wpf|M275"] = new Dictionary<string, string>
+        ["Wpf|Msg_OEEResetAddress3"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 清零地址", ["en-US"] = "OEE Reset Address", ["ja-JP"] = "OEEクリアアドレス", ["pt-BR"] = "Endereço de zeramento do OEE"
         },
-        ["Wpf|M274"] = new Dictionary<string, string>
+        ["Wpf|Msg_OEEResetAddress4"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 清零地址", ["en-US"] = "OEE Reset Address", ["ja-JP"] = "OEEクリアアドレス", ["pt-BR"] = "Endereço de zeramento do OEE"
         },
-        ["Wpf|M273"] = new Dictionary<string, string>
+        ["Wpf|Msg_OEEResetAddress5"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 清零地址", ["en-US"] = "OEE Reset Address", ["ja-JP"] = "OEEクリアアドレス", ["pt-BR"] = "Endereço de zeramento do OEE"
         },
-        ["Wpf|M235"] = new Dictionary<string, string>
+        ["Wpf|Msg_RecipeAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方地址", ["en-US"] = "Recipe Address", ["ja-JP"] = "レシピアドレス", ["pt-BR"] = "Endereço da receita"
         },
-        ["Wpf|M236"] = new Dictionary<string, string>
+        ["Wpf|Msg_Performance"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "性能率", ["en-US"] = "Performance", ["ja-JP"] = "性能率", ["pt-BR"] = "Desempenho"
         },
-        ["Wpf|M237"] = new Dictionary<string, string>
+        ["Wpf|Msg_Availability"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "可用率", ["en-US"] = "Availability", ["ja-JP"] = "稼働率", ["pt-BR"] = "Disponibilidade"
         },
-        ["Wpf|M238"] = new Dictionary<string, string>
+        ["Wpf|Msg_QualityRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "良品率", ["en-US"] = "Quality Rate", ["ja-JP"] = "良品率", ["pt-BR"] = "Taxa de qualidade"
         },
-        ["Wpf|M239"] = new Dictionary<string, string>
+        ["Wpf|Msg_ProductionReviewReport"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生产复盘报表", ["en-US"] = "Production Review Report", ["ja-JP"] = "生産レビュー帳票", ["pt-BR"] = "Relatório de revisão de produção"
         },
-        ["Wpf|M240"] = new Dictionary<string, string>
+        ["Wpf|Msg_MetricValue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "指标,数值", ["en-US"] = "Metric,Value", ["ja-JP"] = "指標,数値", ["pt-BR"] = "Indicador,Valor"
         },
-        ["Wpf|M241"] = new Dictionary<string, string>
+        ["Wpf|Msg_TotalOK"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "总合格产量", ["en-US"] = "Total OK", ["ja-JP"] = "総良品数", ["pt-BR"] = "Total OK"
         },
-        ["Wpf|M242"] = new Dictionary<string, string>
+        ["Wpf|Msg_TotalNG"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "总不合格产量", ["en-US"] = "Total NG", ["ja-JP"] = "総不良数", ["pt-BR"] = "Total NG"
         },
-        ["Wpf|M243"] = new Dictionary<string, string>
+        ["Wpf|Msg_QualityRate2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "良品率", ["en-US"] = "Quality Rate", ["ja-JP"] = "良品率", ["pt-BR"] = "Taxa de qualidade"
         },
-        ["Wpf|M244"] = new Dictionary<string, string>
+        ["Wpf|Msg_RunTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行时长", ["en-US"] = "Run Time", ["ja-JP"] = "稼働時間", ["pt-BR"] = "Tempo de execução"
         },
-        ["Wpf|M245"] = new Dictionary<string, string>
+        ["Wpf|Msg_IdleTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "待机时长", ["en-US"] = "Idle Time", ["ja-JP"] = "待機時間", ["pt-BR"] = "Tempo em espera"
         },
-        ["Wpf|M246"] = new Dictionary<string, string>
+        ["Wpf|Msg_AlarmTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警时长", ["en-US"] = "Alarm Time", ["ja-JP"] = "アラーム時間", ["pt-BR"] = "Tempo de alarmes"
         },
-        ["Wpf|M247"] = new Dictionary<string, string>
+        ["Wpf|Msg_AlarmCount2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警次数", ["en-US"] = "Alarm Count", ["ja-JP"] = "アラーム回数", ["pt-BR"] = "Nº de alarmes"
         },
-        ["Wpf|M248"] = new Dictionary<string, string>
+        ["Wpf|Msg_DeviceDetails"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备明细", ["en-US"] = "Device Details", ["ja-JP"] = "設備明細", ["pt-BR"] = "Detalhes por dispositivo"
         },
-        ["Wpf|M249"] = new Dictionary<string, string>
+        ["Wpf|Msg_DeviceOKNGQualityOEERun"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备,合格产量,不良产量,良品率,OEE,运行时长,待机时长,报警时长,报警次数,主要报警", ["en-US"] = "Device,OK,NG,Quality,OEE,Run,Idle,Alarm,Count,Top Alarm", ["ja-JP"] = "設備,良品,不良,良品率,OEE,稼働時間,待機時間,警報時間,警報回数,主要警報", ["pt-BR"] = "Dispositivo,OK,NG,Qualidade,OEE,Execução,Espera,Alarmes,Contagem,Principal alarme"
         },
-        ["Wpf|M250"] = new Dictionary<string, string>
+        ["Wpf|Msg_ShiftComparison"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次对比", ["en-US"] = "Shift Comparison", ["ja-JP"] = "シフト比較", ["pt-BR"] = "Comparação de turnos"
         },
-        ["Wpf|M251"] = new Dictionary<string, string>
+        ["Wpf|Msg_ShiftOKNGTotalQualityAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次,合格产量,不良产量,总产量,良品率,报警次数,报警密度", ["en-US"] = "Shift,OK,NG,Total,Quality,Alarms,Density", ["ja-JP"] = "シフト,良品,不良,総量,良品率,警報回数,警報密度", ["pt-BR"] = "Turno,OK,NG,Total,Qualidade,Alarmes,Densidade"
         },
-        ["Wpf|M252"] = new Dictionary<string, string>
+        ["Wpf|Msg_TopAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Top 报警", ["en-US"] = "Top Alarms", ["ja-JP"] = "トップ警報", ["pt-BR"] = "Principais alarmes"
         },
-        ["Wpf|M253"] = new Dictionary<string, string>
+        ["Wpf|Msg_AlarmDeviceCountDuration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警名称,设备,触发次数,累计时长", ["en-US"] = "Alarm,Device,Count,Duration", ["ja-JP"] = "警報名,設備,トリガー回数,累計時間", ["pt-BR"] = "Alarme,Dispositivo,Contagem,Duração"
         },
-        ["Wpf|M254"] = new Dictionary<string, string>
+        ["Wpf|Msg_CoreMetrics"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "核心指标", ["en-US"] = "Core Metrics", ["ja-JP"] = "核心指標", ["pt-BR"] = "Indicadores principais"
         },
-        ["Wpf|M255"] = new Dictionary<string, string>
+        ["Wpf|Msg_ProductionTrend"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量趋势", ["en-US"] = "Production Trend", ["ja-JP"] = "生産量トレンド", ["pt-BR"] = "Tendência de produção"
         },
-        ["Wpf|M256"] = new Dictionary<string, string>
+        ["Wpf|Msg_OEELossBreakdown"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE 损失拆解", ["en-US"] = "OEE Loss Breakdown", ["ja-JP"] = "OEE損失分解", ["pt-BR"] = "Detalhamento de perdas do OEE"
         },
-        ["Wpf|M257"] = new Dictionary<string, string>
+        ["Wpf|Msg_PeriodComparison"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "周期对比", ["en-US"] = "Period Comparison", ["ja-JP"] = "周期比較", ["pt-BR"] = "Comparação de períodos"
         },
-        ["Wpf|M258"] = new Dictionary<string, string>
+        ["Wpf|Msg_DowntimeAnalysis2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "停机分析", ["en-US"] = "Downtime Analysis", ["ja-JP"] = "停止分析", ["pt-BR"] = "Análise de paradas"
         },
-        ["Wpf|M259"] = new Dictionary<string, string>
+        ["Wpf|Msg_ProductionHeatmap"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生产热力图", ["en-US"] = "Production Heatmap", ["ja-JP"] = "生産ヒートマップ", ["pt-BR"] = "Mapa de calor da produção"
         },
-        ["Wpf|M260"] = new Dictionary<string, string>
+        ["Wpf|Msg_CurrentChange"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前变化", ["en-US"] = "Current Change", ["ja-JP"] = "現在の変化", ["pt-BR"] = "Mudança atual"
         },
-        ["Wpf|M261"] = new Dictionary<string, string>
+        ["Wpf|Msg_Field"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "字段", ["en-US"] = "Field", ["ja-JP"] = "フィールド", ["pt-BR"] = "Campo"
         },
-        ["Wpf|M262"] = new Dictionary<string, string>
+        ["Wpf|Msg_Defect"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷 ", ["en-US"] = "Defect ", ["ja-JP"] = "不良 ", ["pt-BR"] = "Defeito"
         },
-        ["Wpf|M263"] = new Dictionary<string, string>
+        ["Wpf|Msg_Disconnected2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "断线", ["en-US"] = "Disconnected", ["ja-JP"] = "切断", ["pt-BR"] = "Desconectado"
         },
-        ["Wpf|M264"] = new Dictionary<string, string>
+        ["Wpf|Msg_TotalDuration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "累计时长", ["en-US"] = "Total Duration", ["ja-JP"] = "累計時間", ["pt-BR"] = "Duração acumulada"
         },
-        ["Wpf|M265"] = new Dictionary<string, string>
+        ["Wpf|Msg_Metric"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "指标", ["en-US"] = "Metric", ["ja-JP"] = "指標", ["pt-BR"] = "Indicador"
         },
-        ["Wpf|M266"] = new Dictionary<string, string>
+        ["Wpf|Msg_Value"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "数值", ["en-US"] = "Value", ["ja-JP"] = "数値", ["pt-BR"] = "Valor"
         },
-        ["Wpf|M267"] = new Dictionary<string, string>
+        ["Wpf|Msg_TargetOutput"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标产量", ["en-US"] = "Target Output", ["ja-JP"] = "目標生産量", ["pt-BR"] = "Produção alvo"
         },
-        ["Wpf|M268"] = new Dictionary<string, string>
+        ["Wpf|Msg_TargetAchievementRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标达成率", ["en-US"] = "Target Achievement Rate", ["ja-JP"] = "目標達成率", ["pt-BR"] = "Taxa de atingimento da meta"
         },
-        ["Wpf|M269"] = new Dictionary<string, string>
+        ["Wpf|Msg_DefectPareto"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷帕累托", ["en-US"] = "Defect Pareto", ["ja-JP"] = "不良パレート", ["pt-BR"] = "Pareto de defeitos"
         },
-        ["Wpf|M270"] = new Dictionary<string, string>
+        ["Wpf|Msg_Product"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺陷", ["en-US"] = "Product", ["ja-JP"] = "不良", ["pt-BR"] = "Produto"
         },
-        ["Wpf|M271"] = new Dictionary<string, string>
+        ["Wpf|Msg_CumulativeRatio"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "累计占比", ["en-US"] = "Cumulative Ratio", ["ja-JP"] = "累積比率", ["pt-BR"] = "Proporção acumulada"
         },
-        ["Wpf|M272"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoChartData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无图表数据", ["en-US"] = "No Chart Data", ["ja-JP"] = "チャートデータなし", ["pt-BR"] = "Sem dados para gráfico"
         },
-        ["Wpf|M293"] = new Dictionary<string, string>
+        ["Wpf|Msg_PermanentLicense"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "永久授权", ["en-US"] = "Permanent License", ["ja-JP"] = "永久ライセンス", ["pt-BR"] = "Licença permanente"
         },
-        ["Wpf|M294"] = new Dictionary<string, string>
+        ["Wpf|Msg_TemporaryLicense"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "限期授权", ["en-US"] = "Temporary License", ["ja-JP"] = "期間限定ライセンス", ["pt-BR"] = "Licença temporária"
         },
-        ["Wpf|M295"] = new Dictionary<string, string>
+        ["Wpf|Msg_General"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "通用设置", ["en-US"] = "General", ["ja-JP"] = "一般設定", ["pt-BR"] = "Configurações gerais"
         },
-        ["Wpf|M296"] = new Dictionary<string, string>
+        ["Wpf|Msg_PLCConnection"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 连接", ["en-US"] = "PLC Connection", ["ja-JP"] = "PLC接続", ["pt-BR"] = "Conexão PLC"
         },
-        ["Wpf|M297"] = new Dictionary<string, string>
+        ["Wpf|Msg_AcquisitionStrategy"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "采集策略", ["en-US"] = "Acquisition Strategy", ["ja-JP"] = "収集戦略", ["pt-BR"] = "Estratégia de coleta"
         },
-        ["Wpf|M298"] = new Dictionary<string, string>
+        ["Wpf|Msg_ShiftConfig"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "班次配置", ["en-US"] = "Shift Config", ["ja-JP"] = "シフト設定", ["pt-BR"] = "Configuração de turnos"
         },
-        ["Wpf|M299"] = new Dictionary<string, string>
+        ["Wpf|Msg_InvalidIPAddress"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "IP 地址无效", ["en-US"] = "Invalid IP address", ["ja-JP"] = "IPアドレスが無効", ["pt-BR"] = "Endereço IP inválido"
         },
-        ["Wpf|M301"] = new Dictionary<string, string>
+        ["Wpf|Msg_Previous1Hour"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "前一小时", ["en-US"] = "Previous 1 Hour", ["ja-JP"] = "過去1時間", ["pt-BR"] = "Hora anterior 1 h"
         },
-        ["Wpf|M302"] = new Dictionary<string, string>
+        ["Wpf|Msg_Previous8Hours"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "前 8 小时", ["en-US"] = "Previous 8 Hours", ["ja-JP"] = "過去8時間", ["pt-BR"] = "Hora anterior 8 h"
         },
-        ["Wpf|M303"] = new Dictionary<string, string>
+        ["Wpf|Msg_Previous7Days"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "前 7 天", ["en-US"] = "Previous 7 Days", ["ja-JP"] = "過去7日間", ["pt-BR"] = "Dias anteriores 7"
         },
-        ["Wpf|M300"] = new Dictionary<string, string>
+        ["Wpf|Msg_Previous24Hours"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "前 24 小时", ["en-US"] = "Previous 24 Hours", ["ja-JP"] = "過去24時間", ["pt-BR"] = "Hora anterior 24 h"
         },
@@ -5339,319 +5341,319 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "未激活", ["en-US"] = "Not Activated", ["ja-JP"] = "未アクティベート", ["pt-BR"] = "Não ativado"
         },
-        ["Wpf|M304"] = new Dictionary<string, string>
+        ["Wpf|Msg_SystemTimeAnomalyDetectedTrialHas"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "检测到系统时间异常，试用期已失效，请输入激活码继续使用。", ["en-US"] = "System time anomaly detected; trial has expired. Please enter an activation code to continue.", ["ja-JP"] = "システム時刻の異常を検出しました。試用期間が終了しました。アクティベーションコードを入力してください。", ["pt-BR"] = "Anomalia no horário do sistema detectada; a avaliação expirou. Digite uma chave de ativação para continuar."
         },
-        ["Wpf|M305"] = new Dictionary<string, string>
+        ["Wpf|Msg_LicenseHasExpiredPleaseEnterNew"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "授权已过期，请输入新的激活码。", ["en-US"] = "License has expired. Please enter a new activation code.", ["ja-JP"] = "ライセンスの有効期限が切れました。新しいアクティベーションコードを入力してください。", ["pt-BR"] = "A licença expirou. Digite uma nova chave de ativação."
         },
-        ["Wpf|M306"] = new Dictionary<string, string>
+        ["Wpf|Msg_LicenseDoesMatchMachinePleaseReactivate2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "授权与当前机器不匹配，请重新激活。", ["en-US"] = "License does not match this machine. Please reactivate.", ["ja-JP"] = "ライセンスがこのマシンと一致しません。再アクティベーションしてください。", ["pt-BR"] = "A licença não corresponde a esta máquina. Reative."
         },
-        ["Wpf|M307"] = new Dictionary<string, string>
+        ["Wpf|Msg_PleaseEnterActivationCodeContinue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请输入激活码以继续使用。", ["en-US"] = "Please enter an activation code to continue.", ["ja-JP"] = "アクティベーションコードを入力してください。", ["pt-BR"] = "Digite uma chave de ativação para continuar."
         },
-        ["Wpf|M308"] = new Dictionary<string, string>
+        ["Wpf|Msg_PermanentLicense2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "· 永久授权", ["en-US"] = "· Permanent License", ["ja-JP"] = "· 永久ライセンス", ["pt-BR"] = "· Licença permanente"
         },
-        ["Wpf|M309"] = new Dictionary<string, string>
+        ["Wpf|Msg_ProgramAlreadyRunningCannotStartedAgain"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "程序已在运行，不能重复启动。", ["en-US"] = "The program is already running and cannot be started again.", ["ja-JP"] = "プログラムは既に実行中です。再起動できません。", ["pt-BR"] = "O programa já está em execução e não pode ser iniciado novamente."
         },
-        ["Wpf|M310"] = new Dictionary<string, string>
+        ["Wpf|Msg_CSVFilesCsvAllFiles"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "CSV 文件|*.csv|所有文件|*.*", ["en-US"] = "CSV files|*.csv|All files|*.*", ["ja-JP"] = "CSV ファイル|*.csv|すべてのファイル|*.*", ["pt-BR"] = "Arquivos CSV|*.csv|Todos os arquivos|*.*"
         },
-        ["Wpf|M311"] = new Dictionary<string, string>
+        ["Wpf|Msg_ExportDefectsConfiguration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出缺陷配置", ["en-US"] = "Export Defects Configuration", ["ja-JP"] = "欠陥設定エクスポート", ["pt-BR"] = "Exportar configuração de defeitos"
         },
-        ["Wpf|M312"] = new Dictionary<string, string>
+        ["Wpf|Msg_ImportDefectsConfiguration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入缺陷配置", ["en-US"] = "Import Defects Configuration", ["ja-JP"] = "欠陥設定インポート", ["pt-BR"] = "Importar configuração de defeitos"
         },
-        ["Wpf|M313"] = new Dictionary<string, string>
+        ["Wpf|Msg_ExportCounterAlarmsConfiguration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出计数器报警配置", ["en-US"] = "Export Counter Alarms Configuration", ["ja-JP"] = "カカカウンタアラーム設定エクスポート", ["pt-BR"] = "Exportar configuração de alarmes de contador"
         },
-        ["Wpf|M314"] = new Dictionary<string, string>
+        ["Wpf|Msg_ImportCounterAlarmsConfiguration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入计数器报警配置", ["en-US"] = "Import Counter Alarms Configuration", ["ja-JP"] = "カカカウンタアラーム設定インポート", ["pt-BR"] = "Importar configuração de alarmes de contador"
         },
-        ["Wpf|M315"] = new Dictionary<string, string>
+        ["Wpf|Msg_Login"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "登录", ["en-US"] = "Login", ["ja-JP"] = "ログイン", ["pt-BR"] = "Login"
         },
-        ["Wpf|M316"] = new Dictionary<string, string>
+        ["Wpf|Msg_Username"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "用户名", ["en-US"] = "Username", ["ja-JP"] = "ユーザー名", ["pt-BR"] = "Nome de usuário"
         },
-        ["Wpf|M317"] = new Dictionary<string, string>
+        ["Wpf|Msg_Password"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "密码", ["en-US"] = "Password", ["ja-JP"] = "パスワード", ["pt-BR"] = "Senha"
         },
-        ["Wpf|M318"] = new Dictionary<string, string>
+        ["Wpf|Msg_Log"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "登录", ["en-US"] = "Log In", ["ja-JP"] = "ログイン", ["pt-BR"] = "Entrar"
         },
-        ["Wpf|M319"] = new Dictionary<string, string>
+        ["Wpf|Msg_InvalidUsernamePasswordAccountDisabled"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "用户名或密码错误，或账号已禁用", ["en-US"] = "Invalid username or password, or account is disabled", ["ja-JP"] = "ユーザー名またはパスワードが正しくないか、アカカウントが無効です", ["pt-BR"] = "Nome de usuário ou senha incorretos, ou conta desabilitada"
         },
-        ["Wpf|M320"] = new Dictionary<string, string>
+        ["Wpf|Msg_UserManagement"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "用户管理", ["en-US"] = "User Management", ["ja-JP"] = "ユーザー管理", ["pt-BR"] = "Gestão de usuários"
         },
-        ["Wpf|M321"] = new Dictionary<string, string>
+        ["Wpf|Msg_Role"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "角色", ["en-US"] = "Role", ["ja-JP"] = "ロール", ["pt-BR"] = "Função"
         },
-        ["Wpf|M322"] = new Dictionary<string, string>
+        ["Wpf|Msg_AddUser"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "添加用户", ["en-US"] = "Add User", ["ja-JP"] = "ユーザー追加", ["pt-BR"] = "Adicionar usuário"
         },
-        ["Wpf|M323"] = new Dictionary<string, string>
+        ["Wpf|Msg_DeleteUser"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "删除用户", ["en-US"] = "Delete User", ["ja-JP"] = "ユーザー削除", ["pt-BR"] = "Excluir usuário"
         },
-        ["Wpf|M324"] = new Dictionary<string, string>
+        ["Wpf|Msg_ResetPassword"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "重置密码", ["en-US"] = "Reset Password", ["ja-JP"] = "パスワードリセット", ["pt-BR"] = "Redefinir senha"
         },
-        ["Wpf|M326"] = new Dictionary<string, string>
+        ["Wpf|Msg_UsernameAlreadyExists"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "用户名已存在", ["en-US"] = "Username already exists", ["ja-JP"] = "ユーザー名は既に存在します", ["pt-BR"] = "Nome de usuário já existe"
         },
-        ["Wpf|M327"] = new Dictionary<string, string>
+        ["Wpf|Msg_CannotDeleteLastAdminAccount"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "不能删除最后一个管理员账号", ["en-US"] = "Cannot delete the last admin account", ["ja-JP"] = "最後の管理者アカカウントは削除できません", ["pt-BR"] = "Não é possível excluir a última conta de administrador"
         },
-        ["Wpf|M330"] = new Dictionary<string, string>
+        ["Wpf|Msg_DisplayName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "显示名", ["en-US"] = "Display Name", ["ja-JP"] = "表示名", ["pt-BR"] = "Nome de exibição"
         },
-        ["Wpf|M331"] = new Dictionary<string, string>
+        ["Wpf|Msg_Active"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "启用", ["en-US"] = "Active", ["ja-JP"] = "有効", ["pt-BR"] = "Ativo"
         },
-        ["Wpf|M360"] = new Dictionary<string, string>
+        ["Wpf|Msg_CannotDisableDemoteLastAdministratorAccount"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "不能禁用或降级最后一个管理员账号", ["en-US"] = "Cannot disable or demote the last administrator account", ["ja-JP"] = "最後の管理者を無効化または降格できません", ["pt-BR"] = "Não é possível desabilitar ou rebaixar a última conta de administrador"
         },
-        ["Wpf|M361"] = new Dictionary<string, string>
+        ["Wpf|Msg_CannotChangeOwnRoleDisableYourself"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "不能修改自己的角色或禁用自己", ["en-US"] = "Cannot change your own role or disable yourself", ["ja-JP"] = "自分のロールを変更したり自分自身を無効化したりできません", ["pt-BR"] = "Não é possível alterar sua própria função ou desabilitar-se"
         },
-        ["Wpf|M362"] = new Dictionary<string, string>
+        ["Wpf|Msg_UnsavedChanges3"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "有未保存的修改", ["en-US"] = "Unsaved changes", ["ja-JP"] = "未保存の変更があります", ["pt-BR"] = "Há alterações não salvas"
         },
-        ["Wpf|M364"] = new Dictionary<string, string>
+        ["Wpf|Msg_PasswordMustLeast8Characters"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "密码至少 8 位", ["en-US"] = "Password must be at least 8 characters", ["ja-JP"] = "パスワードは 8 文字以上必要です", ["pt-BR"] = "A senha deve ter pelo menos 8 caracteres"
         },
-        ["Wpf|M365"] = new Dictionary<string, string>
+        ["Wpf|Msg_TwoPasswordsDoMatch"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "两次输入的密码不一致", ["en-US"] = "The two passwords do not match", ["ja-JP"] = "入力したパスワードが一致しません", ["pt-BR"] = "As duas senhas não coincidem"
         },
-        ["Wpf|M366"] = new Dictionary<string, string>
+        ["Wpf|Msg_AccountLockedMinutesRemaining"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "账号已锁定，剩余 {0} 分钟", ["en-US"] = "Account locked, {0} minutes remaining", ["ja-JP"] = "アカカウントがロックされています。残り {0} 分", ["pt-BR"] = "Conta bloqueada; restam {0} minutos"
         },
-        ["Wpf|M367"] = new Dictionary<string, string>
+        ["Wpf|Msg_Unlock"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "解锁", ["en-US"] = "Unlock", ["ja-JP"] = "ロック解除", ["pt-BR"] = "Desbloquear"
         },
-        ["Wpf|M368"] = new Dictionary<string, string>
+        ["Wpf|Msg_MustChangePasswordFirstLogin"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "首次登录必须改密", ["en-US"] = "Must change password on first login", ["ja-JP"] = "初回ログイン時にパスワード変更必須", ["pt-BR"] = "Alteração de senha obrigatória no primeiro login"
         },
-        ["Wpf|M369"] = new Dictionary<string, string>
+        ["Wpf|Msg_PasswordStrengthWeak"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "密码强度：弱", ["en-US"] = "Password strength: weak", ["ja-JP"] = "パスワード強度：弱", ["pt-BR"] = "Força da senha: fraca"
         },
-        ["Wpf|M370"] = new Dictionary<string, string>
+        ["Wpf|Msg_PasswordStrengthMedium"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "密码强度：中", ["en-US"] = "Password strength: medium", ["ja-JP"] = "パスワード強度：中", ["pt-BR"] = "Força da senha: média"
         },
-        ["Wpf|M371"] = new Dictionary<string, string>
+        ["Wpf|Msg_PasswordStrengthStrong"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "密码强度：强", ["en-US"] = "Password strength: strong", ["ja-JP"] = "パスワード強度：強", ["pt-BR"] = "Força da senha: forte"
         },
-        ["Wpf|M372"] = new Dictionary<string, string>
+        ["Wpf|Msg_SecurityReminders"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "安全提醒", ["en-US"] = "Security reminders", ["ja-JP"] = "セキュリティ注意", ["pt-BR"] = "Alertas de segurança"
         },
-        ["Wpf|M373"] = new Dictionary<string, string>
+        ["Wpf|Msg_DefaultPassword"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "默认口令", ["en-US"] = "Default password", ["ja-JP"] = "デフォルトパスワード", ["pt-BR"] = "Senha padrão"
         },
-        ["Wpf|M374"] = new Dictionary<string, string>
+        ["Wpf|Msg_PasswordlessAccount"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "免密账号", ["en-US"] = "Passwordless account", ["ja-JP"] = "パスワードなしアカカウント", ["pt-BR"] = "Conta sem senha"
         },
-        ["Wpf|M375"] = new Dictionary<string, string>
+        ["Wpf|Msg_NeverLogged"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "从未登录", ["en-US"] = "Never logged in", ["ja-JP"] = "未ログイン", ["pt-BR"] = "Nunca fez login"
         },
-        ["Wpf|M376"] = new Dictionary<string, string>
+        ["Wpf|Msg_Locked"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "锁定", ["en-US"] = "Locked", ["ja-JP"] = "ロック中", ["pt-BR"] = "Bloqueada"
         },
-        ["Wpf|M377"] = new Dictionary<string, string>
+        ["Wpf|Msg_ChangePassword"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "修改密码", ["en-US"] = "Change Password", ["ja-JP"] = "パスワード変更", ["pt-BR"] = "Alterar senha"
         },
-        ["Wpf|M378"] = new Dictionary<string, string>
+        ["Wpf|Msg_Disabled"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "禁用", ["en-US"] = "Disabled", ["ja-JP"] = "無効", ["pt-BR"] = "Desabilitada"
         },
-        ["Wpf|M379"] = new Dictionary<string, string>
+        ["Wpf|Msg_SearchUsernameDisplayName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "搜索用户名 / 显示名", ["en-US"] = "Search username / display name", ["ja-JP"] = "ユーザー名 / 表示名を検索", ["pt-BR"] = "Pesquisar nome de usuário / nome de exibição"
         },
-        ["Wpf|M380"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoMatchingUsers"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "无匹配用户", ["en-US"] = "No matching users", ["ja-JP"] = "一致するユーザーがいません", ["pt-BR"] = "Nenhum usuário correspondente"
         },
-        ["Wpf|M381"] = new Dictionary<string, string>
+        ["Wpf|Msg_ExportScope"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出范围", ["en-US"] = "Export Scope", ["ja-JP"] = "エクスポート範囲", ["pt-BR"] = "Escopo de exportação"
         },
-        ["Wpf|M382"] = new Dictionary<string, string>
+        ["Wpf|Msg_ExportAllFilteredResultsYesExports"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出全部筛选结果？「是」导出全部，「否」只导出当前这一页，「取消」不导出。", ["en-US"] = "Export all filtered results? Yes exports everything. No exports this page only. Cancel exports nothing.", ["ja-JP"] = "絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみ、「キャンセル」で中止。", ["pt-BR"] = "Exportar todos os resultados filtrados? Sim exporta tudo. Não exporta só esta página. Cancelar não exporta."
         },
-        ["Wpf|M384"] = new Dictionary<string, string>
+        ["Wpf|Msg_AllFilteredResultsRows"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "全量筛选结果（共 {0} 条）", ["en-US"] = "All filtered results ({0} rows)", ["ja-JP"] = "絞り込み結果の全件（{0} 件）", ["pt-BR"] = "Todos os resultados filtrados ({0} linhas)"
         },
-        ["Wpf|M332"] = new Dictionary<string, string>
+        ["Wpf|Msg_OperatorText"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "操作员", ["en-US"] = "Operator", ["ja-JP"] = "オペレーター", ["pt-BR"] = "Operador"
         },
-        ["Wpf|M333"] = new Dictionary<string, string>
+        ["Wpf|Msg_Engineer"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工程师", ["en-US"] = "Engineer", ["ja-JP"] = "エンジニア", ["pt-BR"] = "Engenheiro"
         },
-        ["Wpf|M334"] = new Dictionary<string, string>
+        ["Wpf|Msg_Administrator"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "管理员", ["en-US"] = "Administrator", ["ja-JP"] = "管理者", ["pt-BR"] = "Administrador"
         },
-        ["Wpf|M336"] = new Dictionary<string, string>
+        ["Wpf|Msg_InsufficientPermissionEngineerAboveRequired"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "权限不足，需要工程师或以上角色", ["en-US"] = "Insufficient permission, engineer or above required", ["ja-JP"] = "権限不足、エンジニア以上のロールが必要です", ["pt-BR"] = "Permissão insuficiente; requer engenheiro ou superior"
         },
-        ["Wpf|M337"] = new Dictionary<string, string>
+        ["Wpf|Msg_InsufficientPermissionAdministratorRequired"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "权限不足，需要管理员角色", ["en-US"] = "Insufficient permission, administrator required", ["ja-JP"] = "権限不足、管理者ロールが必要です", ["pt-BR"] = "Permissão insuficiente; requer administrador"
         },
-        ["Wpf|M338"] = new Dictionary<string, string>
+        ["Wpf|Msg_SwitchUser"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "切换用户", ["en-US"] = "Switch User", ["ja-JP"] = "ユーザー切り替え", ["pt-BR"] = "Trocar usuário"
         },
-        ["Wpf|K587"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OEE"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE", ["en-US"] = "OEE", ["ja-JP"] = "OEE", ["pt-BR"] = "OEE"
         },
-        ["Wpf|K588"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OK2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OK", ["en-US"] = "OK", ["ja-JP"] = "OK", ["pt-BR"] = "OK"
         },
-        ["Wpf|K589"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NG"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "NG", ["en-US"] = "NG", ["ja-JP"] = "NG", ["pt-BR"] = "NG"
         },
-        ["Wpf|K590"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Total"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "总产量", ["en-US"] = "Total", ["ja-JP"] = "合計", ["pt-BR"] = "Total"
         },
-        ["Wpf|K592"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CycleTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "周期", ["en-US"] = "Cycle time", ["ja-JP"] = "サイクルタイム", ["pt-BR"] = "Tempo de ciclo"
         },
-        ["Wpf|K593"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Run"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行", ["en-US"] = "Run", ["ja-JP"] = "実行", ["pt-BR"] = "Execução"
         },
-        ["Wpf|K594"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Details"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "详情", ["en-US"] = "Details", ["ja-JP"] = "詳細", ["pt-BR"] = "Detalhes"
         },
-        ["Wpf|K595"] = new Dictionary<string, string>
+        ["Wpf|Lbl_N"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无", ["en-US"] = "N/A", ["ja-JP"] = "なし", ["pt-BR"] = "N/D"
         },
-        ["Wpf|K596"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Rack"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "机架", ["en-US"] = "Rack", ["ja-JP"] = "ラック", ["pt-BR"] = "Rack"
         },
-        ["Wpf|K597"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Slot"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "槽位", ["en-US"] = "Slot", ["ja-JP"] = "スロット", ["pt-BR"] = "Slot"
         },
-        ["Wpf|K598"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ModbusUnitID"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "Modbus 单元 ID", ["en-US"] = "Modbus Unit ID", ["ja-JP"] = "Modbus ユニット ID", ["pt-BR"] = "ID de unidade Modbus"
         },
-        ["Wpf|K599"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PleaseEnterWorkOrderNumber"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请输入工单号", ["en-US"] = "Please enter the work order number", ["ja-JP"] = "工単番号を入力してください", ["pt-BR"] = "Digite o número da ordem de produção"
         },
-        ["Wpf|K600"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PleaseEnterProductCode"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请输入产品编码", ["en-US"] = "Please enter the product code", ["ja-JP"] = "製品コードを入力してください", ["pt-BR"] = "Digite o código do produto"
         },
-        ["Wpf|K601"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PleaseEnterProductName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请输入产品名称", ["en-US"] = "Please enter the product name", ["ja-JP"] = "製品名を入力してください", ["pt-BR"] = "Digite o nome do produto"
         },
-        ["Wpf|K602"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PleaseSelectBoundDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请选择绑定设备", ["en-US"] = "Please select a bound device", ["ja-JP"] = "バインドするデバイスを選択してください", ["pt-BR"] = "Selecione um dispositivo vinculado"
         },
-        ["Wpf|K603"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PlannedQuantityMustPositiveInteger"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计划产量必须为大于 0 的整数", ["en-US"] = "Planned quantity must be a positive integer", ["ja-JP"] = "計画生産数は 0 より大きい整数でなければなりません", ["pt-BR"] = "A quantidade planejada deve ser um inteiro maior que 0"
         },
-        ["Wpf|K604"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PlannedEndTimeMustLaterStart"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计划结束时间必须晚于开始时间", ["en-US"] = "Planned end time must be later than start time", ["ja-JP"] = "計画終了時刻は開始時刻より後でなければなりません", ["pt-BR"] = "O fim planejado deve ser posterior ao início"
         },
-        ["Wpf|K605"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportDefectsCSV"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出缺陷 CSV", ["en-US"] = "Export Defects CSV", ["ja-JP"] = "欠陥 CSV エクスポート", ["pt-BR"] = "Exportar CSV de defeitos"
         },
-        ["Wpf|K606"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportAllDefectsCurrentDeviceCSV"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出当前设备全部缺陷到 CSV 文件（可用 Excel 编辑）", ["en-US"] = "Export all defects of current device to CSV (editable in Excel)", ["ja-JP"] = "現在のデバイスの全欠陥を CSV にエクスポート（Excel で編集可能）", ["pt-BR"] = "Exporta todos os defeitos do dispositivo atual para CSV (editável no Excel)"
         },
-        ["Wpf|K607"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportDefectsCSV"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入缺陷 CSV", ["en-US"] = "Import Defects CSV", ["ja-JP"] = "欠陥 CSV インポート", ["pt-BR"] = "Importar CSV de defeitos"
         },
-        ["Wpf|K608"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportDefectsCSVAppendReplaceCurrent"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "从 CSV 文件导入缺陷（追加或替换当前设备缺陷列表）", ["en-US"] = "Import defects from CSV (append or replace current device defects)", ["ja-JP"] = "CSV から欠陥をインポート（現在のデバイスの欠陥リストを追加または置換）", ["pt-BR"] = "Importa defeitos de um CSV (anexa ou substitui a lista atual do dispositivo)"
         },
-        ["Wpf|K609"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportCounterAlarmsCSV"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出计数器报警 CSV", ["en-US"] = "Export Counter Alarms CSV", ["ja-JP"] = "カカカウンタアラーム CSV エクスポート", ["pt-BR"] = "Exportar CSV de alarmes de contador"
         },
-        ["Wpf|K610"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportAllCounterAlarmsCurrentDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出当前设备全部计数器报警到 CSV 文件（可用 Excel 编辑）", ["en-US"] = "Export all counter alarms of current device to CSV (editable in Excel)", ["ja-JP"] = "現在のデバイスの全カカカウンタアラームを CSV にエクスポート（Excel で編集可能）", ["pt-BR"] = "Exporta todos os alarmes de contador do dispositivo atual para CSV (editável no Excel)"
         },
-        ["Wpf|K611"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportCounterAlarmsCSV"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入计数器报警 CSV", ["en-US"] = "Import Counter Alarms CSV", ["ja-JP"] = "カカカウンタアラーム CSV インポート", ["pt-BR"] = "Importar CSV de alarmes de contador"
         },
-        ["Wpf|K612"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportCounterAlarmsCSVAppendReplace"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "从 CSV 文件导入计数器报警（追加或替换当前设备计数器报警列表）", ["en-US"] = "Import counter alarms from CSV (append or replace current device counter alarms)", ["ja-JP"] = "CSV からカカカウンタアラームをインポート（現在のデバイスのカカカウンタアラームリストを追加または置換）", ["pt-BR"] = "Importa alarmes de contador de um CSV (anexa ou substitui a lista atual do dispositivo)"
         },
@@ -5659,175 +5661,175 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "审计日志", ["en-US"] = "Audit Log", ["ja-JP"] = "監査ログ", ["pt-BR"] = "Log de auditoria"
         },
-        ["Wpf|K613"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecordsWhoDidWhat"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "记录谁在何时对什么做了什么", ["en-US"] = "Records who did what and when", ["ja-JP"] = "誰がいつ何をしたかを記録します", ["pt-BR"] = "Registra quem fez o quê e quando"
         },
-        ["Wpf|K614"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Time2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时间", ["en-US"] = "Time", ["ja-JP"] = "時刻", ["pt-BR"] = "Hora"
         },
-        ["Wpf|K615"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OperatorText"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "操作人", ["en-US"] = "Operator", ["ja-JP"] = "操作者", ["pt-BR"] = "Operador"
         },
-        ["Wpf|K616"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Action"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "操作类型", ["en-US"] = "Action", ["ja-JP"] = "操作種別", ["pt-BR"] = "Tipo de ação"
         },
-        ["Wpf|K617"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TargetType"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "对象类型", ["en-US"] = "Target Type", ["ja-JP"] = "対象種別", ["pt-BR"] = "Tipo de objeto"
         },
-        ["Wpf|K618"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Target"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "对象标识", ["en-US"] = "Target", ["ja-JP"] = "対象", ["pt-BR"] = "Identificador do objeto"
         },
-        ["Wpf|K619"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Result"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "结果", ["en-US"] = "Result", ["ja-JP"] = "結果", ["pt-BR"] = "Resultado"
         },
-        ["Wpf|K620"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Success"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "成功", ["en-US"] = "Success", ["ja-JP"] = "成功", ["pt-BR"] = "Sucesso"
         },
-        ["Wpf|K621"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Failed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "失败", ["en-US"] = "Failed", ["ja-JP"] = "失敗", ["pt-BR"] = "Falha"
         },
-        ["Wpf|K622"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Detail"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "详情", ["en-US"] = "Detail", ["ja-JP"] = "詳細", ["pt-BR"] = "Detalhes"
         },
-        ["Wpf|K623"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoAuditRecords"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "暂无审计记录", ["en-US"] = "No audit records", ["ja-JP"] = "監査記録はありません", ["pt-BR"] = "Sem registros de auditoria"
         },
-        ["Wpf|K624"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PageEntries"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0}/{1} 页 · 共 {2} 条", ["en-US"] = "Page {0}/{1} · {2} entries", ["ja-JP"] = "{0}/{1} ページ・全 {2} 件", ["pt-BR"] = "Página {0}/{1} · {2} registros"
         },
-        ["Wpf|K625"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Query2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询", ["en-US"] = "Query", ["ja-JP"] = "照会", ["pt-BR"] = "Consultar"
         },
-        ["Wpf|K626"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Reset3"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "重置", ["en-US"] = "Reset", ["ja-JP"] = "リセット", ["pt-BR"] = "Redefinir"
         },
-        ["Wpf|K627"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Previous"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "上一页", ["en-US"] = "Previous", ["ja-JP"] = "前へ", ["pt-BR"] = "Anterior"
         },
-        ["Wpf|K628"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Next"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "下一页", ["en-US"] = "Next", ["ja-JP"] = "次へ", ["pt-BR"] = "Próxima"
         },
-        ["Wpf|K629"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportCSVArchive"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出 CSV（归档）", ["en-US"] = "Export CSV (Archive)", ["ja-JP"] = "CSV エクスポート（アーカイブ）", ["pt-BR"] = "Exportar CSV (arquivo)"
         },
-        ["Wpf|K630"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportJSONArchive"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出 JSON（归档）", ["en-US"] = "Export JSON (Archive)", ["ja-JP"] = "JSON エクスポート（アーカイブ）", ["pt-BR"] = "Exportar JSON (arquivo)"
         },
-        ["Wpf|K631"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportedAuditEntries"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导出 {0} 条审计记录", ["en-US"] = "Exported {0} audit entries", ["ja-JP"] = "監査記録を {0} 件エクスポートしました", ["pt-BR"] = "{0} registros de auditoria exportados"
         },
-        ["Wpf|K632"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AuditExportFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "审计导出失败：{0}", ["en-US"] = "Audit export failed: {0}", ["ja-JP"] = "監査エクスポート失敗：{0}", ["pt-BR"] = "Falha na exportação de auditoria: {0}"
         },
-        ["Wpf|K633"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportAuditLog"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出审计日志", ["en-US"] = "Export Audit Log", ["ja-JP"] = "監査ログのエクスポート", ["pt-BR"] = "Exportar log de auditoria"
         },
-        ["Wpf|K634"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoAuditEntriesExportCurrentFilters"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前筛选条件下暂无审计记录可导出", ["en-US"] = "No audit entries to export under current filters", ["ja-JP"] = "現在のフィルタ条件ではエクスポート可能な監査記録がありません", ["pt-BR"] = "Nenhum registro de auditoria para exportar com os filtros atuais"
         },
-        ["Wpf|K635"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AuditExportTruncatedEntriesMatchedExceeds"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "审计归档不完整：匹配 {0} 条，超过导出上限 {1} 条。请缩小时间范围或筛选条件后重试。", ["en-US"] = "Audit export truncated: {0} entries matched, exceeds export limit of {1}. Narrow the time range or filters and retry.", ["ja-JP"] = "監査アーカイブが不完全です：一致 {0} 件、エクスポート上限 {1} 件を超えています。期間やフィルタを絞り込んで再試行してください。", ["pt-BR"] = "Exportação de auditoria truncada: {0} registros correspondem, excede o limite de {1}. Reduza o período ou os filtros e tente novamente."
         },
-        ["Wpf|K636"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TargetPLCMayOnlyAllowSingle"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标 PLC 可能仅允许单个连接，当前采集已占用该连接。请先停止采集再测试连接。", ["en-US"] = "The target PLC may only allow a single connection, which is currently occupied by data acquisition. Stop acquisition before testing the connection.", ["ja-JP"] = "対象 PLC は単一接続のみ許可している可能性があります。現在データ収集が接続を占有しています。収集を停止してから接続テストを行ってください。", ["pt-BR"] = "O PLC de destino pode permitir apenas uma única conexão, atualmente ocupada pela coleta de dados. Interrompa a coleta antes de testar a conexão."
         },
-        ["Wpf|K637"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Before"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "变更前", ["en-US"] = "Before", ["ja-JP"] = "変更前", ["pt-BR"] = "Antes"
         },
-        ["Wpf|K638"] = new Dictionary<string, string>
+        ["Wpf|Lbl_After"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "变更后", ["en-US"] = "After", ["ja-JP"] = "変更後", ["pt-BR"] = "Depois"
         },
-        ["Wpf|K639"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TotalRecords"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "记录总数", ["en-US"] = "Total records", ["ja-JP"] = "総記録数", ["pt-BR"] = "Total de registros"
         },
-        ["Wpf|K640"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentResults"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前结果", ["en-US"] = "Current results", ["ja-JP"] = "現在の結果", ["pt-BR"] = "Resultados atuais"
         },
-        ["Wpf|K641"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Success2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "成功", ["en-US"] = "Success", ["ja-JP"] = "成功", ["pt-BR"] = "Sucesso"
         },
-        ["Wpf|K642"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Failed2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "失败", ["en-US"] = "Failed", ["ja-JP"] = "失敗", ["pt-BR"] = "Falha"
         },
-        ["Wpf|K643"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SuccessRate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "成功率", ["en-US"] = "Success rate", ["ja-JP"] = "成功率", ["pt-BR"] = "Taxa de sucesso"
         },
-        ["Wpf|K644"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Today2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "今天", ["en-US"] = "Today", ["ja-JP"] = "今日", ["pt-BR"] = "Hoje"
         },
-        ["Wpf|K645"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Last7Days2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "近 7 天", ["en-US"] = "Last 7 days", ["ja-JP"] = "過去 7 日間", ["pt-BR"] = "Últimos 7 dias"
         },
-        ["Wpf|K646"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Last30Days2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "近 30 天", ["en-US"] = "Last 30 days", ["ja-JP"] = "過去 30 日間", ["pt-BR"] = "Últimos 30 dias"
         },
-        ["Wpf|K647"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Month2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "本月", ["en-US"] = "This month", ["ja-JP"] = "今月", ["pt-BR"] = "Este mês"
         },
-        ["Wpf|K648"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AuditDetails"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "审计详情", ["en-US"] = "Audit details", ["ja-JP"] = "監査詳細", ["pt-BR"] = "Detalhes da auditoria"
         },
-        ["Wpf|K649"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SelectRecordLeftViewDetails"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "选择左侧记录查看详情", ["en-US"] = "Select a record on the left to view details", ["ja-JP"] = "左の記録を選択して詳細を表示", ["pt-BR"] = "Selecione um registro à esquerda para ver os detalhes"
         },
-        ["Wpf|K650"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoValuesOperation"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "该操作无前后值对比", ["en-US"] = "No before/after values for this operation", ["ja-JP"] = "この操作には前後値の比較はありません", ["pt-BR"] = "Sem valores antes/depois para esta operação"
         },
-        ["Wpf|K651"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SavedDeviceSCounterAlarmS"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已保存 {0} 台设备配置（{1} 条计数器报警阈值为 0，仅记录不触发）", ["en-US"] = "Saved {0} device(s) ({1} counter alarm(s) with threshold 0: record-only, never triggers)", ["ja-JP"] = "{0} 台のデバイス構成を保存しました（{1} 件のカカカウンタアラームが閾値 0：記録のみで発報しません）", ["pt-BR"] = "{0} configurações de dispositivo salvas ({1} alarmes de contador com limiar 0: apenas registro, nunca dispara)"
         },
-        ["Wpf|K652"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Configured"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未配置", ["en-US"] = "Not configured", ["ja-JP"] = "未設定", ["pt-BR"] = "Não configurado"
         },
-        ["Wpf|K653"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Export2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出", ["en-US"] = "Export", ["ja-JP"] = "エクスポート", ["pt-BR"] = "Exportar"
         },
-        ["Wpf|K654"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Import"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入", ["en-US"] = "Import", ["ja-JP"] = "インポート", ["pt-BR"] = "Importar"
         },
-        ["Wpf|K655"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CumulativeShare"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "累计占比", ["en-US"] = "Cumulative share", ["ja-JP"] = "累積シェア", ["pt-BR"] = "Proporção acumulada"
         },
@@ -5869,11 +5871,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|F_ShiftConfigChanged"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "班次配置已修改。\n\n新配置将立即生效，若当前正处于班次进行中，\n可能导致班次切换检测误判并清零当前累计数据。\n\n建议在班次切换时刻再修改。\n\n是否继续保存？", ["en-US"] = "Shift configuration has been modified.\n\nThe new configuration takes effect immediately. If a shift is in progress,\nit may cause shift-switch detection errors and reset current accumulated data.\n\nIt is recommended to modify at a shift switch.\n\nContinue saving?", ["ja-JP"] = "シフト設定が変更されました。\n\n新しい設定はすぐに有効になります。シフト進行中の場合、\nシフト切替の誤判定や現在の累積データのクリアが発生する可能性があります。\n\nシフト切替のタイミングでの変更を推奨します。\n\n保存を続行しますか？", ["pt-BR"] = "A configuração de turnos foi modificada.\\n\\nA nova configuração vale imediatamente. Se um turno estiver em andamento,\\npode haver erro na detecção de troca de turno e zeramento dos dados acumulados.\\n\\nRecomenda-se modificar no momento da troca de turno.\\n\\nContinuar salvando?"
+            ["zh-CN"] = "班次配置已修改。\r\n\r\n新配置将立即生效，若当前正处于班次进行中，\r\n可能导致班次切换检测误判并清零当前累计数据。\r\n\r\n建议在班次切换时刻再修改。\r\n\r\n是否继续保存？", ["en-US"] = "Shift configuration has been modified.\r\n\r\nThe new configuration takes effect immediately. If a shift is in progress,\r\nit may cause shift-switch detection errors and reset current accumulated data.\r\n\r\nIt is recommended to modify at a shift switch.\r\n\r\nContinue saving?", ["ja-JP"] = "シフト設定が変更されました。\r\n\r\n新しい設定はすぐに有効になります。シフト進行中の場合、\r\nシフト切替の誤判定や現在の累積データのクリアが発生する可能性があります。\r\n\r\nシフト切替のタイミングでの変更を推奨します。\r\n\r\n保存を続行しますか？", ["pt-BR"] = "A configuração de turnos foi modificada.\\n\\nA nova configuração vale imediatamente. Se um turno estiver em andamento,\\npode haver erro na detecção de troca de turno e zeramento dos dados acumulados.\\n\\nRecomenda-se modificar no momento da troca de turno.\\n\\nContinuar salvando?"
         },
         ["Wpf|M_UnsavedChangesLeave"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "设备配置有未保存的修改，确定离开设备管理页吗？\n修改会保留在当前会话中，返回设备管理页后仍可继续保存。", ["en-US"] = "There are unsaved device configuration changes. Leave the device manager?\nChanges are kept in the current session and can still be saved after returning.", ["ja-JP"] = "保存されていない設備構成の変更があります。設備管理ページを離れますか？\n変更は現在のセッションに保持され、戻った後も保存できます。", ["pt-BR"] = "Há alterações não salvas na configuração do dispositivo. Sair da gestão de dispositivos?\\nAs alterações ficam na sessão atual e ainda podem ser salvas após voltar."
+            ["zh-CN"] = "设备配置有未保存的修改，确定离开设备管理页吗？\r\n修改会保留在当前会话中，返回设备管理页后仍可继续保存。", ["en-US"] = "There are unsaved device configuration changes. Leave the device manager?\r\nChanges are kept in the current session and can still be saved after returning.", ["ja-JP"] = "保存されていない設備構成の変更があります。設備管理ページを離れますか？\r\n変更は現在のセッションに保持され、戻った後も保存できます。", ["pt-BR"] = "Há alterações não salvas na configuração do dispositivo. Sair da gestão de dispositivos?\\nAs alterações ficam na sessão atual e ainda podem ser salvas após voltar."
         },
         ["Wpf|M_NoSelfDelete"] = new Dictionary<string, string>
         {
@@ -5895,123 +5897,123 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "导出工单列表", ["en-US"] = "Export work order list", ["ja-JP"] = "工単リストのエクスポート", ["pt-BR"] = "Exportar lista de ordens de produção"
         },
-        ["Wpf|K656"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TimeAvailability3"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "可用率", ["en-US"] = "Time Availability", ["ja-JP"] = "時間稼働率", ["pt-BR"] = "Disponibilidade"
         },
-        ["Wpf|K657"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PerformanceRate2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "性能率", ["en-US"] = "Performance Rate", ["ja-JP"] = "性能稼働率", ["pt-BR"] = "Taxa de desempenho"
         },
-        ["Wpf|K658"] = new Dictionary<string, string>
+        ["Wpf|Lbl_QualityRate2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "合格率", ["en-US"] = "Quality Rate", ["ja-JP"] = "合格率", ["pt-BR"] = "Taxa de qualidade"
         },
-        ["Wpf|K659"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Downtime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "停机", ["en-US"] = "Downtime", ["ja-JP"] = "停止", ["pt-BR"] = "Parada"
         },
-        ["Wpf|K660"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Recipe2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方", ["en-US"] = "Recipe", ["ja-JP"] = "レシピ", ["pt-BR"] = "Receita"
         },
-        ["Wpf|K661"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ApplyDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "下发到设备", ["en-US"] = "Apply to device", ["ja-JP"] = "設備へ適用", ["pt-BR"] = "Aplicar ao dispositivo"
         },
-        ["Wpf|K662"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NewRecipe"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "新建配方", ["en-US"] = "New Recipe", ["ja-JP"] = "新規レシピ", ["pt-BR"] = "Nova receita"
         },
-        ["Wpf|K663"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SaveRecipe"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "保存配方", ["en-US"] = "Save Recipe", ["ja-JP"] = "レシピを保存", ["pt-BR"] = "Salvar receita"
         },
-        ["Wpf|K664"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeleteRecipe"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "删除配方", ["en-US"] = "Delete Recipe", ["ja-JP"] = "レシピを削除", ["pt-BR"] = "Excluir receita"
         },
-        ["Wpf|K665"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ParameterName"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "参数名称", ["en-US"] = "Parameter Name", ["ja-JP"] = "パラメータ名", ["pt-BR"] = "Nome do parâmetro"
         },
-        ["Wpf|K666"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PLCAddress2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "PLC 地址", ["en-US"] = "PLC Address", ["ja-JP"] = "PLC アドレス", ["pt-BR"] = "Endereço PLC"
         },
-        ["Wpf|K667"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Type"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "类型", ["en-US"] = "Type", ["ja-JP"] = "タイプ", ["pt-BR"] = "Tipo"
         },
-        ["Wpf|K668"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Value"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "参数值", ["en-US"] = "Value", ["ja-JP"] = "値", ["pt-BR"] = "Valor do parâmetro"
         },
-        ["Wpf|K669"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Min"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "下限", ["en-US"] = "Min", ["ja-JP"] = "下限", ["pt-BR"] = "Mínimo"
         },
-        ["Wpf|K670"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Max"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "上限", ["en-US"] = "Max", ["ja-JP"] = "上限", ["pt-BR"] = "Máximo"
         },
-        ["Wpf|K671"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Unit2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "单位", ["en-US"] = "Unit", ["ja-JP"] = "単位", ["pt-BR"] = "Unidade"
         },
-        ["Wpf|K672"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AddParameter"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "添加参数项", ["en-US"] = "Add Parameter", ["ja-JP"] = "パラメータを追加", ["pt-BR"] = "Adicionar parâmetro"
         },
-        ["Wpf|K675"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeAppliedSuccessfully"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方下发成功", ["en-US"] = "Recipe applied successfully", ["ja-JP"] = "レシピ適用成功", ["pt-BR"] = "Receita aplicada com sucesso"
         },
-        ["Wpf|K676"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ApplyFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方下发失败：{0}", ["en-US"] = "Apply failed: {0}", ["ja-JP"] = "適用失敗：{0}", ["pt-BR"] = "Falha ao aplicar: {0}"
         },
-        ["Wpf|K677"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeleteRecipe2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确认删除配方 {0}？", ["en-US"] = "Delete recipe {0}?", ["ja-JP"] = "レシピ {0} を削除しますか？", ["pt-BR"] = "Excluir a receita {0}?"
         },
-        ["Wpf|K678"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeName2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方名称", ["en-US"] = "Recipe Name", ["ja-JP"] = "レシピ名", ["pt-BR"] = "Nome da receita"
         },
-        ["Wpf|K679"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MachineTypeBlankGeneral"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "机型（空=通用）", ["en-US"] = "Machine Type (blank = general)", ["ja-JP"] = "機種（空=汎用）", ["pt-BR"] = "Tipo de máquina (vazio = geral)"
         },
-        ["Wpf|K680"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Remark2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "备注", ["en-US"] = "Remark", ["ja-JP"] = "備考", ["pt-BR"] = "Observação"
         },
-        ["Wpf|K681"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CannotSaveRecipeHasNoParameters"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "参数项为空，无法保存配方", ["en-US"] = "Cannot save: recipe has no parameters", ["ja-JP"] = "パラメータがありません。保存できません", ["pt-BR"] = "Não é possível salvar: a receita não tem parâmetros"
         },
-        ["Wpf|K682"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeValidationFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方校验失败：{0}", ["en-US"] = "Recipe validation failed: {0}", ["ja-JP"] = "検証失敗：{0}", ["pt-BR"] = "Falha na validação da receita: {0}"
         },
-        ["Wpf|K683"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TargetDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标设备", ["en-US"] = "Target Device", ["ja-JP"] = "対象設備", ["pt-BR"] = "Dispositivo de destino"
         },
-        ["Wpf|K685"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ApplyRecipeDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确认将配方 {0} 下发到 {1}？", ["en-US"] = "Apply recipe {0} to device {1}?", ["ja-JP"] = "レシピ {0} を設備 {1} に適用しますか？", ["pt-BR"] = "Aplicar a receita {0} ao dispositivo {1}?"
         },
-        ["Wpf|K686"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ApplyingRecipe"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "正在下发配方…", ["en-US"] = "Applying recipe…", ["ja-JP"] = "適用中…", ["pt-BR"] = "Aplicando receita…"
         },
-        ["Wpf|K687"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SelectDeviceFirst"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请先在左侧选择设备", ["en-US"] = "Select a device first", ["ja-JP"] = "先に設備を選択してください", ["pt-BR"] = "Selecione primeiro um dispositivo"
         },
-        ["Wpf|K688"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeSaved"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方 {0} 已保存", ["en-US"] = "Recipe {0} saved", ["ja-JP"] = "レシピ {0} を保存しました", ["pt-BR"] = "Receita {0} salva"
         },
@@ -7275,311 +7277,311 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "{0} 个参数", ["en-US"] = "{0} params", ["ja-JP"] = "{0} パラメータ", ["pt-BR"] = "{0} parâmetros"
         },
-        ["Wpf|K689"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CopyRecipe"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "复制配方", ["en-US"] = "Copy Recipe", ["ja-JP"] = "レシピをコピー", ["pt-BR"] = "Copiar receita"
         },
-        ["Wpf|K690"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportRecipes"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出配方", ["en-US"] = "Export Recipes", ["ja-JP"] = "レシピをエクスポート", ["pt-BR"] = "Exportar receitas"
         },
-        ["Wpf|K691"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportRecipes"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入配方", ["en-US"] = "Import Recipes", ["ja-JP"] = "レシピをインポート", ["pt-BR"] = "Importar receitas"
         },
-        ["Wpf|K692"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Copy2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "（副本）", ["en-US"] = "(Copy)", ["ja-JP"] = "（コピー）", ["pt-BR"] = "(Cópia)"
         },
-        ["Wpf|K693"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoRecipesExport"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前没有可导出的配方数据", ["en-US"] = "No recipes to export", ["ja-JP"] = "エクスポートできるレシピがありません", ["pt-BR"] = "Sem dados de receitas para exportar"
         },
-        ["Wpf|K695"] = new Dictionary<string, string>
+        ["Wpf|Lbl_JSONFilesJsonAllFiles"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "JSON 文件|*.json|所有文件|*.*", ["en-US"] = "JSON files|*.json|All files|*.*", ["ja-JP"] = "JSON ファイル|*.json|すべてのファイル|*.*", ["pt-BR"] = "Arquivos JSON|*.json|Todos os arquivos|*.*"
         },
-        ["Wpf|K696"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CancelApply"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "取消下发", ["en-US"] = "Cancel Apply", ["ja-JP"] = "適用をキャンセル", ["pt-BR"] = "Cancelar aplicação"
         },
-        ["Wpf|K697"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SearchRecipeNameParameter"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "搜索配方名 / 参数名", ["en-US"] = "Search recipe name / parameter", ["ja-JP"] = "レシピ名 / パラメータ名を検索", ["pt-BR"] = "Pesquisar nome da receita / parâmetro"
         },
-        ["Wpf|K698"] = new Dictionary<string, string>
+        ["Wpf|Lbl_General"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "通用", ["en-US"] = "General", ["ja-JP"] = "共通", ["pt-BR"] = "Geral"
         },
-        ["Wpf|K699"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ParamsText"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0:N0} 项参数", ["en-US"] = "{0:N0} params", ["ja-JP"] = "パラメータ {0:N0} 件", ["pt-BR"] = "{0:N0} parâmetros"
         },
-        ["Wpf|K700"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoMatchingRecipesAdjustKeywordsMachine"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "无匹配配方，试试调整关键词或机型筛选", ["en-US"] = "No matching recipes. Adjust keywords or machine-type filters.", ["ja-JP"] = "一致するレシピがありません。キーワードまたは機種フィルタを変更してください", ["pt-BR"] = "Nenhuma receita correspondente. Ajuste as palavras-chave ou o filtro de tipo de máquina."
         },
-        ["Wpf|K701"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Updated"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "更新于 {0:MM-dd HH:mm}", ["en-US"] = "Updated {0:MM-dd HH:mm}", ["ja-JP"] = "更新 {0:MM-dd HH:mm}", ["pt-BR"] = "Atualizado em {0:MM-dd HH:mm}"
         },
-        ["Wpf|K702"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeMachineTypeDoesMatchDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方机型 {0} 与设备机型 {1} 不匹配，仍要下发？", ["en-US"] = "Recipe machine type {0} does not match device type {1}. Apply anyway?", ["ja-JP"] = "レシピの機種 {0} はデバイス機種 {1} と一致しません。それでも適用しますか？", ["pt-BR"] = "O tipo de máquina da receita {0} não corresponde ao tipo do dispositivo {1}. Aplicar mesmo assim?"
         },
-        ["Wpf|K703"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ApplyTimedOut90sWaitingAborted"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "下发超时（90 秒），已终止等待", ["en-US"] = "Apply timed out (90s), waiting aborted", ["ja-JP"] = "適用がタイムアウトしました（90 秒）。待機を終了します", ["pt-BR"] = "Aplicação expirou (90 s); espera abortada"
         },
-        ["Wpf|K704"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Validation"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "校验", ["en-US"] = "Validation", ["ja-JP"] = "チェック", ["pt-BR"] = "Validação"
         },
-        ["Wpf|K705"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AdjustWidthRecipeListEditor"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "调整配方列表与编辑区的宽度", ["en-US"] = "Adjust the width of recipe list and editor", ["ja-JP"] = "レシピリストと編集エリアの幅を調整", ["pt-BR"] = "Ajustar a largura da lista de receitas e do editor"
         },
-        ["Wpf|K706"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RecipeEditor"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "配方编辑", ["en-US"] = "Recipe Editor", ["ja-JP"] = "レシピ編集", ["pt-BR"] = "Editor de receitas"
         },
-        ["Wpf|K707"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MostFrequentAlarm"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最频繁报警（{0}）", ["en-US"] = "Most Frequent Alarm ({0})", ["ja-JP"] = "最も頻発したアラーム（{0}）", ["pt-BR"] = "Alarme mais frequente ({0})"
         },
-        ["Wpf|K708"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShowingFirstOnly"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "仅显示前 {0} 条", ["en-US"] = "Showing first {0} only", ["ja-JP"] = "先頭 {0} 件のみ表示", ["pt-BR"] = "Exibindo apenas os primeiros {0}"
         },
-        ["Wpf|K709"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CountAlarmsYetRecoveredLiveSnapshot"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前未恢复的报警条数；实时快照，约每 3 秒刷新；受级别/设备/搜索筛选影响", ["en-US"] = "Count of alarms not yet recovered; live snapshot refreshed about every 3s; affected by level/device/search filters", ["ja-JP"] = "未復帰のアラーム件数。リアルタイム（約3秒更新）。レベル/設備/検索フィルタの影響あり", ["pt-BR"] = "Nº de alarmes ainda não recuperados; snapshot em tempo real, atualizado a cada ~3 s; afetado pelos filtros de nível/dispositivo/pesquisa"
         },
-        ["Wpf|K710"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TotalTriggerEventsSinceMidnightToday"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受时间范围、级别和搜索影响，只随设备筛选变化", ["en-US"] = "Total trigger events since midnight today; refreshed about every 60s; ignores time range, level, and search; follows only the device filter", ["ja-JP"] = "本日 0:00 以降の発生回数。約60秒更新。時間範囲・レベル・検索の影響なし。設備フィルタのみ", ["pt-BR"] = "Total de disparos desde 0:00 de hoje; atualizado a cada ~60 s; ignora período nível e pesquisa; só segue o filtro de dispositivo"
         },
-        ["Wpf|K711"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TotalRecoveryEventsSinceMidnightToday"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受时间范围、级别和搜索影响，只随设备筛选变化", ["en-US"] = "Total recovery events since midnight today; refreshed about every 60s; ignores time range, level, and search; follows only the device filter", ["ja-JP"] = "本日 0:00 以降の復帰回数。約60秒更新。時間範囲・レベル・検索の影響なし。設備フィルタのみ", ["pt-BR"] = "Total de recuperações desde 0:00 de hoje; atualizado a cada ~60 s; ignora período nível e pesquisa; só segue o filtro de dispositivo"
         },
-        ["Wpf|K712"] = new Dictionary<string, string>
+        ["Wpf|Lbl_EarliestStartedAlarmYetRecoveredLive"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前最早开始且尚未恢复的报警；实时快照；受级别/设备/搜索筛选影响", ["en-US"] = "Earliest-started alarm not yet recovered; live snapshot; affected by level/device/search filters", ["ja-JP"] = "未復帰アラームのうち最も早く発生し継続中のもの。リアルタイム。レベル/設備/検索フィルタの影響あり", ["pt-BR"] = "Alarme mais antigo ainda não recuperado; snapshot em tempo real; afetado pelos filtros de nível/dispositivo/pesquisa"
         },
-        ["Wpf|K713"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NumberDevicesUnrecoveredAlarmsLiveSnapshot"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前未恢复报警涉及的设备台数；实时快照；受级别/设备/搜索筛选影响", ["en-US"] = "Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters", ["ja-JP"] = "未復帰アラームがある設備台数。リアルタイム。レベル/設備/検索フィルタの影響あり", ["pt-BR"] = "Nº de dispositivos com alarmes não recuperados; snapshot em tempo real; afetado pelos filtros de nível/dispositivo/pesquisa"
         },
-        ["Wpf|K714"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TopAlarmTriggerCountSelectedTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "所选时间范围内、且符合当前级别/设备/搜索筛选的触发次数第一名；约每 60 秒刷新", ["en-US"] = "Top alarm by trigger count in the selected time range, after level, device, and search filters; refreshed about every 60s", ["ja-JP"] = "選択した時間範囲で、レベル/設備/検索フィルタ後の発生回数第1位。約60秒更新", ["pt-BR"] = "Alarme com mais disparos no período selecionado, após filtros de nível, dispositivo e pesquisa; atualizado a cada ~60 s"
         },
-        ["Wpf|K717"] = new Dictionary<string, string>
+        ["Wpf|Lbl_EventStreamTopListFollowSelected"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "事件流与 Top 排行跟随时间范围，并受级别、设备和搜索筛选。今日触发和恢复只随设备筛选，从今天 0:00 起算。", ["en-US"] = "Event stream and Top list follow the selected range and the level, device, and search filters. Today's trigger and recover counts follow only the device filter and always start at midnight.", ["ja-JP"] = "イベント流と Top は時間範囲とレベル/設備/検索に従います。本日の発生・復帰は設備フィルタのみ、本日 0:00 から集計します。", ["pt-BR"] = "O fluxo de eventos e o Top seguem o período e os filtros de nível, dispositivo e pesquisa. Disparos e recuperações de hoje seguem só o dispositivo e contam desde 0:00."
         },
-        ["Wpf|K718"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RepeatedTriggersSameAlarmWithinShort"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "同一报警在短时间内重复触发已合并显示，共 {0} 条", ["en-US"] = "Repeated triggers of the same alarm within a short window merged; {0} events total", ["ja-JP"] = "同じアラームの短時間内の繰り返しを統合表示。合計 {0} 件", ["pt-BR"] = "Disparos repetidos do mesmo alarme numa janela curta foram mesclados; {0} eventos no total"
         },
-        ["Wpf|K719"] = new Dictionary<string, string>
+        ["Wpf|Lbl_VersusYesterdaySameTimeYesterdayToday"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "较昨日同期：昨日 {0} / 今日 {1}", ["en-US"] = "Versus yesterday at the same time: yesterday {0} / today {1}", ["ja-JP"] = "昨日同期比：昨日 {0}／今日 {1}", ["pt-BR"] = "Comparado com ontem no mesmo horário: ontem {0} / hoje {1}"
         },
-        ["Wpf|K720"] = new Dictionary<string, string>
+        ["Wpf|Lbl_JustNow"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "刚刚", ["en-US"] = "Just now", ["ja-JP"] = "たった今", ["pt-BR"] = "Agora mesmo"
         },
-        ["Wpf|K721"] = new Dictionary<string, string>
+        ["Wpf|Lbl_MinAgo"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} 分钟前", ["en-US"] = "{0} min ago", ["ja-JP"] = "{0} 分前", ["pt-BR"] = "Há {0} min"
         },
-        ["Wpf|K722"] = new Dictionary<string, string>
+        ["Wpf|Lbl_HrAgo"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0} 小时前", ["en-US"] = "{0} hr ago", ["ja-JP"] = "{0} 時間前", ["pt-BR"] = "Há {0} h"
         },
-        ["Wpf|K723"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Triggers"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "按触发次数", ["en-US"] = "By Triggers", ["ja-JP"] = "発生回数順", ["pt-BR"] = "Por disparos"
         },
-        ["Wpf|K724"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Duration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "按持续时长", ["en-US"] = "By Duration", ["ja-JP"] = "継続時間順", ["pt-BR"] = "Por duração"
         },
-        ["Wpf|K725"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceConfigValidatedOKDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备配置校验通过（共 {0} 台）", ["en-US"] = "Device config validated OK ({0} devices)", ["ja-JP"] = "デバイス設定の検証OK（{0}台）", ["pt-BR"] = "Configuração de dispositivos validada ({0} dispositivos)"
         },
-        ["Wpf|K726"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Validate"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备校验", ["en-US"] = "Validate", ["ja-JP"] = "検証", ["pt-BR"] = "Validar dispositivos"
         },
-        ["Wpf|K727"] = new Dictionary<string, string>
+        ["Wpf|Lbl_CurrentDeviceHasUnsavedChangesSwitching"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前设备有未保存的更改，切换设备将丢失这些更改。仍要继续？", ["en-US"] = "The current device has unsaved changes; switching away will lose them. Continue?", ["ja-JP"] = "現在のデバイスには未保存の変更があります。切り替えると失われます。続行しますか？", ["pt-BR"] = "O dispositivo atual tem alterações não salvas; trocar de dispositivo as perderá. Continuar?"
         },
-        ["Wpf|K728"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportSelectedDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出所选设备", ["en-US"] = "Export Selected Device", ["ja-JP"] = "選択デバイスをエクスポート", ["pt-BR"] = "Exportar dispositivo selecionado"
         },
-        ["Wpf|K729"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportDeviceConfig2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入设备配置", ["en-US"] = "Import Device Config", ["ja-JP"] = "デバイス設定をインポート", ["pt-BR"] = "Importar configuração do dispositivo"
         },
-        ["Wpf|K730"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ExportedDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导出设备「{0}」", ["en-US"] = "Exported device “{0}”", ["ja-JP"] = "デバイス「{0}」をエクスポートしました", ["pt-BR"] = "Dispositivo \"{0}\" exportado"
         },
-        ["Wpf|K731"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportFailedFileEmptyCouldParsed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入失败：文件为空或解析失败。", ["en-US"] = "Import failed: file is empty or could not be parsed.", ["ja-JP"] = "インポート失敗：ファイルが空か解析エラー。", ["pt-BR"] = "Falha na importação: arquivo vazio ou não pôde ser analisado."
         },
-        ["Wpf|K732"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportFailedDeviceIdConflictsExisting"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入失败：设备 Id「{0}」与现有设备冲突，请修改文件中的 Id。", ["en-US"] = "Import failed: device Id “{0}” conflicts with an existing device. Edit the Id in the file.", ["ja-JP"] = "インポート失敗：デバイスID「{0}」が既存デバイスと競合。ファイル内のIDを変更してください。", ["pt-BR"] = "Falha na importação: o Id do dispositivo \"{0}\" conflita com um dispositivo existente. Edite o Id no arquivo."
         },
-        ["Wpf|K733"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportedDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导入设备「{0}」", ["en-US"] = "Imported device “{0}”", ["ja-JP"] = "デバイス「{0}」をインポートしました", ["pt-BR"] = "Dispositivo \"{0}\" importado"
         },
-        ["Wpf|K734"] = new Dictionary<string, string>
+        ["Wpf|Lbl_LeavingDeviceManagerDiscardUnsavedConfiguration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "离开设备管理页将丢弃未保存的配置更改，仍要继续？", ["en-US"] = "Leaving the device manager will discard unsaved configuration changes. Continue?", ["ja-JP"] = "デバイス管理を離れると未保存の設定変更が失われます。続行しますか？", ["pt-BR"] = "Sair da gestão de dispositivos descartará as alterações não salvas. Continuar?"
         },
-        ["Wpf|F317"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RecipesImportedSkippedFailingValidationContinue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "将导入 {0} 条配方（{1} 条校验未通过将被跳过）。继续？", ["en-US"] = "{0} recipes will be imported ({1} will be skipped for failing validation). Continue?", ["ja-JP"] = "レシピ {0} 件をインポートします（検証に失敗した {1} 件はスキップされます）。続行しますか？", ["pt-BR"] = "{0} receitas serão importadas ({1} serão ignoradas por falha na validação). Continuar?"
         },
-        ["Wpf|F318"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ImportedRecipesSkipped"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导入 {0} 条配方，跳过 {1} 条", ["en-US"] = "Imported {0} recipes, skipped {1}", ["ja-JP"] = "レシピ {0} 件をインポートし、{1} 件をスキップしました", ["pt-BR"] = "{0} receitas importadas, {1} ignoradas"
         },
-        ["Wpf|F319"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ExportedRecipes"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导出 {0} 条配方", ["en-US"] = "Exported {0} recipes", ["ja-JP"] = "レシピ {0} 件をエクスポートしました", ["pt-BR"] = "{0} receitas exportadas"
         },
-        ["Wpf|F320"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ExportFailed2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导出失败：{0}", ["en-US"] = "Export failed: {0}", ["ja-JP"] = "エクスポート失敗：{0}", ["pt-BR"] = "Falha na exportação: {0}"
         },
-        ["Wpf|F321"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ImportFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入失败：{0}", ["en-US"] = "Import failed: {0}", ["ja-JP"] = "インポート失敗：{0}", ["pt-BR"] = "Falha na importação: {0}"
         },
-        ["Wpf|F322"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AllRecipesFileFailedValidationInvalid"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "文件中的 {0} 条配方均未通过校验（数据非法或配方名重复）", ["en-US"] = "All {0} recipes in the file failed validation (invalid data or duplicate name)", ["ja-JP"] = "ファイル内のレシピ {0} 件すべてが検証に失敗しました（データ不正またはレシピ名重複）", ["pt-BR"] = "Todas as {0} receitas do arquivo falharam na validação (dados inválidos ou nome duplicado)"
         },
-        ["Wpf|M339"] = new Dictionary<string, string>
+        ["Wpf|Msg_Permanent"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "永久", ["en-US"] = "Permanent", ["ja-JP"] = "永久", ["pt-BR"] = "Permanente"
         },
-        ["Wpf|M340"] = new Dictionary<string, string>
+        ["Wpf|Msg_EnterNewActivationCodeReplaceCurrent2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "输入新的激活码以替换当前授权。", ["en-US"] = "Enter a new activation code to replace the current license.", ["ja-JP"] = "新しいアクティベーションコードを入力して現在のライセンスを置き換えます。", ["pt-BR"] = "Digite uma nova chave de ativação para substituir a licença atual."
         },
-        ["Wpf|M341"] = new Dictionary<string, string>
+        ["Wpf|Msg_TrialExpiredEnterActivationCodeContinue2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "试用期已过期，请输入激活码继续使用。", ["en-US"] = "Trial expired; enter an activation code to continue.", ["ja-JP"] = "試用期間が終了しました。アクティベーションコードを入力して続行してください。", ["pt-BR"] = "Avaliação expirada; digite uma chave de ativação para continuar."
         },
-        ["Wpf|M342"] = new Dictionary<string, string>
+        ["Wpf|Msg_LicenseExpiredEnterNewActivationCode2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "授权已过期，请输入新的激活码。", ["en-US"] = "License expired; enter a new activation code.", ["ja-JP"] = "ライセンスが失効しました。新しいアクティベーションコードを入力してください。", ["pt-BR"] = "Licença expirada; digite uma nova chave de ativação."
         },
-        ["Wpf|M343"] = new Dictionary<string, string>
+        ["Wpf|Msg_LicenseDoesMatchMachinePleaseReactivate3"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "授权与当前机器不匹配，请重新激活。", ["en-US"] = "License does not match this machine; please reactivate.", ["ja-JP"] = "ライセンスがこのマシンと一致しません。再アクティベーションしてください。", ["pt-BR"] = "A licença não corresponde a esta máquina; reative."
         },
-        ["Wpf|M344"] = new Dictionary<string, string>
+        ["Wpf|Msg_EnterActivationCodeContinue2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请输入激活码以继续使用。", ["en-US"] = "Enter an activation code to continue.", ["ja-JP"] = "続行するにはアクティベーションコードを入力してください。", ["pt-BR"] = "Digite uma chave de ativação para continuar."
         },
-        ["Wpf|M345"] = new Dictionary<string, string>
+        ["Wpf|Msg_GenerateSampleWorkOrders"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生成样本工单", ["en-US"] = "Generate Sample Work Orders", ["ja-JP"] = "サンプル工単を生成", ["pt-BR"] = "Gerar ordens de produção de amostra"
         },
-        ["Wpf|M346"] = new Dictionary<string, string>
+        ["Wpf|Msg_WorkOrderNoProductCodeProductNameDeviceNameTarge"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单号,产品编码,产品名称,设备名,计划产量,计划开始,计划结束,状态,备注,创建时间,更新时间", ["en-US"] = "WorkOrderNo,ProductCode,ProductName,DeviceName,TargetQuantity,PlannedStart,PlannedEnd,Status,Remark,CreatedAt,UpdatedAt", ["ja-JP"] = "工単番号,製品コード,製品名,設備名,計画数量,計画開始,計画終了,状態,備考,作成日時,更新日時", ["pt-BR"] = "NºOrdem,CódigoProduto,NomeProduto,Dispositivo,QuantidadeAlvo,InícioPlanejado,FimPlanejado,Status,Observação,CriadoEm,AtualizadoEm"
         },
-        ["Wpf|M347"] = new Dictionary<string, string>
+        ["Wpf|Msg_OEE"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OEE综合", ["en-US"] = "OEE", ["ja-JP"] = "OEE", ["pt-BR"] = "OEE geral"
         },
-        ["Wpf|M348"] = new Dictionary<string, string>
+        ["Wpf|Msg_OKQty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "OK产量", ["en-US"] = "OK Qty", ["ja-JP"] = "OK 生産数", ["pt-BR"] = "Quantidade OK"
         },
-        ["Wpf|M349"] = new Dictionary<string, string>
+        ["Wpf|Msg_NGQty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "NG产量", ["en-US"] = "NG Qty", ["ja-JP"] = "NG 生産数", ["pt-BR"] = "Quantidade NG"
         },
-        ["Wpf|M350"] = new Dictionary<string, string>
+        ["Wpf|Msg_RuntimeS"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行时长(s)", ["en-US"] = "Runtime(s)", ["ja-JP"] = "稼働時間(s)", ["pt-BR"] = "Execução (s)"
         },
-        ["Wpf|M351"] = new Dictionary<string, string>
+        ["Wpf|Msg_AlarmTimeS"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警时长(s)", ["en-US"] = "Alarm time(s)", ["ja-JP"] = "故障時間(s)", ["pt-BR"] = "Tempo de alarmes (s)"
         },
-        ["Wpf|M352"] = new Dictionary<string, string>
+        ["Wpf|Msg_TargetOutputPcsH"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标产能(件/小时)", ["en-US"] = "Target output (pcs/h)", ["ja-JP"] = "目標能力(個/時)", ["pt-BR"] = "Capacidade alvo (pçs/h)"
         },
-        ["Wpf|M353"] = new Dictionary<string, string>
+        ["Wpf|Msg_Device2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "# 设备：{0}", ["en-US"] = "# Device: {0}", ["ja-JP"] = "# 設備：{0}", ["pt-BR"] = "# Dispositivo: {0}"
         },
-        ["Wpf|M354"] = new Dictionary<string, string>
+        ["Wpf|Msg_RuntimeHAlarmHIdleH"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "# 运行时长：{0:F2}h，报警时长：{1:F2}h，待机时长：{2:F2}h", ["en-US"] = "# Runtime: {0:F2}h, alarm: {1:F2}h, idle: {2:F2}h", ["ja-JP"] = "# 稼働時間：{0:F2}h、故障時間：{1:F2}h、待機時間：{2:F2}h", ["pt-BR"] = "# Execução: {0:F2}h, alarmes: {1:F2}h, espera: {2:F2}h"
         },
-        ["Wpf|M355"] = new Dictionary<string, string>
+        ["Wpf|Msg_DataCouldFullySavedExitData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "退出时部分数据保存失败，可能丢失：", ["en-US"] = "Data could not be fully saved on exit; data may be lost:", ["ja-JP"] = "終了時に一部データの保存に失敗し、データが失われる可能性があります：", ["pt-BR"] = "Parte dos dados não pôde ser salva ao sair; dados podem ser perdidos:"
         },
-        ["Wpf|M356"] = new Dictionary<string, string>
+        ["Wpf|Msg_PersistenceFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "持久化失败", ["en-US"] = "Persistence Failed", ["ja-JP"] = "保存失敗", ["pt-BR"] = "Falha de persistência"
         },
-        ["Wpf|M357"] = new Dictionary<string, string>
+        ["Wpf|Msg_Ms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "ms", ["en-US"] = "ms", ["ja-JP"] = "ms", ["pt-BR"] = "ms"
         },
-        ["Wpf|M358"] = new Dictionary<string, string>
+        ["Wpf|Msg_MB"] = new Dictionary<string, string>
         {
             ["zh-CN"] = " MB", ["en-US"] = " MB", ["ja-JP"] = " MB", ["pt-BR"] = " MB"
         },
-        ["Wpf|M359"] = new Dictionary<string, string>
+        ["Wpf|Msg_KB"] = new Dictionary<string, string>
         {
             ["zh-CN"] = " KB", ["en-US"] = " KB", ["ja-JP"] = " KB", ["pt-BR"] = " KB"
         },
-        ["Wpf|F323"] = new Dictionary<string, string>
+        ["Wpf|Prompt_NoAlarmDataCSVFile"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "CSV 文件中没有报警数据", ["en-US"] = "No alarm data in CSV file", ["ja-JP"] = "CSV ファイルにアラームデータがありません", ["pt-BR"] = "Sem dados de alarmes no arquivo CSV"
         },
-        ["Wpf|F324"] = new Dictionary<string, string>
+        ["Wpf|Prompt_Text3"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "{0}: {1}?", ["en-US"] = "{0}: {1}?", ["ja-JP"] = "{0}: {1}?", ["pt-BR"] = "{0}: {1}?"
         },
-        ["Wpf|F325"] = new Dictionary<string, string>
+        ["Wpf|Prompt_QueryExceedsResultLimit100000"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询数据量超过上限（10 万条），请缩小时间或设备范围后重试", ["en-US"] = "Query exceeds the result limit (100,000 rows); narrow the time or device range and retry", ["ja-JP"] = "クエリ結果が上限（10万件）を超えました。期間またはデバイス範囲を絞って再試行してください", ["pt-BR"] = "A consulta excede o limite de resultados (100.000 linhas); reduza o período ou o dispositivo e tente novamente"
         },
-        ["Wpf|F326"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ProgressBasisDeviceCumulativeOutputCurrent"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "进度口径：设备本班次累计产量（与工单管理页按工单聚合的口径可能不同）", ["en-US"] = "Progress basis: device cumulative output for the current shift (may differ from per-work-order aggregation on the Work Order page)", ["ja-JP"] = "進捗基準：デバイスの現シフト累計生産量（作業指示ページの工単集計基準と異なる場合があります）", ["pt-BR"] = "Base do progresso: produção acumulada do dispositivo no turno atual (pode diferir da agregação por ordem na página de Ordens)"
         },
-        ["Wpf|F327"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OutputCsv"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "产量_{0:yyyyMMdd}_{1:yyyyMMdd}.csv", ["en-US"] = "Output_{0:yyyyMMdd}_{1:yyyyMMdd}.csv", ["ja-JP"] = "生産量_{0:yyyyMMdd}_{1:yyyyMMdd}.csv", ["pt-BR"] = "Producao_{0:yyyyMMdd}_{1:yyyyMMdd}.csv"
         },
-        ["Wpf|F328"] = new Dictionary<string, string>
+        ["Wpf|Prompt_StateDurationCsv"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "状态时长_{0:yyyyMMdd}_{1:yyyyMMdd}.csv", ["en-US"] = "StateDuration_{0:yyyyMMdd}_{1:yyyyMMdd}.csv", ["ja-JP"] = "状態時間_{0:yyyyMMdd}_{1:yyyyMMdd}.csv", ["pt-BR"] = "DuracaoEstado_{0:yyyyMMdd}_{1:yyyyMMdd}.csv"
         },
-        ["Wpf|F329"] = new Dictionary<string, string>
+        ["Wpf|Prompt_AlarmCsv"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "报警_{0:yyyyMMdd}_{1:yyyyMMdd}.csv", ["en-US"] = "Alarm_{0:yyyyMMdd}_{1:yyyyMMdd}.csv", ["ja-JP"] = "警報_{0:yyyyMMdd}_{1:yyyyMMdd}.csv", ["pt-BR"] = "Alarmes_{0:yyyyMMdd}_{1:yyyyMMdd}.csv"
         },
@@ -8599,71 +8601,71 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "值项列表", ["en-US"] = "Values", ["ja-JP"] = "値項目一覧", ["pt-BR"] = "Valores"
         },
-        ["Wpf|F331"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ExportedSourcesValues"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导出 {0} 个数据源、{1} 个值项到 {2}", ["en-US"] = "Exported {0} sources and {1} values to {2}", ["ja-JP"] = "{0} 件のデータソースと {1} 件の値項目を {2} にエクスポートしました", ["pt-BR"] = "Exportadas {0} fontes e {1} valores para {2}"
         },
-        ["Wpf|F333"] = new Dictionary<string, string>
+        ["Wpf|Prompt_CSVFileEmptyHasNoData"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "CSV 文件为空或无数据行", ["en-US"] = "CSV file is empty or has no data rows", ["ja-JP"] = "CSV ファイルが空、またはデータ行がありません", ["pt-BR"] = "Arquivo CSV vazio ou sem linhas de dados"
         },
-        ["Wpf|F334"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowSourceNameEmpty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：数据源名称为空", ["en-US"] = "Row {0}: source name is empty", ["ja-JP"] = "{0} 行目: データソース名が空です", ["pt-BR"] = "Linha {0}: nome da fonte vazio"
         },
-        ["Wpf|F335"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowValueNameEmpty"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：值项名称为空", ["en-US"] = "Row {0}: value name is empty", ["ja-JP"] = "{0} 行目: 値項目名が空です", ["pt-BR"] = "Linha {0}: nome do valor vazio"
         },
-        ["Wpf|F336"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowInvalidValueType"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：值项类型「{1}」无效", ["en-US"] = "Row {0}: invalid value type '{1}'", ["ja-JP"] = "{0} 行目: 値項目タイプ「{1}」が無効です", ["pt-BR"] = "Linha {0}: tipo de valor invalido '{1}'"
         },
-        ["Wpf|F337"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowAddressInvalid"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：地址「{1}」无效（{2}）", ["en-US"] = "Row {0}: address '{1}' invalid ({2})", ["ja-JP"] = "{0} 行目: アドレス「{1}」が無効です（{2}）", ["pt-BR"] = "Linha {0}: endereco '{1}' invalido ({2})"
         },
-        ["Wpf|F338"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowAddressTypeMismatchExpectedActual"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：地址「{1}」类型不匹配，期望 {2}，实际 {3}", ["en-US"] = "Row {0}: address '{1}' type mismatch, expected {2}, actual {3}", ["ja-JP"] = "{0} 行目: アドレス「{1}」のタイプ不一致、期待 {2}、実際 {3}", ["pt-BR"] = "Linha {0}: tipo incompativel para endereco '{1}', esperado {2}, atual {3}"
         },
-        ["Wpf|F339"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowInvalidValueField"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：字段「{1}」值「{2}」无效", ["en-US"] = "Row {0}: invalid value '{2}' for field '{1}'", ["ja-JP"] = "{0} 行目: フィールド「{1}」の値「{2}」が無効です", ["pt-BR"] = "Linha {0}: valor invalido '{2}' para campo '{1}'"
         },
-        ["Wpf|F340"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowInvalidEnumJSON"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：枚举 JSON 无效（{1}）", ["en-US"] = "Row {0}: invalid enum JSON ({1})", ["ja-JP"] = "{0} 行目: 列挙 JSON が無効です（{1}）", ["pt-BR"] = "Linha {0}: JSON de enum invalido ({1})"
         },
-        ["Wpf|F341"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowDuplicateEnumValues"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：枚举值重复", ["en-US"] = "Row {0}: duplicate enum values", ["ja-JP"] = "{0} 行目: 列挙値が重複しています", ["pt-BR"] = "Linha {0}: valores de enum duplicados"
         },
-        ["Wpf|F342"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowInconsistentConfigurationSameSource"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：同一数据源配置不一致", ["en-US"] = "Row {0}: inconsistent configuration for the same source", ["ja-JP"] = "{0} 行目: 同一データソースの設定が一致しません", ["pt-BR"] = "Linha {0}: configuracao inconsistente para a mesma fonte"
         },
-        ["Wpf|F343"] = new Dictionary<string, string>
+        ["Wpf|Prompt_RowDuplicateValueSource"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：数据源「{1}」值项「{2}」重复", ["en-US"] = "Row {0}: duplicate value '{2}' in source '{1}'", ["ja-JP"] = "{0} 行目: データソース「{1}」の値項目「{2}」が重複しています", ["pt-BR"] = "Linha {0}: valor duplicado '{2}' na fonte '{1}'"
         },
-        ["Wpf|F344"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ImportSourcesValuesDeviceCurrentlyHas"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "将导入 {0} 个数据源、{1} 个值项（当前设备有 {2} 个数据源）。", ["en-US"] = "Import {0} sources and {1} values (device currently has {2} sources).", ["ja-JP"] = "{0} 件のデータソースと {1} 件の値項目をインポートします（現在 {2} 件のデータソース）。", ["pt-BR"] = "Importar {0} fontes e {1} valores (dispositivo tem {2} fontes)."
         },
-        ["Wpf|F345"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ImportedSourcesValues"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已成功导入 {0} 个数据源、{1} 个值项。", ["en-US"] = "Imported {0} sources and {1} values.", ["ja-JP"] = "{0} 件のデータソースと {1} 件の値項目をインポートしました。", ["pt-BR"] = "Importadas {0} fontes e {1} valores."
         },
-        ["Wpf|F346"] = new Dictionary<string, string>
+        ["Wpf|Prompt_MissingRequiredColumns"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "缺少必需列：{0}", ["en-US"] = "Missing required columns: {0}", ["ja-JP"] = "必須列がありません: {0}", ["pt-BR"] = "Colunas obrigatorias ausentes: {0}"
         },
-        ["Wpf|F347"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ImportedSourcesValuesValidationErrors"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "已导入 {0} 个数据源、{1} 个值项，但有 {2} 个校验错误：\n{3}", ["en-US"] = "Imported {0} sources and {1} values with {2} validation errors:\n{3}", ["ja-JP"] = "{0} 件のデータソースと {1} 件の値項目をインポートしましたが、{2} 件の検証エラーがあります:\n{3}", ["pt-BR"] = "Importadas {0} fontes e {1} valores com {2} erros de validacao:\n{3}"
+            ["zh-CN"] = "已导入 {0} 个数据源、{1} 个值项，但有 {2} 个校验错误：\r\n{3}", ["en-US"] = "Imported {0} sources and {1} values with {2} validation errors:\r\n{3}", ["ja-JP"] = "{0} 件のデータソースと {1} 件の値項目をインポートしましたが、{2} 件の検証エラーがあります:\r\n{3}", ["pt-BR"] = "Importadas {0} fontes e {1} valores com {2} erros de validacao:\r\n{3}"
         },
-        ["Wpf|F348"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ImportFailed2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入失败：{0}", ["en-US"] = "Import failed: {0}", ["ja-JP"] = "インポート失敗: {0}", ["pt-BR"] = "Falha na importacao: {0}"
         },
@@ -8865,7 +8867,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ux_FirstRunNavBody"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "主页/产线总览：实时状态\n报警中心：处理报警\n历史查询/生产复盘：追溯与报表\n设备管理/设备详情/系统设置：需相应权限\n侧边栏底部「使用手册」或按 F1：打开手册", ["en-US"] = "Home & Production Line: live status\nAlarm Center: handle alarms\nHistory & Review: traceability and reports\nDevice Manager, Device Detail & Settings: role required\nSidebar footer User Manual or F1: open manual", ["ja-JP"] = "ホーム/ライン：リアルタイム\nアラームセンター：対応\n履歴/レビュー：分析\n設備管理/設備詳細/設定：権限が必要\nサイドバー下部「使用手册」または F1", ["pt-BR"] = "Inicio e Linha: tempo real\nAlarmes: tratar\nHistorico e Revisao: relatorios\nDispositivos, Detalhe e Configuracoes: permissao\nManual no rodape da barra lateral ou F1"
+            ["zh-CN"] = "主页/产线总览：实时状态\r\n报警中心：处理报警\r\n历史查询/生产复盘：追溯与报表\r\n设备管理/设备详情/系统设置：需相应权限\r\n侧边栏底部「使用手册」或按 F1：打开手册", ["en-US"] = "Home & Production Line: live status\r\nAlarm Center: handle alarms\r\nHistory & Review: traceability and reports\r\nDevice Manager, Device Detail & Settings: role required\r\nSidebar footer User Manual or F1: open manual", ["ja-JP"] = "ホーム/ライン：リアルタイム\r\nアラームセンター：対応\r\n履歴/レビュー：分析\r\n設備管理/設備詳細/設定：権限が必要\r\nサイドバー下部「使用手册」または F1", ["pt-BR"] = "Inicio e Linha: tempo real\r\nAlarmes: tratar\r\nHistorico e Revisao: relatorios\r\nDispositivos, Detalhe e Configuracoes: permissao\r\nManual no rodape da barra lateral ou F1"
         },
         ["Wpf|Ux_FirstRunFinishTitle"] = new Dictionary<string, string>
         {
@@ -9007,159 +9009,159 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "数据源「{0}」触发值与确认值不能相同", ["en-US"] = "Trigger and ack values cannot match in source '{0}'", ["ja-JP"] = "データソース「{0}」のトリガー値と確認値は同じにできません", ["pt-BR"] = "Valores de gatilho e confirmacao nao podem ser iguais na fonte '{0}'"
         },
-        ["Wpf|K750"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportWorkOrders"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入工单", ["en-US"] = "Import Work Orders", ["ja-JP"] = "工単インポート", ["pt-BR"] = "Importar ordens de produção"
         },
-        ["Wpf|K751"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SelectWorkOrderCSVFile"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "选择工单 CSV 文件", ["en-US"] = "Select work order CSV file", ["ja-JP"] = "工単 CSV ファイルを選択", ["pt-BR"] = "Selecione o arquivo CSV de ordens de produção"
         },
-        ["Wpf|K752"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AboutImportWorkOrdersContinue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "即将批量导入 {0} 条工单，是否继续？", ["en-US"] = "About to import {0} work orders. Continue?", ["ja-JP"] = "{0} 件の工単を一括インポートします。続行しますか？", ["pt-BR"] = "Os {0} ordens de produção serão importadas. Continuar?"
         },
-        ["Wpf|K753"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportedWorkOrdersSuccessfully"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已成功导入 {0} 条工单", ["en-US"] = "Imported {0} work orders successfully", ["ja-JP"] = "{0} 件の工単をインポートしました", ["pt-BR"] = "{0} ordens de produção importadas com sucesso"
         },
-        ["Wpf|K754"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ImportedSkipped"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已导入 {0} 条，跳过 {1} 条：{2}", ["en-US"] = "Imported {0}, skipped {1}: {2}", ["ja-JP"] = "{0} 件インポート、{1} 件スキップ：{2}", ["pt-BR"] = "Importadas {0}, ignoradas {1}: {2}"
         },
-        ["Wpf|K755"] = new Dictionary<string, string>
+        ["Wpf|Lbl_FailedReadWorkOrderCSV"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "读取工单 CSV 失败：{0}", ["en-US"] = "Failed to read work order CSV: {0}", ["ja-JP"] = "工単 CSV の読み取りに失敗：{0}", ["pt-BR"] = "Falha ao ler o CSV de ordens de produção: {0}"
         },
-        ["Wpf|K756"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoImportableWorkOrdersFound"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "文件 {0} 中未找到可导入的工单", ["en-US"] = "No importable work orders found in {0}", ["ja-JP"] = "{0} にインポート可能な工単がありません", ["pt-BR"] = "Nenhuma ordem de produção importável encontrada em {0}"
         },
-        ["Wpf|K757"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Copied"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已复制：{0}", ["en-US"] = "Copied: {0}", ["ja-JP"] = "コピーしました：{0}", ["pt-BR"] = "Copiado: {0}"
         },
-        ["Wpf|K762"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Conflict"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "冲突", ["en-US"] = "Conflict", ["ja-JP"] = "競合", ["pt-BR"] = "Conflito"
         },
-        ["Wpf|K763"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Overdue"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "逾期", ["en-US"] = "Overdue", ["ja-JP"] = "期限超過", ["pt-BR"] = "Atrasado"
         },
-        ["Wpf|K765"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Target2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标", ["en-US"] = "Target", ["ja-JP"] = "目標", ["pt-BR"] = "Alvo"
         },
-        ["Wpf|K766"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OK3"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "合格", ["en-US"] = "OK", ["ja-JP"] = "良品", ["pt-BR"] = "OK"
         },
-        ["Wpf|K767"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Achievement"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "达成率", ["en-US"] = "Achievement", ["ja-JP"] = "達成率", ["pt-BR"] = "Taxa de realização"
         },
-        ["Wpf|K771"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Timeline"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时间线", ["en-US"] = "Timeline", ["ja-JP"] = "タイムライン", ["pt-BR"] = "Linha do tempo"
         },
-        ["Wpf|K772"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Created"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "创建", ["en-US"] = "Created", ["ja-JP"] = "作成", ["pt-BR"] = "Criada"
         },
-        ["Wpf|K774"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ActualStart"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "实际开始", ["en-US"] = "Actual start", ["ja-JP"] = "実開始", ["pt-BR"] = "Início real"
         },
-        ["Wpf|K775"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Completed2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "完成", ["en-US"] = "Completed", ["ja-JP"] = "完了", ["pt-BR"] = "Concluída"
         },
-        ["Wpf|K776"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Aborted2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "中止", ["en-US"] = "Aborted", ["ja-JP"] = "中止", ["pt-BR"] = "Abortada"
         },
-        ["Wpf|K788"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Import2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "导入", ["en-US"] = "Import", ["ja-JP"] = "インポート", ["pt-BR"] = "Importar"
         },
-        ["Wpf|K789"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DoubleClickRowEditWorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "双击列表行可直接编辑该工单", ["en-US"] = "Double-click a row to edit that work order", ["ja-JP"] = "行をダブルクリックで編集", ["pt-BR"] = "Clique duas vezes em uma linha para editar essa ordem"
         },
-        ["Wpf|K790"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RowTooFewColumns7Skipped"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行：列数不足（{1} < 7），已跳过", ["en-US"] = "Row {0}: too few columns ({1} < 7); skipped", ["ja-JP"] = "{0} 行目：列数不足（{1} < 7）、スキップ", ["pt-BR"] = "Linha {0}: colunas insuficientes ({1} < 7); ignorada"
         },
-        ["Wpf|K791"] = new Dictionary<string, string>
+        ["Wpf|Lbl_RowPlannedTimeMustYyyyMM"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行 [{1}]：计划时间格式应为 yyyy-MM-dd HH:mm，已跳过", ["en-US"] = "Row {0} [{1}]: planned time must be yyyy-MM-dd HH:mm; skipped", ["ja-JP"] = "{0} 行目 [{1}]：予定時刻は yyyy-MM-dd HH:mm 形式にしてください（スキップ）", ["pt-BR"] = "Linha {0} [{1}]: horário planejado deve ser yyyy-MM-dd HH:mm; ignorada"
         },
-        ["Wpf|K794"] = new Dictionary<string, string>
+        ["Wpf|Lbl_OrderNumberAlreadyExists"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单号已存在", ["en-US"] = "Order number already exists", ["ja-JP"] = "工単番号は既に存在します", ["pt-BR"] = "O número da ordem já existe"
         },
-        ["Wpf|K795"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DeviceFound"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未找到设备「{0}」", ["en-US"] = "Device \"{0}\" not found", ["ja-JP"] = "デバイス「{0}」が見つかりません", ["pt-BR"] = "Dispositivo \"{0}\" não encontrado"
         },
-        ["Wpf|K799"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Overdue2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "逾期 {0}", ["en-US"] = "Overdue {0}", ["ja-JP"] = "期限超過 {0}", ["pt-BR"] = "Atrasado {0}"
         },
-        ["Wpf|K806"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Row"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 行 [{1}]：{2}", ["en-US"] = "Row {0} [{1}]: {2}", ["ja-JP"] = "{0} 行目 [{1}]：{2}", ["pt-BR"] = "Linha {0} [{1}]: {2}"
         },
-        ["Wpf|K901"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WorkOrderSchedule"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单排程", ["en-US"] = "Work Order Schedule", ["ja-JP"] = "工単スケジュール", ["pt-BR"] = "Agendamento de ordens de produção"
         },
-        ["Wpf|K902"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PlannedTime2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "计划时间", ["en-US"] = "Planned time", ["ja-JP"] = "予定時刻", ["pt-BR"] = "Horário planejado"
         },
-        ["Wpf|K903"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Device2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备", ["en-US"] = "Device", ["ja-JP"] = "設備", ["pt-BR"] = "Dispositivo"
         },
-        ["Wpf|K904"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WorkOrders"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单", ["en-US"] = "Work Orders", ["ja-JP"] = "工単", ["pt-BR"] = "Ordens de produção"
         },
-        ["Wpf|K905"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Now"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "现在", ["en-US"] = "Now", ["ja-JP"] = "現在", ["pt-BR"] = "Agora"
         },
-        ["Wpf|K906"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoWorkOrdersCurrentFilter"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前筛选下没有工单", ["en-US"] = "No work orders under the current filter", ["ja-JP"] = "現在の絞り込みに一致する工単なし", ["pt-BR"] = "Nenhuma ordem sob o filtro atual"
         },
-        ["Wpf|K907"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Last1Hour"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近1小时", ["en-US"] = "Last 1 Hour", ["ja-JP"] = "直近1時間", ["pt-BR"] = "Última 1 hora"
         },
-        ["Wpf|K908"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Last4Hours"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近4小时", ["en-US"] = "Last 4 Hours", ["ja-JP"] = "直近4時間", ["pt-BR"] = "Últimas 4 horas"
         },
-        ["Wpf|K909"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Last24Hours"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最近24小时", ["en-US"] = "Last 24 Hours", ["ja-JP"] = "直近24時間", ["pt-BR"] = "Últimas 24 horas"
         },
-        ["Wpf|K910"] = new Dictionary<string, string>
+        ["Wpf|Lbl_TotalOutput2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "总产量", ["en-US"] = "Total Output", ["ja-JP"] = "総生産数", ["pt-BR"] = "Produção total"
         },
-        ["Wpf|K911"] = new Dictionary<string, string>
+        ["Wpf|Lbl_DefectRate2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "不良率", ["en-US"] = "Defect Rate", ["ja-JP"] = "不良率", ["pt-BR"] = "Taxa de defeitos"
         },
-        ["Wpf|K912"] = new Dictionary<string, string>
+        ["Wpf|Lbl_AvgRecoveryTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "平均恢复耗时", ["en-US"] = "Avg Recovery Time", ["ja-JP"] = "平均復旧時間", ["pt-BR"] = "Tempo médio de recuperação"
         },
-        ["Wpf|K913"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Duration2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "持续时间", ["en-US"] = "Duration", ["ja-JP"] = "継続時間", ["pt-BR"] = "Duração"
         },
@@ -9167,55 +9169,55 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "\\n…（共 {0} 条未显示）", ["en-US"] = "\\n… ({0} more not shown)", ["ja-JP"] = "\\n…（他 {0} 件省略）", ["pt-BR"] = "\\n… ({0} itens não exibidos)"
         },
-        ["Wpf|K914"] = new Dictionary<string, string>
+        ["Wpf|Lbl_SNTraceability"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "SN 追溯", ["en-US"] = "SN Traceability", ["ja-JP"] = "SNトレーサビリティ", ["pt-BR"] = "Rastreabilidade SN"
         },
-        ["Wpf|K915"] = new Dictionary<string, string>
+        ["Wpf|Lbl_EnterSNTraceEGSN20260830"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "输入序列号（SN）进行追溯，如 SN20260830-0001", ["en-US"] = "Enter SN to trace, e.g. SN20260830-0001", ["ja-JP"] = "トレースするシリアル番号を入力（例：SN20260830-0001）", ["pt-BR"] = "Digite o SN para rastrear, ex.: SN20260830-0001"
         },
-        ["Wpf|K916"] = new Dictionary<string, string>
+        ["Wpf|Lbl_EnterSNLookUpProductionTrace"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "输入序列号查询其生产追溯记录", ["en-US"] = "Enter an SN to look up its production trace", ["ja-JP"] = "シリアル番号を入力して生産トレースを照会", ["pt-BR"] = "Insira um SN para consultar seu rastreio de produção"
         },
-        ["Wpf|K917"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ShowsDeviceWorkOrderShiftTime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "将展示该件的设备、工单、班次、时间与判定结果", ["en-US"] = "Shows the device, work order, shift, time and result", ["ja-JP"] = "設備・工単・シフト・時間・判定結果を表示します", ["pt-BR"] = "Mostra dispositivo, ordem, turno, horário e resultado"
         },
-        ["Wpf|K919"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Total2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "共 {0} 件", ["en-US"] = "{0} in total", ["ja-JP"] = "合計 {0} 件", ["pt-BR"] = "{0} no total"
         },
-        ["Wpf|K920"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoSNRecordsWorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "该工单暂无 SN 记录", ["en-US"] = "No SN records for this work order", ["ja-JP"] = "この工単にSN記録はありません", ["pt-BR"] = "Nenhum registro de SN para esta ordem"
         },
-        ["Wpf|K921"] = new Dictionary<string, string>
+        ["Wpf|Lbl_PleaseEnterSNTrace"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "请输入要追溯的序列号", ["en-US"] = "Please enter an SN to trace", ["ja-JP"] = "トレースするシリアル番号を入力してください", ["pt-BR"] = "Insira um SN para rastrear"
         },
-        ["Wpf|K922"] = new Dictionary<string, string>
+        ["Wpf|Lbl_NoTraceRecordsFoundSN"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "未找到序列号 {0} 的追溯记录", ["en-US"] = "No trace records found for SN {0}", ["ja-JP"] = "SN {0} のトレース記録が見つかりません", ["pt-BR"] = "Nenhum registro de rastreio encontrado para o SN {0}"
         },
-        ["Wpf|K923"] = new Dictionary<string, string>
+        ["Wpf|Lbl_QueryFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "查询失败：{0}", ["en-US"] = "Query failed: {0}", ["ja-JP"] = "照会失敗：{0}", ["pt-BR"] = "Falha na consulta: {0}"
         },
-        ["Wpf|K924"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Result2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "结果", ["en-US"] = "Result", ["ja-JP"] = "結果", ["pt-BR"] = "Resultado"
         },
-        ["Wpf|K925"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Previous2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "上一页", ["en-US"] = "Previous", ["ja-JP"] = "前へ", ["pt-BR"] = "Anterior"
         },
-        ["Wpf|K926"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Next2"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "下一页", ["en-US"] = "Next", ["ja-JP"] = "次へ", ["pt-BR"] = "Próxima"
         },
-        ["Wpf|K927"] = new Dictionary<string, string>
+        ["Wpf|Lbl_Page"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "第 {0} 页", ["en-US"] = "Page {0}", ["ja-JP"] = "{0} ページ目", ["pt-BR"] = "Página {0}"
         },
@@ -9419,35 +9421,35 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "配方", ["en-US"] = "Recipe", ["ja-JP"] = "レシピ", ["pt-BR"] = "Receita"
         },
-        ["Wpf|K928"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ResetAll"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "全部清零", ["en-US"] = "Reset All", ["ja-JP"] = "一括クリア", ["pt-BR"] = "Zerar tudo"
         },
-        ["Wpf|K929"] = new Dictionary<string, string>
+        ["Wpf|Lbl_ResetOEEAllDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "全部设备 OEE 清零", ["en-US"] = "Reset OEE for All Devices", ["ja-JP"] = "全デバイスの OEE クリア", ["pt-BR"] = "Zerar OEE de todos os dispositivos"
         },
-        ["Wpf|K930"] = new Dictionary<string, string>
+        ["Wpf|Lbl_WritesOEEResetCommandEveryDevice"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "一键向全部设备写入 OEE 清零指令，并清零软件侧累计；不可撤销，断开连接时不可用。", ["en-US"] = "Writes the OEE reset command to every device and clears software-side totals; irreversible and unavailable when disconnected.", ["ja-JP"] = "全デバイスへ OEE クリア指令を書込み、ソフト側の累計もクリアします。取消不可、切断時は利用不可。", ["pt-BR"] = "Envia o comando de zeramento de OEE a todos os dispositivos e zera os acumulados do software; irreversível e indisponível quando desconectado."
         },
-        ["Wpf|M385"] = new Dictionary<string, string>
+        ["Wpf|Msg_ConfirmResetOEEAll"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确认全部设备 OEE 清零", ["en-US"] = "Confirm Reset OEE for All", ["ja-JP"] = "全デバイス OEE クリア確認", ["pt-BR"] = "Confirmar zeramento de OEE de todos"
         },
-        ["Wpf|M386"] = new Dictionary<string, string>
+        ["Wpf|Msg_NoDevicesReset"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "没有可清零的设备", ["en-US"] = "No devices to reset", ["ja-JP"] = "クリア対象のデバイスがありません", ["pt-BR"] = "Nenhum dispositivo para zerar"
         },
-        ["Wpf|F717"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ResetOEEAllDevicesClearsOK"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "确定清零全部 {0} 台设备的 OEE 吗？将清零所有设备的 OK/NG 产量、运行/报警/待机累计时间及报警状态，且无法撤销。", ["en-US"] = "Reset OEE for all {0} devices? This clears OK/NG output, run/alarm/standby totals and alarm state for every device in the line and cannot be undone.", ["ja-JP"] = "全 {0} 台のデバイスの OEE をクリアしますか？全デバイスの OK/NG 生産数、稼働/警報/待機の累計時間、警報状態をクリアし、取消できません。", ["pt-BR"] = "Zerar o OEE de todos os {0} dispositivos? Isso limpa a produção OK/NG, os totais de execução/alarme/espera e o estado de alarme de todos os dispositivos e não pode ser desfeito."
         },
-        ["Wpf|F718"] = new Dictionary<string, string>
+        ["Wpf|Prompt_OEEResetTriggeredAllDevices"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "已触发全部设备 OEE 清零（{0}/{1} 台）", ["en-US"] = "OEE reset triggered for all devices ({0}/{1})", ["ja-JP"] = "全デバイスの OEE クリアを実行しました（{0}/{1} 台）", ["pt-BR"] = "Zeramento de OEE acionado para todos os dispositivos ({0}/{1})"
         },
-        ["Wpf|F719"] = new Dictionary<string, string>
+        ["Wpf|Prompt_ResetOEEAllDevicesFailed"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "全部设备 OEE 清零失败：{0}", ["en-US"] = "Reset OEE for all devices failed: {0}", ["ja-JP"] = "全デバイス OEE クリア失敗：{0}", ["pt-BR"] = "Falha ao zerar o OEE de todos os dispositivos: {0}"
         },
@@ -10087,6 +10089,18 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "周期差 = 实际周期 − 目标周期。正数=慢（每件更久），负数=快。\\n目标 {0} · 实际 {1} · {2}", ["en-US"] = "Cycle gap = actual cycle − target cycle. Positive = slower (longer per piece), negative = faster.\\nTarget {0} · actual {1} · {2}", ["ja-JP"] = "サイクル差 = 実サイクル − 目標サイクル。正=遅い（1個あたり長い）、負=速い。\\n目標 {0} · 実績 {1} · {2}", ["pt-BR"] = "Diferença de ciclo = ciclo real − ciclo alvo. Positivo = mais lento, negativo = mais rápido.\\nAlvo {0} · real {1} · {2}"
         },
+        ["Wpf|Home_CycleOnTarget"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "与目标一致", ["en-US"] = "On target", ["ja-JP"] = "目標どおり", ["pt-BR"] = "No alvo"
+        },
+        ["Wpf|Home_CycleSlower"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "慢 {0:0.00} 秒", ["en-US"] = "{0:0.00}s slower", ["ja-JP"] = "{0:0.00}秒遅い", ["pt-BR"] = "{0:0.00}s mais lento"
+        },
+        ["Wpf|Home_CycleFaster"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "快 {0:0.00} 秒", ["en-US"] = "{0:0.00}s faster", ["ja-JP"] = "{0:0.00}秒速い", ["pt-BR"] = "{0:0.00}s mais rápido"
+        },
         ["Wpf|Home_Tip_DefectSummary"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "本班次缺陷帕累托合计件数（已分类缺陷，不含未录入原因的 NG）。\\n{0}", ["en-US"] = "Shift defect Pareto total count (classified defects only; NG without a reason is excluded).\\n{0}", ["ja-JP"] = "当シフトのパレート不良合計（分類済みのみ。原因未入力の NG は含まない）。\\n{0}", ["pt-BR"] = "Total da Pareto de defeitos do turno (somente classificados; NG sem motivo fica de fora).\\n{0}"
@@ -10590,6 +10604,16 @@ public static class LocalizationCatalog
     public static bool IsKnownKey(string resource, string key)
         => Values.ContainsKey(resource + "|" + key);
 
+    public static IEnumerable<string> Keys(string resource)
+    {
+        var prefix = resource + "|";
+        foreach (var entry in Values.Keys)
+        {
+            if (entry.StartsWith(prefix, StringComparison.Ordinal))
+                yield return entry[prefix.Length..];
+        }
+    }
+
     public static string? Get(string resource, string key, string language)
         => Values.TryGetValue(resource + "|" + key, out var translations)
             && translations.TryGetValue(language, out var value)
@@ -10601,4 +10625,2586 @@ public static class LocalizationCatalog
             && translations.TryGetValue(displayCulture, out var value)
             ? value
             : language;
+}
+}
+
+namespace MainAPP.Resources
+{
+
+/// <summary>
+/// 多语言资源强类型访问。译文在 <see cref="Kanban.Localization.LocalizationCatalog"/>，
+/// 本类只保留当前文化和启动覆盖回调。
+/// WARNING: AUTO-GENERATED by ci/generate_localization.py. DO NOT EDIT MANUALLY.
+/// All 2543 Wpf keys come from MainAPP/Resources/Localization.csv.
+/// </summary>
+public static class Strings
+{
+    private static CultureInfo s_capturedCulture = CultureInfo.GetCultureInfo("zh-CN");
+
+    /// <summary>由 MainAPP 启动时注入。返回 null 表示没有覆盖，继续读内置目录。</summary>
+    public static Func<string, CultureInfo, string?>? TryGetOverride { get; set; }
+
+    public static void CaptureCulture(CultureInfo culture)
+    {
+        s_capturedCulture = culture;
+    }
+
+    /// <summary>按启动期文化取资源；启动覆盖优先，缺失时回退 key 名本身。</summary>
+    public static string S(string key, string fallback)
+    {
+        if (TryGetOverride?.Invoke(key, s_capturedCulture) is string overrideValue)
+            return overrideValue;
+        return Kanban.Localization.LocalizationCatalog.Get("Wpf", key, s_capturedCulture.Name) ?? fallback;
+    }
+
+    public static bool IsKnownKey(string key)
+        => Kanban.Localization.LocalizationCatalog.IsKnownKey("Wpf", key);
+
+    public static string? GetEmbeddedValue(string key, string cultureName)
+        => Kanban.Localization.LocalizationCatalog.Get("Wpf", key, cultureName);
+
+    public static string Ac_GroupRange => S("Ac_GroupRange", "Ac_GroupRange");
+    public static string Ac_GroupSearch => S("Ac_GroupSearch", "Ac_GroupSearch");
+    public static string Ac_Tip_RankDuration => S("Ac_Tip_RankDuration", "Ac_Tip_RankDuration");
+    public static string Alarm_LocalizedNames => S("Alarm_LocalizedNames", "Alarm_LocalizedNames");
+    public static string Alarm_NameEn => S("Alarm_NameEn", "Alarm_NameEn");
+    public static string Alarm_NameJa => S("Alarm_NameJa", "Alarm_NameJa");
+    public static string Alarm_NamePt => S("Alarm_NamePt", "Alarm_NamePt");
+    public static string Assistant_Answering => S("Assistant_Answering", "Assistant_Answering");
+    public static string Assistant_Compare => S("Assistant_Compare", "Assistant_Compare");
+    public static string Assistant_CompareQuestion => S("Assistant_CompareQuestion", "Assistant_CompareQuestion");
+    public static string Assistant_ContextDevice => S("Assistant_ContextDevice", "Assistant_ContextDevice");
+    public static string Assistant_ContextDeviceNone => S("Assistant_ContextDeviceNone", "Assistant_ContextDeviceNone");
+    public static string Assistant_ContextPage => S("Assistant_ContextPage", "Assistant_ContextPage");
+    public static string Assistant_ContextRange => S("Assistant_ContextRange", "Assistant_ContextRange");
+    public static string Assistant_ContextRangeNone => S("Assistant_ContextRangeNone", "Assistant_ContextRangeNone");
+    public static string Assistant_Failed => S("Assistant_Failed", "Assistant_Failed");
+    public static string Assistant_Handover => S("Assistant_Handover", "Assistant_Handover");
+    public static string Assistant_HandoverQuestion => S("Assistant_HandoverQuestion", "Assistant_HandoverQuestion");
+    public static string Assistant_InputHint => S("Assistant_InputHint", "Assistant_InputHint");
+    public static string Assistant_Intro => S("Assistant_Intro", "Assistant_Intro");
+    public static string Assistant_Lag => S("Assistant_Lag", "Assistant_Lag");
+    public static string Assistant_LagQuestion => S("Assistant_LagQuestion", "Assistant_LagQuestion");
+    public static string Assistant_NoServer => S("Assistant_NoServer", "Assistant_NoServer");
+    public static string Assistant_Omitted => S("Assistant_Omitted", "Assistant_Omitted");
+    public static string Assistant_OmittedDetails => S("Assistant_OmittedDetails", "Assistant_OmittedDetails");
+    public static string Assistant_OmittedManual => S("Assistant_OmittedManual", "Assistant_OmittedManual");
+    public static string Assistant_OmittedNames => S("Assistant_OmittedNames", "Assistant_OmittedNames");
+    public static string Assistant_OmittedNotes => S("Assistant_OmittedNotes", "Assistant_OmittedNotes");
+    public static string Assistant_OrderBehind => S("Assistant_OrderBehind", "Assistant_OrderBehind");
+    public static string Assistant_OrderBehindQuestion => S("Assistant_OrderBehindQuestion", "Assistant_OrderBehindQuestion");
+    public static string Assistant_Preparing => S("Assistant_Preparing", "Assistant_Preparing");
+    public static string Assistant_Querying => S("Assistant_Querying", "Assistant_Querying");
+    public static string Assistant_RepeatedNote => S("Assistant_RepeatedNote", "Assistant_RepeatedNote");
+    public static string Assistant_Send => S("Assistant_Send", "Assistant_Send");
+    public static string Assistant_Stop => S("Assistant_Stop", "Assistant_Stop");
+    public static string Assistant_Stopped => S("Assistant_Stopped", "Assistant_Stopped");
+    public static string Assistant_Title => S("Assistant_Title", "Assistant_Title");
+    public static string Assistant_TooLong => S("Assistant_TooLong", "Assistant_TooLong");
+    public static string Assistant_Ungrounded => S("Assistant_Ungrounded", "Assistant_Ungrounded");
+    public static string Assistant_Unrecognized => S("Assistant_Unrecognized", "Assistant_Unrecognized");
+    public static string Assistant_Yesterday => S("Assistant_Yesterday", "Assistant_Yesterday");
+    public static string Assistant_YesterdayQuestion => S("Assistant_YesterdayQuestion", "Assistant_YesterdayQuestion");
+    public static string Audit_ChainBroken => S("Audit_ChainBroken", "Audit_ChainBroken");
+    public static string Audit_ChainIntact => S("Audit_ChainIntact", "Audit_ChainIntact");
+    public static string Audit_ChainUnchecked => S("Audit_ChainUnchecked", "Audit_ChainUnchecked");
+    public static string Audit_Detail_AuditArchive => S("Audit_Detail_AuditArchive", "Audit_Detail_AuditArchive");
+    public static string Audit_Detail_AutoLogin => S("Audit_Detail_AutoLogin", "Audit_Detail_AutoLogin");
+    public static string Audit_Detail_AutoLoginFallback => S("Audit_Detail_AutoLoginFallback", "Audit_Detail_AutoLoginFallback");
+    public static string Audit_Detail_HistoryQuery => S("Audit_Detail_HistoryQuery", "Audit_Detail_HistoryQuery");
+    public static string Audit_Detail_PageExport => S("Audit_Detail_PageExport", "Audit_Detail_PageExport");
+    public static string Audit_Detail_RecipeExport => S("Audit_Detail_RecipeExport", "Audit_Detail_RecipeExport");
+    public static string Audit_Detail_RecipeImport => S("Audit_Detail_RecipeImport", "Audit_Detail_RecipeImport");
+    public static string Audit_Detail_ReviewPdf => S("Audit_Detail_ReviewPdf", "Audit_Detail_ReviewPdf");
+    public static string Audit_Detail_ReviewReport => S("Audit_Detail_ReviewReport", "Audit_Detail_ReviewReport");
+    public static string Audit_Detail_Role => S("Audit_Detail_Role", "Audit_Detail_Role");
+    public static string Audit_Detail_RoleMustChangePwd => S("Audit_Detail_RoleMustChangePwd", "Audit_Detail_RoleMustChangePwd");
+    public static string Audit_Detail_SnQuery => S("Audit_Detail_SnQuery", "Audit_Detail_SnQuery");
+    public static string Audit_Detail_WoAdd => S("Audit_Detail_WoAdd", "Audit_Detail_WoAdd");
+    public static string Common_Hide => S("Common_Hide", "Common_Hide");
+    public static string Common_Language => S("Common_Language", "Common_Language");
+    public static string Common_RestartRequired => S("Common_RestartRequired", "Common_RestartRequired");
+    public static string Common_Save => S("Common_Save", "Common_Save");
+    public static string Common_Show => S("Common_Show", "Common_Show");
+    public static string Conn_Connected => S("Conn_Connected", "Conn_Connected");
+    public static string Conn_ConnectingSuffix => S("Conn_ConnectingSuffix", "Conn_ConnectingSuffix");
+    public static string Conn_Disconnected => S("Conn_Disconnected", "Conn_Disconnected");
+    public static string Conn_Live => S("Conn_Live", "Conn_Live");
+    public static string Conn_RemoteConnecting => S("Conn_RemoteConnecting", "Conn_RemoteConnecting");
+    public static string Csv_Alarm_Description => S("Csv_Alarm_Description", "Csv_Alarm_Description");
+    public static string Csv_Alarm_FileName => S("Csv_Alarm_FileName", "Csv_Alarm_FileName");
+    public static string Csv_Alarm_Level => S("Csv_Alarm_Level", "Csv_Alarm_Level");
+    public static string Csv_Alarm_Name => S("Csv_Alarm_Name", "Csv_Alarm_Name");
+    public static string Csv_Alarm_NameEn => S("Csv_Alarm_NameEn", "Csv_Alarm_NameEn");
+    public static string Csv_Alarm_NameJa => S("Csv_Alarm_NameJa", "Csv_Alarm_NameJa");
+    public static string Csv_Alarm_NamePt => S("Csv_Alarm_NamePt", "Csv_Alarm_NamePt");
+    public static string Csv_Alarm_PlcAddress => S("Csv_Alarm_PlcAddress", "Csv_Alarm_PlcAddress");
+    public static string Csv_Alarm_Summary => S("Csv_Alarm_Summary", "Csv_Alarm_Summary");
+    public static string Csv_CounterAlarm_Description => S("Csv_CounterAlarm_Description", "Csv_CounterAlarm_Description");
+    public static string Csv_CounterAlarm_Enabled => S("Csv_CounterAlarm_Enabled", "Csv_CounterAlarm_Enabled");
+    public static string Csv_CounterAlarm_FileName => S("Csv_CounterAlarm_FileName", "Csv_CounterAlarm_FileName");
+    public static string Csv_CounterAlarm_MaxValue => S("Csv_CounterAlarm_MaxValue", "Csv_CounterAlarm_MaxValue");
+    public static string Csv_CounterAlarm_Name => S("Csv_CounterAlarm_Name", "Csv_CounterAlarm_Name");
+    public static string Csv_CounterAlarm_NameEn => S("Csv_CounterAlarm_NameEn", "Csv_CounterAlarm_NameEn");
+    public static string Csv_CounterAlarm_NameJa => S("Csv_CounterAlarm_NameJa", "Csv_CounterAlarm_NameJa");
+    public static string Csv_CounterAlarm_NamePt => S("Csv_CounterAlarm_NamePt", "Csv_CounterAlarm_NamePt");
+    public static string Csv_CounterAlarm_PlcAddress => S("Csv_CounterAlarm_PlcAddress", "Csv_CounterAlarm_PlcAddress");
+    public static string Csv_CounterAlarm_Unit => S("Csv_CounterAlarm_Unit", "Csv_CounterAlarm_Unit");
+    public static string Csv_DailyReport_FileName => S("Csv_DailyReport_FileName", "Csv_DailyReport_FileName");
+    public static string Csv_DataSource_AckValue => S("Csv_DataSource_AckValue", "Csv_DataSource_AckValue");
+    public static string Csv_DataSource_BoolExpectedValue => S("Csv_DataSource_BoolExpectedValue", "Csv_DataSource_BoolExpectedValue");
+    public static string Csv_DataSource_ConfirmSeconds => S("Csv_DataSource_ConfirmSeconds", "Csv_DataSource_ConfirmSeconds");
+    public static string Csv_DataSource_EnumValuesJson => S("Csv_DataSource_EnumValuesJson", "Csv_DataSource_EnumValuesJson");
+    public static string Csv_DataSource_ExpectedValue => S("Csv_DataSource_ExpectedValue", "Csv_DataSource_ExpectedValue");
+    public static string Csv_DataSource_ExpectedValueConfigured => S("Csv_DataSource_ExpectedValueConfigured", "Csv_DataSource_ExpectedValueConfigured");
+    public static string Csv_DataSource_FileName => S("Csv_DataSource_FileName", "Csv_DataSource_FileName");
+    public static string Csv_DataSource_FloatExpectedValue => S("Csv_DataSource_FloatExpectedValue", "Csv_DataSource_FloatExpectedValue");
+    public static string Csv_DataSource_FloatLimitMax => S("Csv_DataSource_FloatLimitMax", "Csv_DataSource_FloatLimitMax");
+    public static string Csv_DataSource_FloatLimitMin => S("Csv_DataSource_FloatLimitMin", "Csv_DataSource_FloatLimitMin");
+    public static string Csv_DataSource_Hysteresis => S("Csv_DataSource_Hysteresis", "Csv_DataSource_Hysteresis");
+    public static string Csv_DataSource_LimitMax => S("Csv_DataSource_LimitMax", "Csv_DataSource_LimitMax");
+    public static string Csv_DataSource_LimitMin => S("Csv_DataSource_LimitMin", "Csv_DataSource_LimitMin");
+    public static string Csv_DataSource_SourceDescription => S("Csv_DataSource_SourceDescription", "Csv_DataSource_SourceDescription");
+    public static string Csv_DataSource_SourceEnabled => S("Csv_DataSource_SourceEnabled", "Csv_DataSource_SourceEnabled");
+    public static string Csv_DataSource_SourceName => S("Csv_DataSource_SourceName", "Csv_DataSource_SourceName");
+    public static string Csv_DataSource_SourceNameEn => S("Csv_DataSource_SourceNameEn", "Csv_DataSource_SourceNameEn");
+    public static string Csv_DataSource_SourceNameJa => S("Csv_DataSource_SourceNameJa", "Csv_DataSource_SourceNameJa");
+    public static string Csv_DataSource_SourceNamePt => S("Csv_DataSource_SourceNamePt", "Csv_DataSource_SourceNamePt");
+    public static string Csv_DataSource_SourceType => S("Csv_DataSource_SourceType", "Csv_DataSource_SourceType");
+    public static string Csv_DataSource_StringExpectedValue => S("Csv_DataSource_StringExpectedValue", "Csv_DataSource_StringExpectedValue");
+    public static string Csv_DataSource_StringLength => S("Csv_DataSource_StringLength", "Csv_DataSource_StringLength");
+    public static string Csv_DataSource_TriggerAddress => S("Csv_DataSource_TriggerAddress", "Csv_DataSource_TriggerAddress");
+    public static string Csv_DataSource_TriggerValue => S("Csv_DataSource_TriggerValue", "Csv_DataSource_TriggerValue");
+    public static string Csv_DataSource_ValueDataType => S("Csv_DataSource_ValueDataType", "Csv_DataSource_ValueDataType");
+    public static string Csv_DataSource_ValueEnabled => S("Csv_DataSource_ValueEnabled", "Csv_DataSource_ValueEnabled");
+    public static string Csv_DataSource_ValueName => S("Csv_DataSource_ValueName", "Csv_DataSource_ValueName");
+    public static string Csv_DataSource_ValueNameEn => S("Csv_DataSource_ValueNameEn", "Csv_DataSource_ValueNameEn");
+    public static string Csv_DataSource_ValueNameJa => S("Csv_DataSource_ValueNameJa", "Csv_DataSource_ValueNameJa");
+    public static string Csv_DataSource_ValueNamePt => S("Csv_DataSource_ValueNamePt", "Csv_DataSource_ValueNamePt");
+    public static string Csv_DataSource_ValuePlcAddress => S("Csv_DataSource_ValuePlcAddress", "Csv_DataSource_ValuePlcAddress");
+    public static string Csv_DataSource_ValueUnit => S("Csv_DataSource_ValueUnit", "Csv_DataSource_ValueUnit");
+    public static string Csv_Defect_Category => S("Csv_Defect_Category", "Csv_Defect_Category");
+    public static string Csv_Defect_FileName => S("Csv_Defect_FileName", "Csv_Defect_FileName");
+    public static string Csv_Defect_Name => S("Csv_Defect_Name", "Csv_Defect_Name");
+    public static string Csv_Defect_NameEn => S("Csv_Defect_NameEn", "Csv_Defect_NameEn");
+    public static string Csv_Defect_NameJa => S("Csv_Defect_NameJa", "Csv_Defect_NameJa");
+    public static string Csv_Defect_NamePt => S("Csv_Defect_NamePt", "Csv_Defect_NamePt");
+    public static string Csv_Defect_PlcAddress => S("Csv_Defect_PlcAddress", "Csv_Defect_PlcAddress");
+    public static string Csv_Defect_Severity => S("Csv_Defect_Severity", "Csv_Defect_Severity");
+    public static string Csv_Export_PageHint => S("Csv_Export_PageHint", "Csv_Export_PageHint");
+    public static string Csv_Hd_AlarmId => S("Csv_Hd_AlarmId", "Csv_Hd_AlarmId");
+    public static string Csv_Hd_AlarmName => S("Csv_Hd_AlarmName", "Csv_Hd_AlarmName");
+    public static string Csv_Hd_CurrState => S("Csv_Hd_CurrState", "Csv_Hd_CurrState");
+    public static string Csv_Hd_CurrStateText => S("Csv_Hd_CurrStateText", "Csv_Hd_CurrStateText");
+    public static string Csv_Hd_DeviceId => S("Csv_Hd_DeviceId", "Csv_Hd_DeviceId");
+    public static string Csv_Hd_DeviceName => S("Csv_Hd_DeviceName", "Csv_Hd_DeviceName");
+    public static string Csv_Hd_DurationText => S("Csv_Hd_DurationText", "Csv_Hd_DurationText");
+    public static string Csv_Hd_EventType => S("Csv_Hd_EventType", "Csv_Hd_EventType");
+    public static string Csv_Hd_EventTypeText => S("Csv_Hd_EventTypeText", "Csv_Hd_EventTypeText");
+    public static string Csv_Hd_Metric => S("Csv_Hd_Metric", "Csv_Hd_Metric");
+    public static string Csv_Hd_NgProduction => S("Csv_Hd_NgProduction", "Csv_Hd_NgProduction");
+    public static string Csv_Hd_OkProduction => S("Csv_Hd_OkProduction", "Csv_Hd_OkProduction");
+    public static string Csv_Hd_PlcAddress => S("Csv_Hd_PlcAddress", "Csv_Hd_PlcAddress");
+    public static string Csv_Hd_PrevState => S("Csv_Hd_PrevState", "Csv_Hd_PrevState");
+    public static string Csv_Hd_PrevStateText => S("Csv_Hd_PrevStateText", "Csv_Hd_PrevStateText");
+    public static string Csv_Hd_ShiftName => S("Csv_Hd_ShiftName", "Csv_Hd_ShiftName");
+    public static string Csv_Hd_StatusWord => S("Csv_Hd_StatusWord", "Csv_Hd_StatusWord");
+    public static string Csv_Hd_Timestamp => S("Csv_Hd_Timestamp", "Csv_Hd_Timestamp");
+    public static string Csv_Hd_Value => S("Csv_Hd_Value", "Csv_Hd_Value");
+    public static string Csv_LabelRange => S("Csv_LabelRange", "Csv_LabelRange");
+    public static string Csv_LabelShift => S("Csv_LabelShift", "Csv_LabelShift");
+    public static string Csv_Prod_Range => S("Csv_Prod_Range", "Csv_Prod_Range");
+    public static string Csv_Prod_Summary => S("Csv_Prod_Summary", "Csv_Prod_Summary");
+    public static string Csv_WorkOrder_FileName => S("Csv_WorkOrder_FileName", "Csv_WorkOrder_FileName");
+    public static string Dd_OeeOutputHint => S("Dd_OeeOutputHint", "Dd_OeeOutputHint");
+    public static string Dd_Tip_ActualCapacity => S("Dd_Tip_ActualCapacity", "Dd_Tip_ActualCapacity");
+    public static string Dd_Tip_CycleGap => S("Dd_Tip_CycleGap", "Dd_Tip_CycleGap");
+    public static string Dd_Tip_PlcRaw => S("Dd_Tip_PlcRaw", "Dd_Tip_PlcRaw");
+    public static string Dd_Tip_Theoretical => S("Dd_Tip_Theoretical", "Dd_Tip_Theoretical");
+    public static string Dd_Tip_TodayAlarms => S("Dd_Tip_TodayAlarms", "Dd_Tip_TodayAlarms");
+    public static string Defect_Appearance => S("Defect_Appearance", "Defect_Appearance");
+    public static string Defect_Dimension => S("Defect_Dimension", "Defect_Dimension");
+    public static string Defect_Function => S("Defect_Function", "Defect_Function");
+    public static string Defect_Other => S("Defect_Other", "Defect_Other");
+    public static string Defect_Packaging => S("Defect_Packaging", "Defect_Packaging");
+    public static string Dsm_AckValue => S("Dsm_AckValue", "Dsm_AckValue");
+    public static string Dsm_AddEnumValue => S("Dsm_AddEnumValue", "Dsm_AddEnumValue");
+    public static string Dsm_AddSource => S("Dsm_AddSource", "Dsm_AddSource");
+    public static string Dsm_AddValue => S("Dsm_AddValue", "Dsm_AddValue");
+    public static string Dsm_Address => S("Dsm_Address", "Dsm_Address");
+    public static string Dsm_Alarm => S("Dsm_Alarm", "Dsm_Alarm");
+    public static string Dsm_AlarmValues => S("Dsm_AlarmValues", "Dsm_AlarmValues");
+    public static string Dsm_AllDevices => S("Dsm_AllDevices", "Dsm_AllDevices");
+    public static string Dsm_AllStates => S("Dsm_AllStates", "Dsm_AllStates");
+    public static string Dsm_BackToLiveCard => S("Dsm_BackToLiveCard", "Dsm_BackToLiveCard");
+    public static string Dsm_Bool => S("Dsm_Bool", "Dsm_Bool");
+    public static string Dsm_BoolFalse => S("Dsm_BoolFalse", "Dsm_BoolFalse");
+    public static string Dsm_BoolTrue => S("Dsm_BoolTrue", "Dsm_BoolTrue");
+    public static string Dsm_ClearFilters => S("Dsm_ClearFilters", "Dsm_ClearFilters");
+    public static string Dsm_CollectionDescription => S("Dsm_CollectionDescription", "Dsm_CollectionDescription");
+    public static string Dsm_CompactCards => S("Dsm_CompactCards", "Dsm_CompactCards");
+    public static string Dsm_Criteria => S("Dsm_Criteria", "Dsm_Criteria");
+    public static string Dsm_CurrentValue => S("Dsm_CurrentValue", "Dsm_CurrentValue");
+    public static string Dsm_DataSourceSectionHint => S("Dsm_DataSourceSectionHint", "Dsm_DataSourceSectionHint");
+    public static string Dsm_DataSourceSectionTitle => S("Dsm_DataSourceSectionTitle", "Dsm_DataSourceSectionTitle");
+    public static string Dsm_DefaultEnumStateName => S("Dsm_DefaultEnumStateName", "Dsm_DefaultEnumStateName");
+    public static string Dsm_DefaultValueName => S("Dsm_DefaultValueName", "Dsm_DefaultValueName");
+    public static string Dsm_Details => S("Dsm_Details", "Dsm_Details");
+    public static string Dsm_Device => S("Dsm_Device", "Dsm_Device");
+    public static string Dsm_DeviceFilter => S("Dsm_DeviceFilter", "Dsm_DeviceFilter");
+    public static string Dsm_DisplayMode => S("Dsm_DisplayMode", "Dsm_DisplayMode");
+    public static string Dsm_DisplayName => S("Dsm_DisplayName", "Dsm_DisplayName");
+    public static string Dsm_Empty => S("Dsm_Empty", "Dsm_Empty");
+    public static string Dsm_EmptyHint => S("Dsm_EmptyHint", "Dsm_EmptyHint");
+    public static string Dsm_Enabled => S("Dsm_Enabled", "Dsm_Enabled");
+    public static string Dsm_EnumTableTitle => S("Dsm_EnumTableTitle", "Dsm_EnumTableTitle");
+    public static string Dsm_EnumValue => S("Dsm_EnumValue", "Dsm_EnumValue");
+    public static string Dsm_ExceptionHint => S("Dsm_ExceptionHint", "Dsm_ExceptionHint");
+    public static string Dsm_ExceptionSummary => S("Dsm_ExceptionSummary", "Dsm_ExceptionSummary");
+    public static string Dsm_Exceptions => S("Dsm_Exceptions", "Dsm_Exceptions");
+    public static string Dsm_ExceptionsView => S("Dsm_ExceptionsView", "Dsm_ExceptionsView");
+    public static string Dsm_ExpectedValue => S("Dsm_ExpectedValue", "Dsm_ExpectedValue");
+    public static string Dsm_Float32 => S("Dsm_Float32", "Dsm_Float32");
+    public static string Dsm_Fresh => S("Dsm_Fresh", "Dsm_Fresh");
+    public static string Dsm_Freshness => S("Dsm_Freshness", "Dsm_Freshness");
+    public static string Dsm_Int32 => S("Dsm_Int32", "Dsm_Int32");
+    public static string Dsm_Invalid => S("Dsm_Invalid", "Dsm_Invalid");
+    public static string Dsm_LastRefresh => S("Dsm_LastRefresh", "Dsm_LastRefresh");
+    public static string Dsm_LastUpdated => S("Dsm_LastUpdated", "Dsm_LastUpdated");
+    public static string Dsm_LastValidValue => S("Dsm_LastValidValue", "Dsm_LastValidValue");
+    public static string Dsm_Name => S("Dsm_Name", "Dsm_Name");
+    public static string Dsm_NoDevicesHint => S("Dsm_NoDevicesHint", "Dsm_NoDevicesHint");
+    public static string Dsm_NoMatch => S("Dsm_NoMatch", "Dsm_NoMatch");
+    public static string Dsm_NoMatchHint => S("Dsm_NoMatchHint", "Dsm_NoMatchHint");
+    public static string Dsm_Normal => S("Dsm_Normal", "Dsm_Normal");
+    public static string Dsm_NormalValues => S("Dsm_NormalValues", "Dsm_NormalValues");
+    public static string Dsm_NotSampled => S("Dsm_NotSampled", "Dsm_NotSampled");
+    public static string Dsm_Periodic => S("Dsm_Periodic", "Dsm_Periodic");
+    public static string Dsm_ReadFailed => S("Dsm_ReadFailed", "Dsm_ReadFailed");
+    public static string Dsm_Refresh => S("Dsm_Refresh", "Dsm_Refresh");
+    public static string Dsm_RemoveEnumValue => S("Dsm_RemoveEnumValue", "Dsm_RemoveEnumValue");
+    public static string Dsm_RemoveSource => S("Dsm_RemoveSource", "Dsm_RemoveSource");
+    public static string Dsm_RemoveValue => S("Dsm_RemoveValue", "Dsm_RemoveValue");
+    public static string Dsm_Search => S("Dsm_Search", "Dsm_Search");
+    public static string Dsm_SelectRow => S("Dsm_SelectRow", "Dsm_SelectRow");
+    public static string Dsm_ShowingSummary => S("Dsm_ShowingSummary", "Dsm_ShowingSummary");
+    public static string Dsm_Source => S("Dsm_Source", "Dsm_Source");
+    public static string Dsm_SourceFormat => S("Dsm_SourceFormat", "Dsm_SourceFormat");
+    public static string Dsm_SourceSectionTitle => S("Dsm_SourceSectionTitle", "Dsm_SourceSectionTitle");
+    public static string Dsm_Stale => S("Dsm_Stale", "Dsm_Stale");
+    public static string Dsm_StateFilter => S("Dsm_StateFilter", "Dsm_StateFilter");
+    public static string Dsm_Status => S("Dsm_Status", "Dsm_Status");
+    public static string Dsm_String => S("Dsm_String", "Dsm_String");
+    public static string Dsm_Subtitle => S("Dsm_Subtitle", "Dsm_Subtitle");
+    public static string Dsm_TableView => S("Dsm_TableView", "Dsm_TableView");
+    public static string Dsm_TimedSuffix => S("Dsm_TimedSuffix", "Dsm_TimedSuffix");
+    public static string Dsm_Title => S("Dsm_Title", "Dsm_Title");
+    public static string Dsm_TotalValues => S("Dsm_TotalValues", "Dsm_TotalValues");
+    public static string Dsm_TrendChart => S("Dsm_TrendChart", "Dsm_TrendChart");
+    public static string Dsm_TrendDataGap => S("Dsm_TrendDataGap", "Dsm_TrendDataGap");
+    public static string Dsm_TrendLowerLimit => S("Dsm_TrendLowerLimit", "Dsm_TrendLowerLimit");
+    public static string Dsm_TrendNoData => S("Dsm_TrendNoData", "Dsm_TrendNoData");
+    public static string Dsm_TrendNoDataHint => S("Dsm_TrendNoDataHint", "Dsm_TrendNoDataHint");
+    public static string Dsm_TrendSelectHint => S("Dsm_TrendSelectHint", "Dsm_TrendSelectHint");
+    public static string Dsm_TrendSelectValue => S("Dsm_TrendSelectValue", "Dsm_TrendSelectValue");
+    public static string Dsm_TrendSessionHint => S("Dsm_TrendSessionHint", "Dsm_TrendSessionHint");
+    public static string Dsm_TrendUnsupported => S("Dsm_TrendUnsupported", "Dsm_TrendUnsupported");
+    public static string Dsm_TrendUpperLimit => S("Dsm_TrendUpperLimit", "Dsm_TrendUpperLimit");
+    public static string Dsm_TrendView => S("Dsm_TrendView", "Dsm_TrendView");
+    public static string Dsm_TrendYAxis => S("Dsm_TrendYAxis", "Dsm_TrendYAxis");
+    public static string Dsm_TriggerAddress => S("Dsm_TriggerAddress", "Dsm_TriggerAddress");
+    public static string Dsm_TriggerMode => S("Dsm_TriggerMode", "Dsm_TriggerMode");
+    public static string Dsm_TriggerValue => S("Dsm_TriggerValue", "Dsm_TriggerValue");
+    public static string Dsm_Triggered => S("Dsm_Triggered", "Dsm_Triggered");
+    public static string Dsm_Type => S("Dsm_Type", "Dsm_Type");
+    public static string Dsm_Unit => S("Dsm_Unit", "Dsm_Unit");
+    public static string Dsm_UnitFormat => S("Dsm_UnitFormat", "Dsm_UnitFormat");
+    public static string Dsm_Unspecified => S("Dsm_Unspecified", "Dsm_Unspecified");
+    public static string Dsm_Value => S("Dsm_Value", "Dsm_Value");
+    public static string Dsm_ValueSectionTitle => S("Dsm_ValueSectionTitle", "Dsm_ValueSectionTitle");
+    public static string EventType_Recovered => S("EventType_Recovered", "EventType_Recovered");
+    public static string EventType_ShiftChange => S("EventType_ShiftChange", "EventType_ShiftChange");
+    public static string EventType_Triggered => S("EventType_Triggered", "EventType_Triggered");
+    public static string Export_CsvFilter => S("Export_CsvFilter", "Export_CsvFilter");
+    public static string Export_PdfFilter => S("Export_PdfFilter", "Export_PdfFilter");
+    public static string Export_ReviewCsvFileName => S("Export_ReviewCsvFileName", "Export_ReviewCsvFileName");
+    public static string Export_ReviewPdfFileName => S("Export_ReviewPdfFileName", "Export_ReviewPdfFileName");
+    public static string F_DeviceHealthBreakdown => S("F_DeviceHealthBreakdown", "F_DeviceHealthBreakdown");
+    public static string F_DevicesSaved => S("F_DevicesSaved", "F_DevicesSaved");
+    public static string F_QueryFailed => S("F_QueryFailed", "F_QueryFailed");
+    public static string F_ShiftConfigChanged => S("F_ShiftConfigChanged", "F_ShiftConfigChanged");
+    public static string Hh_BoardHint => S("Hh_BoardHint", "Hh_BoardHint");
+    public static string Hh_BoardMeta => S("Hh_BoardMeta", "Hh_BoardMeta");
+    public static string Hh_BoardTitle => S("Hh_BoardTitle", "Hh_BoardTitle");
+    public static string Hh_Cumulative => S("Hh_Cumulative", "Hh_Cumulative");
+    public static string Hh_Hit => S("Hh_Hit", "Hh_Hit");
+    public static string Hh_Miss => S("Hh_Miss", "Hh_Miss");
+    public static string Hh_OffShift => S("Hh_OffShift", "Hh_OffShift");
+    public static string Hh_OffShiftHint => S("Hh_OffShiftHint", "Hh_OffShiftHint");
+    public static string Hh_Plan => S("Hh_Plan", "Hh_Plan");
+    public static string Home_CumulativeQuality => S("Home_CumulativeQuality", "Home_CumulativeQuality");
+    public static string Home_CycleFaster => S("Home_CycleFaster", "Home_CycleFaster");
+    public static string Home_CycleOnTarget => S("Home_CycleOnTarget", "Home_CycleOnTarget");
+    public static string Home_CycleSlower => S("Home_CycleSlower", "Home_CycleSlower");
+    public static string Home_DeviceHealth => S("Home_DeviceHealth", "Home_DeviceHealth");
+    public static string Home_DeviceHealthTooltip => S("Home_DeviceHealthTooltip", "Home_DeviceHealthTooltip");
+    public static string Home_DeviceHealth_Abnormal => S("Home_DeviceHealth_Abnormal", "Home_DeviceHealth_Abnormal");
+    public static string Home_DeviceHealth_Attention => S("Home_DeviceHealth_Attention", "Home_DeviceHealth_Attention");
+    public static string Home_DeviceHealth_Good => S("Home_DeviceHealth_Good", "Home_DeviceHealth_Good");
+    public static string Home_DeviceHealth_Healthy => S("Home_DeviceHealth_Healthy", "Home_DeviceHealth_Healthy");
+    public static string Home_HourlyFlag => S("Home_HourlyFlag", "Home_HourlyFlag");
+    public static string Home_MuteShort => S("Home_MuteShort", "Home_MuteShort");
+    public static string Home_NoDataSpan => S("Home_NoDataSpan", "Home_NoDataSpan");
+    public static string Home_Scope_Range => S("Home_Scope_Range", "Home_Scope_Range");
+    public static string Home_Scope_Range_Tip => S("Home_Scope_Range_Tip", "Home_Scope_Range_Tip");
+    public static string Home_Scope_Realtime => S("Home_Scope_Realtime", "Home_Scope_Realtime");
+    public static string Home_Scope_Realtime_Tip => S("Home_Scope_Realtime_Tip", "Home_Scope_Realtime_Tip");
+    public static string Home_Scope_Shift => S("Home_Scope_Shift", "Home_Scope_Shift");
+    public static string Home_Scope_Shift_Tip => S("Home_Scope_Shift_Tip", "Home_Scope_Shift_Tip");
+    public static string Home_Scope_WorkOrder => S("Home_Scope_WorkOrder", "Home_Scope_WorkOrder");
+    public static string Home_Scope_WorkOrder_Tip => S("Home_Scope_WorkOrder_Tip", "Home_Scope_WorkOrder_Tip");
+    public static string Home_SelectDeviceHint => S("Home_SelectDeviceHint", "Home_SelectDeviceHint");
+    public static string Home_ShiftOk => S("Home_ShiftOk", "Home_ShiftOk");
+    public static string Home_ShiftTotalOutput => S("Home_ShiftTotalOutput", "Home_ShiftTotalOutput");
+    public static string Home_Tip_ActiveAlarmCount => S("Home_Tip_ActiveAlarmCount", "Home_Tip_ActiveAlarmCount");
+    public static string Home_Tip_ActiveAlarmDuration => S("Home_Tip_ActiveAlarmDuration", "Home_Tip_ActiveAlarmDuration");
+    public static string Home_Tip_ActualCycle => S("Home_Tip_ActualCycle", "Home_Tip_ActualCycle");
+    public static string Home_Tip_AlarmTime => S("Home_Tip_AlarmTime", "Home_Tip_AlarmTime");
+    public static string Home_Tip_Availability => S("Home_Tip_Availability", "Home_Tip_Availability");
+    public static string Home_Tip_Clock => S("Home_Tip_Clock", "Home_Tip_Clock");
+    public static string Home_Tip_ConnBadge => S("Home_Tip_ConnBadge", "Home_Tip_ConnBadge");
+    public static string Home_Tip_CurrentShift => S("Home_Tip_CurrentShift", "Home_Tip_CurrentShift");
+    public static string Home_Tip_CycleDiff => S("Home_Tip_CycleDiff", "Home_Tip_CycleDiff");
+    public static string Home_Tip_DataFresh => S("Home_Tip_DataFresh", "Home_Tip_DataFresh");
+    public static string Home_Tip_DefectNgShare => S("Home_Tip_DefectNgShare", "Home_Tip_DefectNgShare");
+    public static string Home_Tip_DefectSummary => S("Home_Tip_DefectSummary", "Home_Tip_DefectSummary");
+    public static string Home_Tip_DeviceCount => S("Home_Tip_DeviceCount", "Home_Tip_DeviceCount");
+    public static string Home_Tip_DeviceStatus => S("Home_Tip_DeviceStatus", "Home_Tip_DeviceStatus");
+    public static string Home_Tip_HourlyFlag => S("Home_Tip_HourlyFlag", "Home_Tip_HourlyFlag");
+    public static string Home_Tip_LastShift => S("Home_Tip_LastShift", "Home_Tip_LastShift");
+    public static string Home_Tip_NgRate => S("Home_Tip_NgRate", "Home_Tip_NgRate");
+    public static string Home_Tip_Oee => S("Home_Tip_Oee", "Home_Tip_Oee");
+    public static string Home_Tip_OfflineTime => S("Home_Tip_OfflineTime", "Home_Tip_OfflineTime");
+    public static string Home_Tip_PausedTime => S("Home_Tip_PausedTime", "Home_Tip_PausedTime");
+    public static string Home_Tip_Performance => S("Home_Tip_Performance", "Home_Tip_Performance");
+    public static string Home_Tip_Quality => S("Home_Tip_Quality", "Home_Tip_Quality");
+    public static string Home_Tip_QualityGap => S("Home_Tip_QualityGap", "Home_Tip_QualityGap");
+    public static string Home_Tip_QualityTrend => S("Home_Tip_QualityTrend", "Home_Tip_QualityTrend");
+    public static string Home_Tip_RealtimeSpeed => S("Home_Tip_RealtimeSpeed", "Home_Tip_RealtimeSpeed");
+    public static string Home_Tip_Recipe => S("Home_Tip_Recipe", "Home_Tip_Recipe");
+    public static string Home_Tip_RunTime => S("Home_Tip_RunTime", "Home_Tip_RunTime");
+    public static string Home_Tip_Shift => S("Home_Tip_Shift", "Home_Tip_Shift");
+    public static string Home_Tip_ShiftOk => S("Home_Tip_ShiftOk", "Home_Tip_ShiftOk");
+    public static string Home_Tip_SnapSeq => S("Home_Tip_SnapSeq", "Home_Tip_SnapSeq");
+    public static string Home_Tip_SpeedAchievement => S("Home_Tip_SpeedAchievement", "Home_Tip_SpeedAchievement");
+    public static string Home_Tip_StatusWord => S("Home_Tip_StatusWord", "Home_Tip_StatusWord");
+    public static string Home_Tip_TargetCycle => S("Home_Tip_TargetCycle", "Home_Tip_TargetCycle");
+    public static string Home_Tip_TotalOutput => S("Home_Tip_TotalOutput", "Home_Tip_TotalOutput");
+    public static string Home_Tip_TrendWindow => S("Home_Tip_TrendWindow", "Home_Tip_TrendWindow");
+    public static string Home_Tip_WorkOrderAchievement => S("Home_Tip_WorkOrderAchievement", "Home_Tip_WorkOrderAchievement");
+    public static string Home_Tip_WorkOrderCumulativeOk => S("Home_Tip_WorkOrderCumulativeOk", "Home_Tip_WorkOrderCumulativeOk");
+    public static string Home_Tip_WorkOrderNg => S("Home_Tip_WorkOrderNg", "Home_Tip_WorkOrderNg");
+    public static string Home_Tip_WorkOrderOk => S("Home_Tip_WorkOrderOk", "Home_Tip_WorkOrderOk");
+    public static string Home_Tip_WorkOrderProgress => S("Home_Tip_WorkOrderProgress", "Home_Tip_WorkOrderProgress");
+    public static string Home_Tip_WorkOrderQuality => S("Home_Tip_WorkOrderQuality", "Home_Tip_WorkOrderQuality");
+    public static string Home_Tip_WorkOrderSchedule => S("Home_Tip_WorkOrderSchedule", "Home_Tip_WorkOrderSchedule");
+    public static string Home_Tip_WorkOrderTarget => S("Home_Tip_WorkOrderTarget", "Home_Tip_WorkOrderTarget");
+    public static string Home_TotalDuration => S("Home_TotalDuration", "Home_TotalDuration");
+    public static string Home_WorkOrderAchievement => S("Home_WorkOrderAchievement", "Home_WorkOrderAchievement");
+    public static string Home_WorkOrderAhead => S("Home_WorkOrderAhead", "Home_WorkOrderAhead");
+    public static string Home_WorkOrderBehind => S("Home_WorkOrderBehind", "Home_WorkOrderBehind");
+    public static string Home_WorkOrderCumulativeOk => S("Home_WorkOrderCumulativeOk", "Home_WorkOrderCumulativeOk");
+    public static string Home_WorkOrderEmpty => S("Home_WorkOrderEmpty", "Home_WorkOrderEmpty");
+    public static string Home_WorkOrderEmptyHint => S("Home_WorkOrderEmptyHint", "Home_WorkOrderEmptyHint");
+    public static string Home_WorkOrderNg => S("Home_WorkOrderNg", "Home_WorkOrderNg");
+    public static string Home_WorkOrderOverdue => S("Home_WorkOrderOverdue", "Home_WorkOrderOverdue");
+    public static string Home_WorkOrderQuality => S("Home_WorkOrderQuality", "Home_WorkOrderQuality");
+    public static string Home_WorkOrderSchedule => S("Home_WorkOrderSchedule", "Home_WorkOrderSchedule");
+    public static string Hp_DefectCumulative => S("Hp_DefectCumulative", "Hp_DefectCumulative");
+    public static string Hp_DefectEmptyUnconfigured => S("Hp_DefectEmptyUnconfigured", "Hp_DefectEmptyUnconfigured");
+    public static string Hp_DefectEmptyUnconfiguredHint => S("Hp_DefectEmptyUnconfiguredHint", "Hp_DefectEmptyUnconfiguredHint");
+    public static string Hp_DefectEmptyZero => S("Hp_DefectEmptyZero", "Hp_DefectEmptyZero");
+    public static string Hp_DefectEmptyZeroHint => S("Hp_DefectEmptyZeroHint", "Hp_DefectEmptyZeroHint");
+    public static string Hp_DefectOthers => S("Hp_DefectOthers", "Hp_DefectOthers");
+    public static string Hp_DefectShareNg => S("Hp_DefectShareNg", "Hp_DefectShareNg");
+    public static string Hp_DefectSubtitle => S("Hp_DefectSubtitle", "Hp_DefectSubtitle");
+    public static string Hp_DefectSummary => S("Hp_DefectSummary", "Hp_DefectSummary");
+    public static string Hp_DefectTooltip => S("Hp_DefectTooltip", "Hp_DefectTooltip");
+    public static string Hp_DefectTooltipNoAddr => S("Hp_DefectTooltipNoAddr", "Hp_DefectTooltipNoAddr");
+    public static string Hq_SnNotSupported => S("Hq_SnNotSupported", "Hq_SnNotSupported");
+    public static string Hq_SnNotSupportedHint => S("Hq_SnNotSupportedHint", "Hq_SnNotSupportedHint");
+    public static string Hq_Tip_WindowMttr => S("Hq_Tip_WindowMttr", "Hq_Tip_WindowMttr");
+    public static string Hq_Tip_WindowNg => S("Hq_Tip_WindowNg", "Hq_Tip_WindowNg");
+    public static string Hq_Tip_WindowNgRate => S("Hq_Tip_WindowNgRate", "Hq_Tip_WindowNgRate");
+    public static string Hq_Tip_WindowOee => S("Hq_Tip_WindowOee", "Hq_Tip_WindowOee");
+    public static string Hq_Tip_WindowOk => S("Hq_Tip_WindowOk", "Hq_Tip_WindowOk");
+    public static string Hq_Tip_WindowOutput => S("Hq_Tip_WindowOutput", "Hq_Tip_WindowOutput");
+    public static string Hq_Tip_WindowPending => S("Hq_Tip_WindowPending", "Hq_Tip_WindowPending");
+    public static string Hq_Tip_WindowQuality => S("Hq_Tip_WindowQuality", "Hq_Tip_WindowQuality");
+    public static string Hq_Tip_WindowRecovered => S("Hq_Tip_WindowRecovered", "Hq_Tip_WindowRecovered");
+    public static string Hq_Tip_WindowTriggered => S("Hq_Tip_WindowTriggered", "Hq_Tip_WindowTriggered");
+    public static string Language_Portuguese => S("Language_Portuguese", "Language_Portuguese");
+    public static string Lbl_Abort => S("Lbl_Abort", "Lbl_Abort");
+    public static string Lbl_Aborted => S("Lbl_Aborted", "Lbl_Aborted");
+    public static string Lbl_Aborted2 => S("Lbl_Aborted2", "Lbl_Aborted2");
+    public static string Lbl_AboutImportWorkOrdersContinue => S("Lbl_AboutImportWorkOrdersContinue", "Lbl_AboutImportWorkOrdersContinue");
+    public static string Lbl_Achievement => S("Lbl_Achievement", "Lbl_Achievement");
+    public static string Lbl_AchievementRate => S("Lbl_AchievementRate", "Lbl_AchievementRate");
+    public static string Lbl_AcquisitionAbnormal => S("Lbl_AcquisitionAbnormal", "Lbl_AcquisitionAbnormal");
+    public static string Lbl_AcquisitionLoop => S("Lbl_AcquisitionLoop", "Lbl_AcquisitionLoop");
+    public static string Lbl_AcquisitionProcessResourcesConfiguration => S("Lbl_AcquisitionProcessResourcesConfiguration", "Lbl_AcquisitionProcessResourcesConfiguration");
+    public static string Lbl_AcquisitionQualityReadPerformance => S("Lbl_AcquisitionQualityReadPerformance", "Lbl_AcquisitionQualityReadPerformance");
+    public static string Lbl_AcquisitionStrategy => S("Lbl_AcquisitionStrategy", "Lbl_AcquisitionStrategy");
+    public static string Lbl_AcquisitionSuccessRate => S("Lbl_AcquisitionSuccessRate", "Lbl_AcquisitionSuccessRate");
+    public static string Lbl_Action => S("Lbl_Action", "Lbl_Action");
+    public static string Lbl_ActivationTime => S("Lbl_ActivationTime", "Lbl_ActivationTime");
+    public static string Lbl_ActiveAlarmList => S("Lbl_ActiveAlarmList", "Lbl_ActiveAlarmList");
+    public static string Lbl_ActiveAlarms => S("Lbl_ActiveAlarms", "Lbl_ActiveAlarms");
+    public static string Lbl_ActiveAlarmsLive => S("Lbl_ActiveAlarmsLive", "Lbl_ActiveAlarmsLive");
+    public static string Lbl_ActualCycleIncludesPLCReadTime => S("Lbl_ActualCycleIncludesPLCReadTime", "Lbl_ActualCycleIncludesPLCReadTime");
+    public static string Lbl_ActualCycleTime => S("Lbl_ActualCycleTime", "Lbl_ActualCycleTime");
+    public static string Lbl_ActualStart => S("Lbl_ActualStart", "Lbl_ActualStart");
+    public static string Lbl_Add => S("Lbl_Add", "Lbl_Add");
+    public static string Lbl_AddAlarm => S("Lbl_AddAlarm", "Lbl_AddAlarm");
+    public static string Lbl_AddCounterAlarm => S("Lbl_AddCounterAlarm", "Lbl_AddCounterAlarm");
+    public static string Lbl_AddDefect => S("Lbl_AddDefect", "Lbl_AddDefect");
+    public static string Lbl_AddDevice => S("Lbl_AddDevice", "Lbl_AddDevice");
+    public static string Lbl_AddDevicesDeviceManagement => S("Lbl_AddDevicesDeviceManagement", "Lbl_AddDevicesDeviceManagement");
+    public static string Lbl_AddParameter => S("Lbl_AddParameter", "Lbl_AddParameter");
+    public static string Lbl_AddShift => S("Lbl_AddShift", "Lbl_AddShift");
+    public static string Lbl_AddressConflictClickLocate => S("Lbl_AddressConflictClickLocate", "Lbl_AddressConflictClickLocate");
+    public static string Lbl_AdjustBatchReadPollingHistoryWrite => S("Lbl_AdjustBatchReadPollingHistoryWrite", "Lbl_AdjustBatchReadPollingHistoryWrite");
+    public static string Lbl_AdjustWidthDeviceListDetail => S("Lbl_AdjustWidthDeviceListDetail", "Lbl_AdjustWidthDeviceListDetail");
+    public static string Lbl_AdjustWidthOrderListDetail => S("Lbl_AdjustWidthOrderListDetail", "Lbl_AdjustWidthOrderListDetail");
+    public static string Lbl_AdjustWidthRecipeListEditor => S("Lbl_AdjustWidthRecipeListEditor", "Lbl_AdjustWidthRecipeListEditor");
+    public static string Lbl_AffectedDevice => S("Lbl_AffectedDevice", "Lbl_AffectedDevice");
+    public static string Lbl_After => S("Lbl_After", "Lbl_After");
+    public static string Lbl_Alarm => S("Lbl_Alarm", "Lbl_Alarm");
+    public static string Lbl_AlarmCenter => S("Lbl_AlarmCenter", "Lbl_AlarmCenter");
+    public static string Lbl_AlarmCount => S("Lbl_AlarmCount", "Lbl_AlarmCount");
+    public static string Lbl_AlarmDensity => S("Lbl_AlarmDensity", "Lbl_AlarmDensity");
+    public static string Lbl_AlarmDescription => S("Lbl_AlarmDescription", "Lbl_AlarmDescription");
+    public static string Lbl_AlarmDuration => S("Lbl_AlarmDuration", "Lbl_AlarmDuration");
+    public static string Lbl_AlarmEventTable => S("Lbl_AlarmEventTable", "Lbl_AlarmEventTable");
+    public static string Lbl_AlarmFirst => S("Lbl_AlarmFirst", "Lbl_AlarmFirst");
+    public static string Lbl_AlarmLevel => S("Lbl_AlarmLevel", "Lbl_AlarmLevel");
+    public static string Lbl_AlarmList => S("Lbl_AlarmList", "Lbl_AlarmList");
+    public static string Lbl_AlarmManagement => S("Lbl_AlarmManagement", "Lbl_AlarmManagement");
+    public static string Lbl_AlarmName => S("Lbl_AlarmName", "Lbl_AlarmName");
+    public static string Lbl_AlarmPLCAddress => S("Lbl_AlarmPLCAddress", "Lbl_AlarmPLCAddress");
+    public static string Lbl_AlarmRankingList => S("Lbl_AlarmRankingList", "Lbl_AlarmRankingList");
+    public static string Lbl_AlarmRecords => S("Lbl_AlarmRecords", "Lbl_AlarmRecords");
+    public static string Lbl_AlarmRecordsTab => S("Lbl_AlarmRecordsTab", "Lbl_AlarmRecordsTab");
+    public static string Lbl_AlarmType => S("Lbl_AlarmType", "Lbl_AlarmType");
+    public static string Lbl_AlarmTypeFilter => S("Lbl_AlarmTypeFilter", "Lbl_AlarmTypeFilter");
+    public static string Lbl_All => S("Lbl_All", "Lbl_All");
+    public static string Lbl_AllowedAddressGapsBatch => S("Lbl_AllowedAddressGapsBatch", "Lbl_AllowedAddressGapsBatch");
+    public static string Lbl_AllowedUnconfiguredGapsWithinBatch0 => S("Lbl_AllowedUnconfiguredGapsWithinBatch0", "Lbl_AllowedUnconfiguredGapsWithinBatch0");
+    public static string Lbl_ApplyDevice => S("Lbl_ApplyDevice", "Lbl_ApplyDevice");
+    public static string Lbl_ApplyFailed => S("Lbl_ApplyFailed", "Lbl_ApplyFailed");
+    public static string Lbl_ApplyRecipeDevice => S("Lbl_ApplyRecipeDevice", "Lbl_ApplyRecipeDevice");
+    public static string Lbl_ApplyTimedOut90sWaitingAborted => S("Lbl_ApplyTimedOut90sWaitingAborted", "Lbl_ApplyTimedOut90sWaitingAborted");
+    public static string Lbl_ApplyingRecipe => S("Lbl_ApplyingRecipe", "Lbl_ApplyingRecipe");
+    public static string Lbl_AuditDetails => S("Lbl_AuditDetails", "Lbl_AuditDetails");
+    public static string Lbl_AuditExportFailed => S("Lbl_AuditExportFailed", "Lbl_AuditExportFailed");
+    public static string Lbl_AuditExportTruncatedEntriesMatchedExceeds => S("Lbl_AuditExportTruncatedEntriesMatchedExceeds", "Lbl_AuditExportTruncatedEntriesMatchedExceeds");
+    public static string Lbl_AutoDailyReportTime => S("Lbl_AutoDailyReportTime", "Lbl_AutoDailyReportTime");
+    public static string Lbl_AutoGenerateDeviceDailyReportPDF => S("Lbl_AutoGenerateDeviceDailyReportPDF", "Lbl_AutoGenerateDeviceDailyReportPDF");
+    public static string Lbl_AverageAlarmDuration => S("Lbl_AverageAlarmDuration", "Lbl_AverageAlarmDuration");
+    public static string Lbl_AverageCycle => S("Lbl_AverageCycle", "Lbl_AverageCycle");
+    public static string Lbl_AvgRecoveryTime => S("Lbl_AvgRecoveryTime", "Lbl_AvgRecoveryTime");
+    public static string Lbl_BPerformanceRate => S("Lbl_BPerformanceRate", "Lbl_BPerformanceRate");
+    public static string Lbl_Back => S("Lbl_Back", "Lbl_Back");
+    public static string Lbl_BackHomeEsc => S("Lbl_BackHomeEsc", "Lbl_BackHomeEsc");
+    public static string Lbl_BasicParameters => S("Lbl_BasicParameters", "Lbl_BasicParameters");
+    public static string Lbl_BatchPlan => S("Lbl_BatchPlan", "Lbl_BatchPlan");
+    public static string Lbl_BatchReadAddressGaps => S("Lbl_BatchReadAddressGaps", "Lbl_BatchReadAddressGaps");
+    public static string Lbl_Before => S("Lbl_Before", "Lbl_Before");
+    public static string Lbl_BoundDevice => S("Lbl_BoundDevice", "Lbl_BoundDevice");
+    public static string Lbl_CPUMemory => S("Lbl_CPUMemory", "Lbl_CPUMemory");
+    public static string Lbl_CQualityRate => S("Lbl_CQualityRate", "Lbl_CQualityRate");
+    public static string Lbl_Cancel => S("Lbl_Cancel", "Lbl_Cancel");
+    public static string Lbl_CancelApply => S("Lbl_CancelApply", "Lbl_CancelApply");
+    public static string Lbl_CannotSaveRecipeHasNoParameters => S("Lbl_CannotSaveRecipeHasNoParameters", "Lbl_CannotSaveRecipeHasNoParameters");
+    public static string Lbl_ChangeVsPreviousPeriod => S("Lbl_ChangeVsPreviousPeriod", "Lbl_ChangeVsPreviousPeriod");
+    public static string Lbl_ClearCounterAlarmValue => S("Lbl_ClearCounterAlarmValue", "Lbl_ClearCounterAlarmValue");
+    public static string Lbl_ClearFiltersCtrlR => S("Lbl_ClearFiltersCtrlR", "Lbl_ClearFiltersCtrlR");
+    public static string Lbl_ClearValue => S("Lbl_ClearValue", "Lbl_ClearValue");
+    public static string Lbl_ClickAddBelowAdjustFilters => S("Lbl_ClickAddBelowAdjustFilters", "Lbl_ClickAddBelowAdjustFilters");
+    public static string Lbl_ClickAddShiftTopRightConfigure => S("Lbl_ClickAddShiftTopRightConfigure", "Lbl_ClickAddShiftTopRightConfigure");
+    public static string Lbl_ClickClockIconPickTime => S("Lbl_ClickClockIconPickTime", "Lbl_ClickClockIconPickTime");
+    public static string Lbl_Close => S("Lbl_Close", "Lbl_Close");
+    public static string Lbl_CollapseExpandSidebar => S("Lbl_CollapseExpandSidebar", "Lbl_CollapseExpandSidebar");
+    public static string Lbl_CollapseExpandSidebar2 => S("Lbl_CollapseExpandSidebar2", "Lbl_CollapseExpandSidebar2");
+    public static string Lbl_CollectorServiceURL => S("Lbl_CollectorServiceURL", "Lbl_CollectorServiceURL");
+    public static string Lbl_CommunicationLost => S("Lbl_CommunicationLost", "Lbl_CommunicationLost");
+    public static string Lbl_Complete => S("Lbl_Complete", "Lbl_Complete");
+    public static string Lbl_Completed => S("Lbl_Completed", "Lbl_Completed");
+    public static string Lbl_Completed2 => S("Lbl_Completed2", "Lbl_Completed2");
+    public static string Lbl_CompletedPolls => S("Lbl_CompletedPolls", "Lbl_CompletedPolls");
+    public static string Lbl_ComputedCurrentDeviceStatusAlarmHistory => S("Lbl_ComputedCurrentDeviceStatusAlarmHistory", "Lbl_ComputedCurrentDeviceStatusAlarmHistory");
+    public static string Lbl_ConclusionGeneratedProductionDeviceQualityData => S("Lbl_ConclusionGeneratedProductionDeviceQualityData", "Lbl_ConclusionGeneratedProductionDeviceQualityData");
+    public static string Lbl_ConfigCheck => S("Lbl_ConfigCheck", "Lbl_ConfigCheck");
+    public static string Lbl_ConfigErrorClickLocate => S("Lbl_ConfigErrorClickLocate", "Lbl_ConfigErrorClickLocate");
+    public static string Lbl_ConfigureCommunicationAddressAcquisitionRateDisp => S("Lbl_ConfigureCommunicationAddressAcquisitionRateDisp", "Lbl_ConfigureCommunicationAddressAcquisitionRateDisp");
+    public static string Lbl_ConfigureShiftsSettings => S("Lbl_ConfigureShiftsSettings", "Lbl_ConfigureShiftsSettings");
+    public static string Lbl_Configured => S("Lbl_Configured", "Lbl_Configured");
+    public static string Lbl_ConfiguredDevices => S("Lbl_ConfiguredDevices", "Lbl_ConfiguredDevices");
+    public static string Lbl_ConfiguredPollInterval => S("Lbl_ConfiguredPollInterval", "Lbl_ConfiguredPollInterval");
+    public static string Lbl_Conflict => S("Lbl_Conflict", "Lbl_Conflict");
+    public static string Lbl_ConnectionEndpoint => S("Lbl_ConnectionEndpoint", "Lbl_ConnectionEndpoint");
+    public static string Lbl_ConnectionTimeout => S("Lbl_ConnectionTimeout", "Lbl_ConnectionTimeout");
+    public static string Lbl_ConnectionTimeoutMs => S("Lbl_ConnectionTimeoutMs", "Lbl_ConnectionTimeoutMs");
+    public static string Lbl_ConsecutiveFailureRetries => S("Lbl_ConsecutiveFailureRetries", "Lbl_ConsecutiveFailureRetries");
+    public static string Lbl_ConsecutiveFailures => S("Lbl_ConsecutiveFailures", "Lbl_ConsecutiveFailures");
+    public static string Lbl_Copied => S("Lbl_Copied", "Lbl_Copied");
+    public static string Lbl_Copy => S("Lbl_Copy", "Lbl_Copy");
+    public static string Lbl_Copy2 => S("Lbl_Copy2", "Lbl_Copy2");
+    public static string Lbl_CopyAlarmInfo => S("Lbl_CopyAlarmInfo", "Lbl_CopyAlarmInfo");
+    public static string Lbl_CopyCurrentOrderNewPendingOrder => S("Lbl_CopyCurrentOrderNewPendingOrder", "Lbl_CopyCurrentOrderNewPendingOrder");
+    public static string Lbl_CopyImportExportRestoreVirtual => S("Lbl_CopyImportExportRestoreVirtual", "Lbl_CopyImportExportRestoreVirtual");
+    public static string Lbl_CopyLicenseKey => S("Lbl_CopyLicenseKey", "Lbl_CopyLicenseKey");
+    public static string Lbl_CopyMachineCode => S("Lbl_CopyMachineCode", "Lbl_CopyMachineCode");
+    public static string Lbl_CopyRecipe => S("Lbl_CopyRecipe", "Lbl_CopyRecipe");
+    public static string Lbl_CopySelectedDevice => S("Lbl_CopySelectedDevice", "Lbl_CopySelectedDevice");
+    public static string Lbl_CopySelectedDevice2 => S("Lbl_CopySelectedDevice2", "Lbl_CopySelectedDevice2");
+    public static string Lbl_CountAlarmsYetRecoveredLiveSnapshot => S("Lbl_CountAlarmsYetRecoveredLiveSnapshot", "Lbl_CountAlarmsYetRecoveredLiveSnapshot");
+    public static string Lbl_CountUnit => S("Lbl_CountUnit", "Lbl_CountUnit");
+    public static string Lbl_CounterAlarm => S("Lbl_CounterAlarm", "Lbl_CounterAlarm");
+    public static string Lbl_CounterAlarmDescription => S("Lbl_CounterAlarmDescription", "Lbl_CounterAlarmDescription");
+    public static string Lbl_CounterAlarmList => S("Lbl_CounterAlarmList", "Lbl_CounterAlarmList");
+    public static string Lbl_CounterAlarmName => S("Lbl_CounterAlarmName", "Lbl_CounterAlarmName");
+    public static string Lbl_CounterAlarmPLCAddress => S("Lbl_CounterAlarmPLCAddress", "Lbl_CounterAlarmPLCAddress");
+    public static string Lbl_CounterAlarmUpperThreshold => S("Lbl_CounterAlarmUpperThreshold", "Lbl_CounterAlarmUpperThreshold");
+    public static string Lbl_Created => S("Lbl_Created", "Lbl_Created");
+    public static string Lbl_CumulativeDisconnects => S("Lbl_CumulativeDisconnects", "Lbl_CumulativeDisconnects");
+    public static string Lbl_CumulativeShare => S("Lbl_CumulativeShare", "Lbl_CumulativeShare");
+    public static string Lbl_CurrentDeviceDefectPareto => S("Lbl_CurrentDeviceDefectPareto", "Lbl_CurrentDeviceDefectPareto");
+    public static string Lbl_CurrentDeviceDetails => S("Lbl_CurrentDeviceDetails", "Lbl_CurrentDeviceDetails");
+    public static string Lbl_CurrentDeviceHasConfigurationIssues => S("Lbl_CurrentDeviceHasConfigurationIssues", "Lbl_CurrentDeviceHasConfigurationIssues");
+    public static string Lbl_CurrentDeviceHasUnsavedChangesSwitching => S("Lbl_CurrentDeviceHasUnsavedChangesSwitching", "Lbl_CurrentDeviceHasUnsavedChangesSwitching");
+    public static string Lbl_CurrentOEE => S("Lbl_CurrentOEE", "Lbl_CurrentOEE");
+    public static string Lbl_CurrentProductionProgress => S("Lbl_CurrentProductionProgress", "Lbl_CurrentProductionProgress");
+    public static string Lbl_CurrentQualityRate => S("Lbl_CurrentQualityRate", "Lbl_CurrentQualityRate");
+    public static string Lbl_CurrentRecipe => S("Lbl_CurrentRecipe", "Lbl_CurrentRecipe");
+    public static string Lbl_CurrentResults => S("Lbl_CurrentResults", "Lbl_CurrentResults");
+    public static string Lbl_CurrentShift => S("Lbl_CurrentShift", "Lbl_CurrentShift");
+    public static string Lbl_CurrentShiftQuality => S("Lbl_CurrentShiftQuality", "Lbl_CurrentShiftQuality");
+    public static string Lbl_CurrentSpeed => S("Lbl_CurrentSpeed", "Lbl_CurrentSpeed");
+    public static string Lbl_CurrentStatus => S("Lbl_CurrentStatus", "Lbl_CurrentStatus");
+    public static string Lbl_CurrentTotalOutput => S("Lbl_CurrentTotalOutput", "Lbl_CurrentTotalOutput");
+    public static string Lbl_CurrentValue => S("Lbl_CurrentValue", "Lbl_CurrentValue");
+    public static string Lbl_CurrentWorkOrder => S("Lbl_CurrentWorkOrder", "Lbl_CurrentWorkOrder");
+    public static string Lbl_Custom => S("Lbl_Custom", "Lbl_Custom");
+    public static string Lbl_CycleComparison => S("Lbl_CycleComparison", "Lbl_CycleComparison");
+    public static string Lbl_CycleTime => S("Lbl_CycleTime", "Lbl_CycleTime");
+    public static string Lbl_DashboardRefreshInterval => S("Lbl_DashboardRefreshInterval", "Lbl_DashboardRefreshInterval");
+    public static string Lbl_DashboardRefreshIntervalMs => S("Lbl_DashboardRefreshIntervalMs", "Lbl_DashboardRefreshIntervalMs");
+    public static string Lbl_DashboardRefreshIntervalMs2 => S("Lbl_DashboardRefreshIntervalMs2", "Lbl_DashboardRefreshIntervalMs2");
+    public static string Lbl_DashboardTitle => S("Lbl_DashboardTitle", "Lbl_DashboardTitle");
+    public static string Lbl_DashboardWindowPageTitleWebScreens => S("Lbl_DashboardWindowPageTitleWebScreens", "Lbl_DashboardWindowPageTitleWebScreens");
+    public static string Lbl_DataAcquisitionMode => S("Lbl_DataAcquisitionMode", "Lbl_DataAcquisitionMode");
+    public static string Lbl_DatabaseStorage => S("Lbl_DatabaseStorage", "Lbl_DatabaseStorage");
+    public static string Lbl_DefaultText => S("Lbl_DefaultText", "Lbl_DefaultText");
+    public static string Lbl_DefectCategory => S("Lbl_DefectCategory", "Lbl_DefectCategory");
+    public static string Lbl_DefectCountsComeDeviceCumulativeSnapshot => S("Lbl_DefectCountsComeDeviceCumulativeSnapshot", "Lbl_DefectCountsComeDeviceCumulativeSnapshot");
+    public static string Lbl_DefectList => S("Lbl_DefectList", "Lbl_DefectList");
+    public static string Lbl_DefectManagement => S("Lbl_DefectManagement", "Lbl_DefectManagement");
+    public static string Lbl_DefectName => S("Lbl_DefectName", "Lbl_DefectName");
+    public static string Lbl_DefectPLCAddress => S("Lbl_DefectPLCAddress", "Lbl_DefectPLCAddress");
+    public static string Lbl_DefectParetoTop8 => S("Lbl_DefectParetoTop8", "Lbl_DefectParetoTop8");
+    public static string Lbl_DefectRate => S("Lbl_DefectRate", "Lbl_DefectRate");
+    public static string Lbl_DefectRate2 => S("Lbl_DefectRate2", "Lbl_DefectRate2");
+    public static string Lbl_DefectRatio => S("Lbl_DefectRatio", "Lbl_DefectRatio");
+    public static string Lbl_DefectSeverity => S("Lbl_DefectSeverity", "Lbl_DefectSeverity");
+    public static string Lbl_DefectiveOutput => S("Lbl_DefectiveOutput", "Lbl_DefectiveOutput");
+    public static string Lbl_Delete => S("Lbl_Delete", "Lbl_Delete");
+    public static string Lbl_DeleteAlarm => S("Lbl_DeleteAlarm", "Lbl_DeleteAlarm");
+    public static string Lbl_DeleteCounterAlarm => S("Lbl_DeleteCounterAlarm", "Lbl_DeleteCounterAlarm");
+    public static string Lbl_DeleteDefect => S("Lbl_DeleteDefect", "Lbl_DeleteDefect");
+    public static string Lbl_DeleteRecipe => S("Lbl_DeleteRecipe", "Lbl_DeleteRecipe");
+    public static string Lbl_DeleteRecipe2 => S("Lbl_DeleteRecipe2", "Lbl_DeleteRecipe2");
+    public static string Lbl_DeleteSelectedDevice => S("Lbl_DeleteSelectedDevice", "Lbl_DeleteSelectedDevice");
+    public static string Lbl_DeleteShift => S("Lbl_DeleteShift", "Lbl_DeleteShift");
+    public static string Lbl_Detail => S("Lbl_Detail", "Lbl_Detail");
+    public static string Lbl_Details => S("Lbl_Details", "Lbl_Details");
+    public static string Lbl_Device => S("Lbl_Device", "Lbl_Device");
+    public static string Lbl_Device2 => S("Lbl_Device2", "Lbl_Device2");
+    public static string Lbl_DeviceAcquisitionStatus => S("Lbl_DeviceAcquisitionStatus", "Lbl_DeviceAcquisitionStatus");
+    public static string Lbl_DeviceConfig => S("Lbl_DeviceConfig", "Lbl_DeviceConfig");
+    public static string Lbl_DeviceConfigValidatedOKDevices => S("Lbl_DeviceConfigValidatedOKDevices", "Lbl_DeviceConfigValidatedOKDevices");
+    public static string Lbl_DeviceDetail => S("Lbl_DeviceDetail", "Lbl_DeviceDetail");
+    public static string Lbl_DeviceDetailTabs => S("Lbl_DeviceDetailTabs", "Lbl_DeviceDetailTabs");
+    public static string Lbl_DeviceFilter => S("Lbl_DeviceFilter", "Lbl_DeviceFilter");
+    public static string Lbl_DeviceFound => S("Lbl_DeviceFound", "Lbl_DeviceFound");
+    public static string Lbl_DeviceHealthScore => S("Lbl_DeviceHealthScore", "Lbl_DeviceHealthScore");
+    public static string Lbl_DeviceList => S("Lbl_DeviceList", "Lbl_DeviceList");
+    public static string Lbl_DeviceName => S("Lbl_DeviceName", "Lbl_DeviceName");
+    public static string Lbl_DeviceName2 => S("Lbl_DeviceName2", "Lbl_DeviceName2");
+    public static string Lbl_DeviceParameters => S("Lbl_DeviceParameters", "Lbl_DeviceParameters");
+    public static string Lbl_DeviceReads => S("Lbl_DeviceReads", "Lbl_DeviceReads");
+    public static string Lbl_DeviceRunningNoOutputAcquired => S("Lbl_DeviceRunningNoOutputAcquired", "Lbl_DeviceRunningNoOutputAcquired");
+    public static string Lbl_DeviceRunningNormally => S("Lbl_DeviceRunningNormally", "Lbl_DeviceRunningNormally");
+    public static string Lbl_DeviceStatus => S("Lbl_DeviceStatus", "Lbl_DeviceStatus");
+    public static string Lbl_DeviceStatusTimeline => S("Lbl_DeviceStatusTimeline", "Lbl_DeviceStatusTimeline");
+    public static string Lbl_DiscardChanges => S("Lbl_DiscardChanges", "Lbl_DiscardChanges");
+    public static string Lbl_DisconnectDuration => S("Lbl_DisconnectDuration", "Lbl_DisconnectDuration");
+    public static string Lbl_DoubleClickErrorJumpDeviceTab => S("Lbl_DoubleClickErrorJumpDeviceTab", "Lbl_DoubleClickErrorJumpDeviceTab");
+    public static string Lbl_DoubleClickRowEditWorkOrder => S("Lbl_DoubleClickRowEditWorkOrder", "Lbl_DoubleClickRowEditWorkOrder");
+    public static string Lbl_Downtime => S("Lbl_Downtime", "Lbl_Downtime");
+    public static string Lbl_DowntimeAnalysis => S("Lbl_DowntimeAnalysis", "Lbl_DowntimeAnalysis");
+    public static string Lbl_Duration => S("Lbl_Duration", "Lbl_Duration");
+    public static string Lbl_Duration2 => S("Lbl_Duration2", "Lbl_Duration2");
+    public static string Lbl_DurationBarChart => S("Lbl_DurationBarChart", "Lbl_DurationBarChart");
+    public static string Lbl_EarliestAlarmOngoing => S("Lbl_EarliestAlarmOngoing", "Lbl_EarliestAlarmOngoing");
+    public static string Lbl_EarliestStartedAlarmYetRecoveredLive => S("Lbl_EarliestStartedAlarmYetRecoveredLive", "Lbl_EarliestStartedAlarmYetRecoveredLive");
+    public static string Lbl_Edit => S("Lbl_Edit", "Lbl_Edit");
+    public static string Lbl_EditWorkOrder => S("Lbl_EditWorkOrder", "Lbl_EditWorkOrder");
+    public static string Lbl_EnableAutoDailyReport => S("Lbl_EnableAutoDailyReport", "Lbl_EnableAutoDailyReport");
+    public static string Lbl_EnableNewAlarmSound => S("Lbl_EnableNewAlarmSound", "Lbl_EnableNewAlarmSound");
+    public static string Lbl_End => S("Lbl_End", "Lbl_End");
+    public static string Lbl_EnterSNLookUpProductionTrace => S("Lbl_EnterSNLookUpProductionTrace", "Lbl_EnterSNLookUpProductionTrace");
+    public static string Lbl_EnterSNTraceEGSN20260830 => S("Lbl_EnterSNTraceEGSN20260830", "Lbl_EnterSNTraceEGSN20260830");
+    public static string Lbl_EventStreamTopListFollowSelected => S("Lbl_EventStreamTopListFollowSelected", "Lbl_EventStreamTopListFollowSelected");
+    public static string Lbl_EventType => S("Lbl_EventType", "Lbl_EventType");
+    public static string Lbl_Exceeded => S("Lbl_Exceeded", "Lbl_Exceeded");
+    public static string Lbl_ExpiryTime => S("Lbl_ExpiryTime", "Lbl_ExpiryTime");
+    public static string Lbl_Export => S("Lbl_Export", "Lbl_Export");
+    public static string Lbl_Export2 => S("Lbl_Export2", "Lbl_Export2");
+    public static string Lbl_ExportAlarmCSV => S("Lbl_ExportAlarmCSV", "Lbl_ExportAlarmCSV");
+    public static string Lbl_ExportAllAlarmsCurrentDeviceCSV => S("Lbl_ExportAllAlarmsCurrentDeviceCSV", "Lbl_ExportAllAlarmsCurrentDeviceCSV");
+    public static string Lbl_ExportAllCounterAlarmsCurrentDevice => S("Lbl_ExportAllCounterAlarmsCurrentDevice", "Lbl_ExportAllCounterAlarmsCurrentDevice");
+    public static string Lbl_ExportAllDefectsCurrentDeviceCSV => S("Lbl_ExportAllDefectsCurrentDeviceCSV", "Lbl_ExportAllDefectsCurrentDeviceCSV");
+    public static string Lbl_ExportAuditLog => S("Lbl_ExportAuditLog", "Lbl_ExportAuditLog");
+    public static string Lbl_ExportCSVArchive => S("Lbl_ExportCSVArchive", "Lbl_ExportCSVArchive");
+    public static string Lbl_ExportCSVCtrlE => S("Lbl_ExportCSVCtrlE", "Lbl_ExportCSVCtrlE");
+    public static string Lbl_ExportConfig => S("Lbl_ExportConfig", "Lbl_ExportConfig");
+    public static string Lbl_ExportCounterAlarmsCSV => S("Lbl_ExportCounterAlarmsCSV", "Lbl_ExportCounterAlarmsCSV");
+    public static string Lbl_ExportCurrentTabDataCSV => S("Lbl_ExportCurrentTabDataCSV", "Lbl_ExportCurrentTabDataCSV");
+    public static string Lbl_ExportDefectsCSV => S("Lbl_ExportDefectsCSV", "Lbl_ExportDefectsCSV");
+    public static string Lbl_ExportDeviceConfig => S("Lbl_ExportDeviceConfig", "Lbl_ExportDeviceConfig");
+    public static string Lbl_ExportJSONArchive => S("Lbl_ExportJSONArchive", "Lbl_ExportJSONArchive");
+    public static string Lbl_ExportPDF => S("Lbl_ExportPDF", "Lbl_ExportPDF");
+    public static string Lbl_ExportRecipes => S("Lbl_ExportRecipes", "Lbl_ExportRecipes");
+    public static string Lbl_ExportReport => S("Lbl_ExportReport", "Lbl_ExportReport");
+    public static string Lbl_ExportReviewPDF => S("Lbl_ExportReviewPDF", "Lbl_ExportReviewPDF");
+    public static string Lbl_ExportReviewPDFCurrentTimeRange => S("Lbl_ExportReviewPDFCurrentTimeRange", "Lbl_ExportReviewPDFCurrentTimeRange");
+    public static string Lbl_ExportReviewReport => S("Lbl_ExportReviewReport", "Lbl_ExportReviewReport");
+    public static string Lbl_ExportReviewReportCurrentTimeRange => S("Lbl_ExportReviewReportCurrentTimeRange", "Lbl_ExportReviewReportCurrentTimeRange");
+    public static string Lbl_ExportSelectedDevice => S("Lbl_ExportSelectedDevice", "Lbl_ExportSelectedDevice");
+    public static string Lbl_ExportedAuditEntries => S("Lbl_ExportedAuditEntries", "Lbl_ExportedAuditEntries");
+    public static string Lbl_ExportedDevice => S("Lbl_ExportedDevice", "Lbl_ExportedDevice");
+    public static string Lbl_ExtraLarge130 => S("Lbl_ExtraLarge130", "Lbl_ExtraLarge130");
+    public static string Lbl_Failed => S("Lbl_Failed", "Lbl_Failed");
+    public static string Lbl_Failed2 => S("Lbl_Failed2", "Lbl_Failed2");
+    public static string Lbl_FailedReadWorkOrderCSV => S("Lbl_FailedReadWorkOrderCSV", "Lbl_FailedReadWorkOrderCSV");
+    public static string Lbl_FilterDevicesStatus => S("Lbl_FilterDevicesStatus", "Lbl_FilterDevicesStatus");
+    public static string Lbl_FilterHighLevelAlarms => S("Lbl_FilterHighLevelAlarms", "Lbl_FilterHighLevelAlarms");
+    public static string Lbl_FilterLowLevelAlarms => S("Lbl_FilterLowLevelAlarms", "Lbl_FilterLowLevelAlarms");
+    public static string Lbl_FilterMediumLevelAlarms => S("Lbl_FilterMediumLevelAlarms", "Lbl_FilterMediumLevelAlarms");
+    public static string Lbl_FollowingConfigurationIssuesWereFound => S("Lbl_FollowingConfigurationIssuesWereFound", "Lbl_FollowingConfigurationIssuesWereFound");
+    public static string Lbl_FreeDisk => S("Lbl_FreeDisk", "Lbl_FreeDisk");
+    public static string Lbl_From => S("Lbl_From", "Lbl_From");
+    public static string Lbl_FullMode => S("Lbl_FullMode", "Lbl_FullMode");
+    public static string Lbl_FullModeDisplayManagement => S("Lbl_FullModeDisplayManagement", "Lbl_FullModeDisplayManagement");
+    public static string Lbl_GPUEngineLoad => S("Lbl_GPUEngineLoad", "Lbl_GPUEngineLoad");
+    public static string Lbl_GPUUsage => S("Lbl_GPUUsage", "Lbl_GPUUsage");
+    public static string Lbl_Gap => S("Lbl_Gap", "Lbl_Gap");
+    public static string Lbl_General => S("Lbl_General", "Lbl_General");
+    public static string Lbl_Generate20VirtualDevicesPreviewPassword => S("Lbl_Generate20VirtualDevicesPreviewPassword", "Lbl_Generate20VirtualDevicesPreviewPassword");
+    public static string Lbl_GenerateSampleOrdersPreviewPasswordRequired => S("Lbl_GenerateSampleOrdersPreviewPasswordRequired", "Lbl_GenerateSampleOrdersPreviewPasswordRequired");
+    public static string Lbl_GenerateSamples => S("Lbl_GenerateSamples", "Lbl_GenerateSamples");
+    public static string Lbl_GenerateVirtualDevices => S("Lbl_GenerateVirtualDevices", "Lbl_GenerateVirtualDevices");
+    public static string Lbl_GeneratedHistoricalAlarmEvents => S("Lbl_GeneratedHistoricalAlarmEvents", "Lbl_GeneratedHistoricalAlarmEvents");
+    public static string Lbl_GeneratesPreviousDayDeviceReportTime => S("Lbl_GeneratesPreviousDayDeviceReportTime", "Lbl_GeneratesPreviousDayDeviceReportTime");
+    public static string Lbl_GeneratesPreviousDayPDFEachDevice => S("Lbl_GeneratesPreviousDayPDFEachDevice", "Lbl_GeneratesPreviousDayPDFEachDevice");
+    public static string Lbl_GoodOutput => S("Lbl_GoodOutput", "Lbl_GoodOutput");
+    public static string Lbl_HasNG => S("Lbl_HasNG", "Lbl_HasNG");
+    public static string Lbl_HealthPLCCommunicationAcquisitionLoopDevice => S("Lbl_HealthPLCCommunicationAcquisitionLoopDevice", "Lbl_HealthPLCCommunicationAcquisitionLoopDevice");
+    public static string Lbl_High => S("Lbl_High", "Lbl_High");
+    public static string Lbl_HintAdjustKeywordStatusFilter => S("Lbl_HintAdjustKeywordStatusFilter", "Lbl_HintAdjustKeywordStatusFilter");
+    public static string Lbl_HintStatusDurationRequiresSpecificDevice => S("Lbl_HintStatusDurationRequiresSpecificDevice", "Lbl_HintStatusDurationRequiresSpecificDevice");
+    public static string Lbl_HintSwitchDeviceWidenTimeRange => S("Lbl_HintSwitchDeviceWidenTimeRange", "Lbl_HintSwitchDeviceWidenTimeRange");
+    public static string Lbl_HintSwitchDeviceWidenTimeRange2 => S("Lbl_HintSwitchDeviceWidenTimeRange2", "Lbl_HintSwitchDeviceWidenTimeRange2");
+    public static string Lbl_History => S("Lbl_History", "Lbl_History");
+    public static string Lbl_HistoryQuery => S("Lbl_HistoryQuery", "Lbl_HistoryQuery");
+    public static string Lbl_HistoryWriteFrequency => S("Lbl_HistoryWriteFrequency", "Lbl_HistoryWriteFrequency");
+    public static string Lbl_HistoryWriteHealth => S("Lbl_HistoryWriteHealth", "Lbl_HistoryWriteHealth");
+    public static string Lbl_HistoryWriteInterval => S("Lbl_HistoryWriteInterval", "Lbl_HistoryWriteInterval");
+    public static string Lbl_HistoryWriteIntervalScans => S("Lbl_HistoryWriteIntervalScans", "Lbl_HistoryWriteIntervalScans");
+    public static string Lbl_HistoryWriteIntervalScans2 => S("Lbl_HistoryWriteIntervalScans2", "Lbl_HistoryWriteIntervalScans2");
+    public static string Lbl_HrAgo => S("Lbl_HrAgo", "Lbl_HrAgo");
+    public static string Lbl_IPAddress => S("Lbl_IPAddress", "Lbl_IPAddress");
+    public static string Lbl_Import => S("Lbl_Import", "Lbl_Import");
+    public static string Lbl_Import2 => S("Lbl_Import2", "Lbl_Import2");
+    public static string Lbl_ImportAlarmCSV => S("Lbl_ImportAlarmCSV", "Lbl_ImportAlarmCSV");
+    public static string Lbl_ImportAlarmsCSVAppendReplaceCurrent => S("Lbl_ImportAlarmsCSVAppendReplaceCurrent", "Lbl_ImportAlarmsCSVAppendReplaceCurrent");
+    public static string Lbl_ImportConfig => S("Lbl_ImportConfig", "Lbl_ImportConfig");
+    public static string Lbl_ImportCounterAlarmsCSV => S("Lbl_ImportCounterAlarmsCSV", "Lbl_ImportCounterAlarmsCSV");
+    public static string Lbl_ImportCounterAlarmsCSVAppendReplace => S("Lbl_ImportCounterAlarmsCSVAppendReplace", "Lbl_ImportCounterAlarmsCSVAppendReplace");
+    public static string Lbl_ImportDefectsCSV => S("Lbl_ImportDefectsCSV", "Lbl_ImportDefectsCSV");
+    public static string Lbl_ImportDefectsCSVAppendReplaceCurrent => S("Lbl_ImportDefectsCSVAppendReplaceCurrent", "Lbl_ImportDefectsCSVAppendReplaceCurrent");
+    public static string Lbl_ImportDeviceConfig => S("Lbl_ImportDeviceConfig", "Lbl_ImportDeviceConfig");
+    public static string Lbl_ImportDeviceConfig2 => S("Lbl_ImportDeviceConfig2", "Lbl_ImportDeviceConfig2");
+    public static string Lbl_ImportFailedDeviceIdConflictsExisting => S("Lbl_ImportFailedDeviceIdConflictsExisting", "Lbl_ImportFailedDeviceIdConflictsExisting");
+    public static string Lbl_ImportFailedFileEmptyCouldParsed => S("Lbl_ImportFailedFileEmptyCouldParsed", "Lbl_ImportFailedFileEmptyCouldParsed");
+    public static string Lbl_ImportRecipes => S("Lbl_ImportRecipes", "Lbl_ImportRecipes");
+    public static string Lbl_ImportWorkOrders => S("Lbl_ImportWorkOrders", "Lbl_ImportWorkOrders");
+    public static string Lbl_ImportedDevice => S("Lbl_ImportedDevice", "Lbl_ImportedDevice");
+    public static string Lbl_ImportedSkipped => S("Lbl_ImportedSkipped", "Lbl_ImportedSkipped");
+    public static string Lbl_ImportedWorkOrdersSuccessfully => S("Lbl_ImportedWorkOrdersSuccessfully", "Lbl_ImportedWorkOrdersSuccessfully");
+    public static string Lbl_JSONFilesJsonAllFiles => S("Lbl_JSONFilesJsonAllFiles", "Lbl_JSONFilesJsonAllFiles");
+    public static string Lbl_JustNow => S("Lbl_JustNow", "Lbl_JustNow");
+    public static string Lbl_KanbanCollectorSignalRURLEG => S("Lbl_KanbanCollectorSignalRURLEG", "Lbl_KanbanCollectorSignalRURLEG");
+    public static string Lbl_KanbanSystem => S("Lbl_KanbanSystem", "Lbl_KanbanSystem");
+    public static string Lbl_Language => S("Lbl_Language", "Lbl_Language");
+    public static string Lbl_Large115 => S("Lbl_Large115", "Lbl_Large115");
+    public static string Lbl_Last1Hour => S("Lbl_Last1Hour", "Lbl_Last1Hour");
+    public static string Lbl_Last1h => S("Lbl_Last1h", "Lbl_Last1h");
+    public static string Lbl_Last24Hours => S("Lbl_Last24Hours", "Lbl_Last24Hours");
+    public static string Lbl_Last24h => S("Lbl_Last24h", "Lbl_Last24h");
+    public static string Lbl_Last30Days => S("Lbl_Last30Days", "Lbl_Last30Days");
+    public static string Lbl_Last30Days2 => S("Lbl_Last30Days2", "Lbl_Last30Days2");
+    public static string Lbl_Last4Hours => S("Lbl_Last4Hours", "Lbl_Last4Hours");
+    public static string Lbl_Last4h => S("Lbl_Last4h", "Lbl_Last4h");
+    public static string Lbl_Last60RefreshesMs => S("Lbl_Last60RefreshesMs", "Lbl_Last60RefreshesMs");
+    public static string Lbl_Last7Days => S("Lbl_Last7Days", "Lbl_Last7Days");
+    public static string Lbl_Last7Days2 => S("Lbl_Last7Days2", "Lbl_Last7Days2");
+    public static string Lbl_LastSuccessTime => S("Lbl_LastSuccessTime", "Lbl_LastSuccessTime");
+    public static string Lbl_LastSuccessfulWrite => S("Lbl_LastSuccessfulWrite", "Lbl_LastSuccessfulWrite");
+    public static string Lbl_LeavingDeviceManagerDiscardUnsavedConfiguration => S("Lbl_LeavingDeviceManagerDiscardUnsavedConfiguration", "Lbl_LeavingDeviceManagerDiscardUnsavedConfiguration");
+    public static string Lbl_Level => S("Lbl_Level", "Lbl_Level");
+    public static string Lbl_LicenseKey => S("Lbl_LicenseKey", "Lbl_LicenseKey");
+    public static string Lbl_LicenseManagement => S("Lbl_LicenseManagement", "Lbl_LicenseManagement");
+    public static string Lbl_LicenseStatus => S("Lbl_LicenseStatus", "Lbl_LicenseStatus");
+    public static string Lbl_LicenseType => S("Lbl_LicenseType", "Lbl_LicenseType");
+    public static string Lbl_Loading => S("Lbl_Loading", "Lbl_Loading");
+    public static string Lbl_LocalAcquisitionMode => S("Lbl_LocalAcquisitionMode", "Lbl_LocalAcquisitionMode");
+    public static string Lbl_LocalAcquisitionStandalone => S("Lbl_LocalAcquisitionStandalone", "Lbl_LocalAcquisitionStandalone");
+    public static string Lbl_LocateLossesAcrossPerformanceAvailabilityQuality => S("Lbl_LocateLossesAcrossPerformanceAvailabilityQuality", "Lbl_LocateLossesAcrossPerformanceAvailabilityQuality");
+    public static string Lbl_LongestDowntime => S("Lbl_LongestDowntime", "Lbl_LongestDowntime");
+    public static string Lbl_Low => S("Lbl_Low", "Lbl_Low");
+    public static string Lbl_MachineCode => S("Lbl_MachineCode", "Lbl_MachineCode");
+    public static string Lbl_MachineTypeBlankGeneral => S("Lbl_MachineTypeBlankGeneral", "Lbl_MachineTypeBlankGeneral");
+    public static string Lbl_MainAlarms => S("Lbl_MainAlarms", "Lbl_MainAlarms");
+    public static string Lbl_MainAlarmsCurrentTimeRange => S("Lbl_MainAlarmsCurrentTimeRange", "Lbl_MainAlarmsCurrentTimeRange");
+    public static string Lbl_MainNavigation => S("Lbl_MainNavigation", "Lbl_MainNavigation");
+    public static string Lbl_ManageProductionShiftsTimeRanges => S("Lbl_ManageProductionShiftsTimeRanges", "Lbl_ManageProductionShiftsTimeRanges");
+    public static string Lbl_ManualOEEReset => S("Lbl_ManualOEEReset", "Lbl_ManualOEEReset");
+    public static string Lbl_ManualRefreshF5 => S("Lbl_ManualRefreshF5", "Lbl_ManualRefreshF5");
+    public static string Lbl_Max => S("Lbl_Max", "Lbl_Max");
+    public static string Lbl_MaxCycle => S("Lbl_MaxCycle", "Lbl_MaxCycle");
+    public static string Lbl_Medium => S("Lbl_Medium", "Lbl_Medium");
+    public static string Lbl_MemoryDisk => S("Lbl_MemoryDisk", "Lbl_MemoryDisk");
+    public static string Lbl_MetOnly => S("Lbl_MetOnly", "Lbl_MetOnly");
+    public static string Lbl_Min => S("Lbl_Min", "Lbl_Min");
+    public static string Lbl_MinAgo => S("Lbl_MinAgo", "Lbl_MinAgo");
+    public static string Lbl_ModbusAddressStarts0 => S("Lbl_ModbusAddressStarts0", "Lbl_ModbusAddressStarts0");
+    public static string Lbl_ModbusBitFunction => S("Lbl_ModbusBitFunction", "Lbl_ModbusBitFunction");
+    public static string Lbl_ModbusBitFunction12 => S("Lbl_ModbusBitFunction12", "Lbl_ModbusBitFunction12");
+    public static string Lbl_ModbusDataFormat => S("Lbl_ModbusDataFormat", "Lbl_ModbusDataFormat");
+    public static string Lbl_ModbusRegisterFunction => S("Lbl_ModbusRegisterFunction", "Lbl_ModbusRegisterFunction");
+    public static string Lbl_ModbusRegisterFunction34 => S("Lbl_ModbusRegisterFunction34", "Lbl_ModbusRegisterFunction34");
+    public static string Lbl_ModbusUnitID => S("Lbl_ModbusUnitID", "Lbl_ModbusUnitID");
+    public static string Lbl_Month => S("Lbl_Month", "Lbl_Month");
+    public static string Lbl_Month2 => S("Lbl_Month2", "Lbl_Month2");
+    public static string Lbl_More => S("Lbl_More", "Lbl_More");
+    public static string Lbl_MoreDeviceActions => S("Lbl_MoreDeviceActions", "Lbl_MoreDeviceActions");
+    public static string Lbl_MostFrequentAlarm => S("Lbl_MostFrequentAlarm", "Lbl_MostFrequentAlarm");
+    public static string Lbl_MuteNewAlarms => S("Lbl_MuteNewAlarms", "Lbl_MuteNewAlarms");
+    public static string Lbl_N => S("Lbl_N", "Lbl_N");
+    public static string Lbl_NG => S("Lbl_NG", "Lbl_NG");
+    public static string Lbl_NGCount => S("Lbl_NGCount", "Lbl_NGCount");
+    public static string Lbl_NGCountAddressEGD102 => S("Lbl_NGCountAddressEGD102", "Lbl_NGCountAddressEGD102");
+    public static string Lbl_NGCountPLCAddress => S("Lbl_NGCountPLCAddress", "Lbl_NGCountPLCAddress");
+    public static string Lbl_NGOutput => S("Lbl_NGOutput", "Lbl_NGOutput");
+    public static string Lbl_NGOutputPcs => S("Lbl_NGOutputPcs", "Lbl_NGOutputPcs");
+    public static string Lbl_NewRecipe => S("Lbl_NewRecipe", "Lbl_NewRecipe");
+    public static string Lbl_Next => S("Lbl_Next", "Lbl_Next");
+    public static string Lbl_Next2 => S("Lbl_Next2", "Lbl_Next2");
+    public static string Lbl_NextStatus => S("Lbl_NextStatus", "Lbl_NextStatus");
+    public static string Lbl_NoActiveAlarms => S("Lbl_NoActiveAlarms", "Lbl_NoActiveAlarms");
+    public static string Lbl_NoActiveWorkOrder => S("Lbl_NoActiveWorkOrder", "Lbl_NoActiveWorkOrder");
+    public static string Lbl_NoAlarmRecords => S("Lbl_NoAlarmRecords", "Lbl_NoAlarmRecords");
+    public static string Lbl_NoAuditEntriesExportCurrentFilters => S("Lbl_NoAuditEntriesExportCurrentFilters", "Lbl_NoAuditEntriesExportCurrentFilters");
+    public static string Lbl_NoAuditRecords => S("Lbl_NoAuditRecords", "Lbl_NoAuditRecords");
+    public static string Lbl_NoCumulativeDefects => S("Lbl_NoCumulativeDefects", "Lbl_NoCumulativeDefects");
+    public static string Lbl_NoData => S("Lbl_NoData", "Lbl_NoData");
+    public static string Lbl_NoDefectData => S("Lbl_NoDefectData", "Lbl_NoDefectData");
+    public static string Lbl_NoDeviceSelected => S("Lbl_NoDeviceSelected", "Lbl_NoDeviceSelected");
+    public static string Lbl_NoDevices => S("Lbl_NoDevices", "Lbl_NoDevices");
+    public static string Lbl_NoHeatmapData => S("Lbl_NoHeatmapData", "Lbl_NoHeatmapData");
+    public static string Lbl_NoImportableWorkOrdersFound => S("Lbl_NoImportableWorkOrdersFound", "Lbl_NoImportableWorkOrdersFound");
+    public static string Lbl_NoMatchingAlarmRecords => S("Lbl_NoMatchingAlarmRecords", "Lbl_NoMatchingAlarmRecords");
+    public static string Lbl_NoMatchingDevice => S("Lbl_NoMatchingDevice", "Lbl_NoMatchingDevice");
+    public static string Lbl_NoMatchingOutputData => S("Lbl_NoMatchingOutputData", "Lbl_NoMatchingOutputData");
+    public static string Lbl_NoMatchingRecipesAdjustKeywordsMachine => S("Lbl_NoMatchingRecipesAdjustKeywordsMachine", "Lbl_NoMatchingRecipesAdjustKeywordsMachine");
+    public static string Lbl_NoMatchingStatusTransitions => S("Lbl_NoMatchingStatusTransitions", "Lbl_NoMatchingStatusTransitions");
+    public static string Lbl_NoMatchingWorkOrder => S("Lbl_NoMatchingWorkOrder", "Lbl_NoMatchingWorkOrder");
+    public static string Lbl_NoOEEData => S("Lbl_NoOEEData", "Lbl_NoOEEData");
+    public static string Lbl_NoOutputData => S("Lbl_NoOutputData", "Lbl_NoOutputData");
+    public static string Lbl_NoRecipesExport => S("Lbl_NoRecipesExport", "Lbl_NoRecipesExport");
+    public static string Lbl_NoSNRecordsWorkOrder => S("Lbl_NoSNRecordsWorkOrder", "Lbl_NoSNRecordsWorkOrder");
+    public static string Lbl_NoShiftData => S("Lbl_NoShiftData", "Lbl_NoShiftData");
+    public static string Lbl_NoShifts => S("Lbl_NoShifts", "Lbl_NoShifts");
+    public static string Lbl_NoStatusData => S("Lbl_NoStatusData", "Lbl_NoStatusData");
+    public static string Lbl_NoTraceRecordsFoundSN => S("Lbl_NoTraceRecordsFoundSN", "Lbl_NoTraceRecordsFoundSN");
+    public static string Lbl_NoValuesOperation => S("Lbl_NoValuesOperation", "Lbl_NoValuesOperation");
+    public static string Lbl_NoWorkOrdersCurrentFilter => S("Lbl_NoWorkOrdersCurrentFilter", "Lbl_NoWorkOrdersCurrentFilter");
+    public static string Lbl_Now => S("Lbl_Now", "Lbl_Now");
+    public static string Lbl_NumberDevicesUnrecoveredAlarmsLiveSnapshot => S("Lbl_NumberDevicesUnrecoveredAlarmsLiveSnapshot", "Lbl_NumberDevicesUnrecoveredAlarmsLiveSnapshot");
+    public static string Lbl_OEE => S("Lbl_OEE", "Lbl_OEE");
+    public static string Lbl_OEEAnalysis => S("Lbl_OEEAnalysis", "Lbl_OEEAnalysis");
+    public static string Lbl_OEEAnalysisTab => S("Lbl_OEEAnalysisTab", "Lbl_OEEAnalysisTab");
+    public static string Lbl_OEEBreakdown => S("Lbl_OEEBreakdown", "Lbl_OEEBreakdown");
+    public static string Lbl_OEELossBreakdown => S("Lbl_OEELossBreakdown", "Lbl_OEELossBreakdown");
+    public static string Lbl_OEEMetrics => S("Lbl_OEEMetrics", "Lbl_OEEMetrics");
+    public static string Lbl_OEEOverallEquipmentEffectiveness => S("Lbl_OEEOverallEquipmentEffectiveness", "Lbl_OEEOverallEquipmentEffectiveness");
+    public static string Lbl_OEEQualityRatePerformanceRateTime => S("Lbl_OEEQualityRatePerformanceRateTime", "Lbl_OEEQualityRatePerformanceRateTime");
+    public static string Lbl_OEEResetAddressEGD106 => S("Lbl_OEEResetAddressEGD106", "Lbl_OEEResetAddressEGD106");
+    public static string Lbl_OEEResetPLCAddress => S("Lbl_OEEResetPLCAddress", "Lbl_OEEResetPLCAddress");
+    public static string Lbl_OEEShiftDetailTable => S("Lbl_OEEShiftDetailTable", "Lbl_OEEShiftDetailTable");
+    public static string Lbl_OK => S("Lbl_OK", "Lbl_OK");
+    public static string Lbl_OK2 => S("Lbl_OK2", "Lbl_OK2");
+    public static string Lbl_OK3 => S("Lbl_OK3", "Lbl_OK3");
+    public static string Lbl_OKCount => S("Lbl_OKCount", "Lbl_OKCount");
+    public static string Lbl_OKCountAddressEGD100 => S("Lbl_OKCountAddressEGD100", "Lbl_OKCountAddressEGD100");
+    public static string Lbl_OKCountPLCAddress => S("Lbl_OKCountPLCAddress", "Lbl_OKCountPLCAddress");
+    public static string Lbl_OKOutput => S("Lbl_OKOutput", "Lbl_OKOutput");
+    public static string Lbl_OKOutputPcs => S("Lbl_OKOutputPcs", "Lbl_OKOutputPcs");
+    public static string Lbl_OmronFINSReadSplitLength => S("Lbl_OmronFINSReadSplitLength", "Lbl_OmronFINSReadSplitLength");
+    public static string Lbl_OpenWorkOrderManagement => S("Lbl_OpenWorkOrderManagement", "Lbl_OpenWorkOrderManagement");
+    public static string Lbl_OperatorText => S("Lbl_OperatorText", "Lbl_OperatorText");
+    public static string Lbl_OrderCompletion => S("Lbl_OrderCompletion", "Lbl_OrderCompletion");
+    public static string Lbl_OrderNumberAlreadyExists => S("Lbl_OrderNumberAlreadyExists", "Lbl_OrderNumberAlreadyExists");
+    public static string Lbl_OrderScheduleSort => S("Lbl_OrderScheduleSort", "Lbl_OrderScheduleSort");
+    public static string Lbl_OrderTarget => S("Lbl_OrderTarget", "Lbl_OrderTarget");
+    public static string Lbl_Output => S("Lbl_Output", "Lbl_Output");
+    public static string Lbl_Output2 => S("Lbl_Output2", "Lbl_Output2");
+    public static string Lbl_OutputComparison => S("Lbl_OutputComparison", "Lbl_OutputComparison");
+    public static string Lbl_OutputComposition => S("Lbl_OutputComposition", "Lbl_OutputComposition");
+    public static string Lbl_OutputHeatmap => S("Lbl_OutputHeatmap", "Lbl_OutputHeatmap");
+    public static string Lbl_OutputLogTable => S("Lbl_OutputLogTable", "Lbl_OutputLogTable");
+    public static string Lbl_OutputQualityDifferencesAcrossShifts => S("Lbl_OutputQualityDifferencesAcrossShifts", "Lbl_OutputQualityDifferencesAcrossShifts");
+    public static string Lbl_OutputQuery => S("Lbl_OutputQuery", "Lbl_OutputQuery");
+    public static string Lbl_OutputQueryTab => S("Lbl_OutputQueryTab", "Lbl_OutputQueryTab");
+    public static string Lbl_OutputRunTimeOEESelectedDevice => S("Lbl_OutputRunTimeOEESelectedDevice", "Lbl_OutputRunTimeOEESelectedDevice");
+    public static string Lbl_OutputTrend => S("Lbl_OutputTrend", "Lbl_OutputTrend");
+    public static string Lbl_OverallOEE => S("Lbl_OverallOEE", "Lbl_OverallOEE");
+    public static string Lbl_Overdue => S("Lbl_Overdue", "Lbl_Overdue");
+    public static string Lbl_Overdue2 => S("Lbl_Overdue2", "Lbl_Overdue2");
+    public static string Lbl_OverdueOnly => S("Lbl_OverdueOnly", "Lbl_OverdueOnly");
+    public static string Lbl_OverwriteLastSavedConfigPasswordRequired => S("Lbl_OverwriteLastSavedConfigPasswordRequired", "Lbl_OverwriteLastSavedConfigPasswordRequired");
+    public static string Lbl_PLCAcquisitionPollIntervalMs => S("Lbl_PLCAcquisitionPollIntervalMs", "Lbl_PLCAcquisitionPollIntervalMs");
+    public static string Lbl_PLCAddress => S("Lbl_PLCAddress", "Lbl_PLCAddress");
+    public static string Lbl_PLCAddress2 => S("Lbl_PLCAddress2", "Lbl_PLCAddress2");
+    public static string Lbl_PLCAddressConfig => S("Lbl_PLCAddressConfig", "Lbl_PLCAddressConfig");
+    public static string Lbl_PLCAddressEGD200 => S("Lbl_PLCAddressEGD200", "Lbl_PLCAddressEGD200");
+    public static string Lbl_PLCAddressEGD300 => S("Lbl_PLCAddressEGD300", "Lbl_PLCAddressEGD300");
+    public static string Lbl_PLCAddressEGM100 => S("Lbl_PLCAddressEGM100", "Lbl_PLCAddressEGM100");
+    public static string Lbl_PLCBatchReadCount => S("Lbl_PLCBatchReadCount", "Lbl_PLCBatchReadCount");
+    public static string Lbl_PLCBatchReadMaxCount => S("Lbl_PLCBatchReadMaxCount", "Lbl_PLCBatchReadMaxCount");
+    public static string Lbl_PLCBrand => S("Lbl_PLCBrand", "Lbl_PLCBrand");
+    public static string Lbl_PLCCommunicationDetails => S("Lbl_PLCCommunicationDetails", "Lbl_PLCCommunicationDetails");
+    public static string Lbl_PLCConnected => S("Lbl_PLCConnected", "Lbl_PLCConnected");
+    public static string Lbl_PLCConnection => S("Lbl_PLCConnection", "Lbl_PLCConnection");
+    public static string Lbl_PLCConnectionConfig => S("Lbl_PLCConnectionConfig", "Lbl_PLCConnectionConfig");
+    public static string Lbl_PLCConnectionTimeoutMs => S("Lbl_PLCConnectionTimeoutMs", "Lbl_PLCConnectionTimeoutMs");
+    public static string Lbl_PLCDisconnected => S("Lbl_PLCDisconnected", "Lbl_PLCDisconnected");
+    public static string Lbl_PLCDisconnectedLiveDataMayStale => S("Lbl_PLCDisconnectedLiveDataMayStale", "Lbl_PLCDisconnectedLiveDataMayStale");
+    public static string Lbl_PLCDisconnectedReadWriteClearOperations => S("Lbl_PLCDisconnectedReadWriteClearOperations", "Lbl_PLCDisconnectedReadWriteClearOperations");
+    public static string Lbl_PLCIPAddress => S("Lbl_PLCIPAddress", "Lbl_PLCIPAddress");
+    public static string Lbl_PLCLiveValues => S("Lbl_PLCLiveValues", "Lbl_PLCLiveValues");
+    public static string Lbl_PLCPort => S("Lbl_PLCPort", "Lbl_PLCPort");
+    public static string Lbl_Page => S("Lbl_Page", "Lbl_Page");
+    public static string Lbl_PageEntries => S("Lbl_PageEntries", "Lbl_PageEntries");
+    public static string Lbl_ParameterName => S("Lbl_ParameterName", "Lbl_ParameterName");
+    public static string Lbl_ParamsText => S("Lbl_ParamsText", "Lbl_ParamsText");
+    public static string Lbl_Pcs => S("Lbl_Pcs", "Lbl_Pcs");
+    public static string Lbl_PcsH => S("Lbl_PcsH", "Lbl_PcsH");
+    public static string Lbl_PeakPeriod => S("Lbl_PeakPeriod", "Lbl_PeakPeriod");
+    public static string Lbl_Pending => S("Lbl_Pending", "Lbl_Pending");
+    public static string Lbl_PendingRecovery => S("Lbl_PendingRecovery", "Lbl_PendingRecovery");
+    public static string Lbl_PendingSnapshots => S("Lbl_PendingSnapshots", "Lbl_PendingSnapshots");
+    public static string Lbl_PerformanceRate => S("Lbl_PerformanceRate", "Lbl_PerformanceRate");
+    public static string Lbl_PerformanceRate2 => S("Lbl_PerformanceRate2", "Lbl_PerformanceRate2");
+    public static string Lbl_PlannedEnd => S("Lbl_PlannedEnd", "Lbl_PlannedEnd");
+    public static string Lbl_PlannedEndTimeMustLaterStart => S("Lbl_PlannedEndTimeMustLaterStart", "Lbl_PlannedEndTimeMustLaterStart");
+    public static string Lbl_PlannedOutput => S("Lbl_PlannedOutput", "Lbl_PlannedOutput");
+    public static string Lbl_PlannedOutputPcs => S("Lbl_PlannedOutputPcs", "Lbl_PlannedOutputPcs");
+    public static string Lbl_PlannedQuantityMustPositiveInteger => S("Lbl_PlannedQuantityMustPositiveInteger", "Lbl_PlannedQuantityMustPositiveInteger");
+    public static string Lbl_PlannedStart => S("Lbl_PlannedStart", "Lbl_PlannedStart");
+    public static string Lbl_PlannedTime => S("Lbl_PlannedTime", "Lbl_PlannedTime");
+    public static string Lbl_PlannedTime2 => S("Lbl_PlannedTime2", "Lbl_PlannedTime2");
+    public static string Lbl_PlaysSystemSoundNewAlarmsVisual => S("Lbl_PlaysSystemSoundNewAlarmsVisual", "Lbl_PlaysSystemSoundNewAlarmsVisual");
+    public static string Lbl_PleaseEnterProductCode => S("Lbl_PleaseEnterProductCode", "Lbl_PleaseEnterProductCode");
+    public static string Lbl_PleaseEnterProductName => S("Lbl_PleaseEnterProductName", "Lbl_PleaseEnterProductName");
+    public static string Lbl_PleaseEnterSNTrace => S("Lbl_PleaseEnterSNTrace", "Lbl_PleaseEnterSNTrace");
+    public static string Lbl_PleaseEnterWorkOrderNumber => S("Lbl_PleaseEnterWorkOrderNumber", "Lbl_PleaseEnterWorkOrderNumber");
+    public static string Lbl_PleaseSelectBoundDevice => S("Lbl_PleaseSelectBoundDevice", "Lbl_PleaseSelectBoundDevice");
+    public static string Lbl_PollCycleTrend => S("Lbl_PollCycleTrend", "Lbl_PollCycleTrend");
+    public static string Lbl_PollInterval => S("Lbl_PollInterval", "Lbl_PollInterval");
+    public static string Lbl_PollIntervalMs => S("Lbl_PollIntervalMs", "Lbl_PollIntervalMs");
+    public static string Lbl_PollSuccessRate => S("Lbl_PollSuccessRate", "Lbl_PollSuccessRate");
+    public static string Lbl_Port => S("Lbl_Port", "Lbl_Port");
+    public static string Lbl_Previous => S("Lbl_Previous", "Lbl_Previous");
+    public static string Lbl_Previous2 => S("Lbl_Previous2", "Lbl_Previous2");
+    public static string Lbl_PreviousShift => S("Lbl_PreviousShift", "Lbl_PreviousShift");
+    public static string Lbl_PreviousStatus => S("Lbl_PreviousStatus", "Lbl_PreviousStatus");
+    public static string Lbl_ProcessResources => S("Lbl_ProcessResources", "Lbl_ProcessResources");
+    public static string Lbl_Product => S("Lbl_Product", "Lbl_Product");
+    public static string Lbl_ProductBatch => S("Lbl_ProductBatch", "Lbl_ProductBatch");
+    public static string Lbl_ProductCode => S("Lbl_ProductCode", "Lbl_ProductCode");
+    public static string Lbl_ProductName => S("Lbl_ProductName", "Lbl_ProductName");
+    public static string Lbl_ProductionDashboard => S("Lbl_ProductionDashboard", "Lbl_ProductionDashboard");
+    public static string Lbl_ProductionLine => S("Lbl_ProductionLine", "Lbl_ProductionLine");
+    public static string Lbl_ProductionReview => S("Lbl_ProductionReview", "Lbl_ProductionReview");
+    public static string Lbl_ProgramUptime => S("Lbl_ProgramUptime", "Lbl_ProgramUptime");
+    public static string Lbl_Progress => S("Lbl_Progress", "Lbl_Progress");
+    public static string Lbl_Progress2 => S("Lbl_Progress2", "Lbl_Progress2");
+    public static string Lbl_QualityRate => S("Lbl_QualityRate", "Lbl_QualityRate");
+    public static string Lbl_QualityRate2 => S("Lbl_QualityRate2", "Lbl_QualityRate2");
+    public static string Lbl_Query => S("Lbl_Query", "Lbl_Query");
+    public static string Lbl_Query2 => S("Lbl_Query2", "Lbl_Query2");
+    public static string Lbl_QueryCtrlEnter => S("Lbl_QueryCtrlEnter", "Lbl_QueryCtrlEnter");
+    public static string Lbl_QueryEndTime => S("Lbl_QueryEndTime", "Lbl_QueryEndTime");
+    public static string Lbl_QueryFailed => S("Lbl_QueryFailed", "Lbl_QueryFailed");
+    public static string Lbl_QueryHistoryData => S("Lbl_QueryHistoryData", "Lbl_QueryHistoryData");
+    public static string Lbl_QueryOutputAllOrdersUpdateProgress => S("Lbl_QueryOutputAllOrdersUpdateProgress", "Lbl_QueryOutputAllOrdersUpdateProgress");
+    public static string Lbl_QueryStartTime => S("Lbl_QueryStartTime", "Lbl_QueryStartTime");
+    public static string Lbl_QuickTime => S("Lbl_QuickTime", "Lbl_QuickTime");
+    public static string Lbl_QuickTimeSelection => S("Lbl_QuickTimeSelection", "Lbl_QuickTimeSelection");
+    public static string Lbl_Rack => S("Lbl_Rack", "Lbl_Rack");
+    public static string Lbl_RankedDefectsAddedSelectedTimeRange => S("Lbl_RankedDefectsAddedSelectedTimeRange", "Lbl_RankedDefectsAddedSelectedTimeRange");
+    public static string Lbl_Reactivate => S("Lbl_Reactivate", "Lbl_Reactivate");
+    public static string Lbl_Read => S("Lbl_Read", "Lbl_Read");
+    public static string Lbl_ReadConfig => S("Lbl_ReadConfig", "Lbl_ReadConfig");
+    public static string Lbl_ReadCurrentPLCValuesDisabledPLC => S("Lbl_ReadCurrentPLCValuesDisabledPLC", "Lbl_ReadCurrentPLCValuesDisabledPLC");
+    public static string Lbl_ReadNGCountAddress => S("Lbl_ReadNGCountAddress", "Lbl_ReadNGCountAddress");
+    public static string Lbl_ReadOKCountAddress => S("Lbl_ReadOKCountAddress", "Lbl_ReadOKCountAddress");
+    public static string Lbl_ReadPointsConfigured => S("Lbl_ReadPointsConfigured", "Lbl_ReadPointsConfigured");
+    public static string Lbl_ReadStatusAddress => S("Lbl_ReadStatusAddress", "Lbl_ReadStatusAddress");
+    public static string Lbl_RealTimeFaultList => S("Lbl_RealTimeFaultList", "Lbl_RealTimeFaultList");
+    public static string Lbl_RealTimeFaults => S("Lbl_RealTimeFaults", "Lbl_RealTimeFaults");
+    public static string Lbl_RecentAcquisitionCycle => S("Lbl_RecentAcquisitionCycle", "Lbl_RecentAcquisitionCycle");
+    public static string Lbl_RecentAlarmEvents => S("Lbl_RecentAlarmEvents", "Lbl_RecentAlarmEvents");
+    public static string Lbl_RecentEventStream => S("Lbl_RecentEventStream", "Lbl_RecentEventStream");
+    public static string Lbl_RecentSuccessfulDevices => S("Lbl_RecentSuccessfulDevices", "Lbl_RecentSuccessfulDevices");
+    public static string Lbl_RecentSuccessfulReads => S("Lbl_RecentSuccessfulReads", "Lbl_RecentSuccessfulReads");
+    public static string Lbl_Recipe => S("Lbl_Recipe", "Lbl_Recipe");
+    public static string Lbl_Recipe2 => S("Lbl_Recipe2", "Lbl_Recipe2");
+    public static string Lbl_RecipeAddressEGD500 => S("Lbl_RecipeAddressEGD500", "Lbl_RecipeAddressEGD500");
+    public static string Lbl_RecipeAppliedSuccessfully => S("Lbl_RecipeAppliedSuccessfully", "Lbl_RecipeAppliedSuccessfully");
+    public static string Lbl_RecipeEditor => S("Lbl_RecipeEditor", "Lbl_RecipeEditor");
+    public static string Lbl_RecipeMachineTypeDoesMatchDevice => S("Lbl_RecipeMachineTypeDoesMatchDevice", "Lbl_RecipeMachineTypeDoesMatchDevice");
+    public static string Lbl_RecipeName => S("Lbl_RecipeName", "Lbl_RecipeName");
+    public static string Lbl_RecipeName2 => S("Lbl_RecipeName2", "Lbl_RecipeName2");
+    public static string Lbl_RecipePLCAddress => S("Lbl_RecipePLCAddress", "Lbl_RecipePLCAddress");
+    public static string Lbl_RecipeParameters => S("Lbl_RecipeParameters", "Lbl_RecipeParameters");
+    public static string Lbl_RecipeSaved => S("Lbl_RecipeSaved", "Lbl_RecipeSaved");
+    public static string Lbl_RecipeValidationFailed => S("Lbl_RecipeValidationFailed", "Lbl_RecipeValidationFailed");
+    public static string Lbl_RecipeValue => S("Lbl_RecipeValue", "Lbl_RecipeValue");
+    public static string Lbl_RecipeValueCurrentDeviceConfig => S("Lbl_RecipeValueCurrentDeviceConfig", "Lbl_RecipeValueCurrentDeviceConfig");
+    public static string Lbl_RecipeValueIntegerDWord => S("Lbl_RecipeValueIntegerDWord", "Lbl_RecipeValueIntegerDWord");
+    public static string Lbl_RecordsWhoDidWhat => S("Lbl_RecordsWhoDidWhat", "Lbl_RecordsWhoDidWhat");
+    public static string Lbl_RecoveredCount => S("Lbl_RecoveredCount", "Lbl_RecoveredCount");
+    public static string Lbl_RecoveredToday => S("Lbl_RecoveredToday", "Lbl_RecoveredToday");
+    public static string Lbl_RecoveryFiles => S("Lbl_RecoveryFiles", "Lbl_RecoveryFiles");
+    public static string Lbl_Refresh => S("Lbl_Refresh", "Lbl_Refresh");
+    public static string Lbl_RefreshF5 => S("Lbl_RefreshF5", "Lbl_RefreshF5");
+    public static string Lbl_RefreshOutput => S("Lbl_RefreshOutput", "Lbl_RefreshOutput");
+    public static string Lbl_RefreshReviewData => S("Lbl_RefreshReviewData", "Lbl_RefreshReviewData");
+    public static string Lbl_RefreshRuntimeMetricsF5 => S("Lbl_RefreshRuntimeMetricsF5", "Lbl_RefreshRuntimeMetricsF5");
+    public static string Lbl_Remark => S("Lbl_Remark", "Lbl_Remark");
+    public static string Lbl_Remark2 => S("Lbl_Remark2", "Lbl_Remark2");
+    public static string Lbl_RemoteAcquisitionCollectorService => S("Lbl_RemoteAcquisitionCollectorService", "Lbl_RemoteAcquisitionCollectorService");
+    public static string Lbl_RemoteAcquisitionMode => S("Lbl_RemoteAcquisitionMode", "Lbl_RemoteAcquisitionMode");
+    public static string Lbl_RemoteModeConnectsKanbanCollectorService => S("Lbl_RemoteModeConnectsKanbanCollectorService", "Lbl_RemoteModeConnectsKanbanCollectorService");
+    public static string Lbl_RepeatedTriggersSameAlarmWithinShort => S("Lbl_RepeatedTriggersSameAlarmWithinShort", "Lbl_RepeatedTriggersSameAlarmWithinShort");
+    public static string Lbl_Reset => S("Lbl_Reset", "Lbl_Reset");
+    public static string Lbl_Reset2 => S("Lbl_Reset2", "Lbl_Reset2");
+    public static string Lbl_Reset3 => S("Lbl_Reset3", "Lbl_Reset3");
+    public static string Lbl_ResetAll => S("Lbl_ResetAll", "Lbl_ResetAll");
+    public static string Lbl_ResetFilters => S("Lbl_ResetFilters", "Lbl_ResetFilters");
+    public static string Lbl_ResetOEEAllDevices => S("Lbl_ResetOEEAllDevices", "Lbl_ResetOEEAllDevices");
+    public static string Lbl_RestoreDefaults => S("Lbl_RestoreDefaults", "Lbl_RestoreDefaults");
+    public static string Lbl_RestorePrevious => S("Lbl_RestorePrevious", "Lbl_RestorePrevious");
+    public static string Lbl_RestorePreviousConfig => S("Lbl_RestorePreviousConfig", "Lbl_RestorePreviousConfig");
+    public static string Lbl_Result => S("Lbl_Result", "Lbl_Result");
+    public static string Lbl_Result2 => S("Lbl_Result2", "Lbl_Result2");
+    public static string Lbl_ReviewConclusion => S("Lbl_ReviewConclusion", "Lbl_ReviewConclusion");
+    public static string Lbl_ReviewDeviceSelection => S("Lbl_ReviewDeviceSelection", "Lbl_ReviewDeviceSelection");
+    public static string Lbl_Round => S("Lbl_Round", "Lbl_Round");
+    public static string Lbl_Row => S("Lbl_Row", "Lbl_Row");
+    public static string Lbl_RowPlannedTimeMustYyyyMM => S("Lbl_RowPlannedTimeMustYyyyMM", "Lbl_RowPlannedTimeMustYyyyMM");
+    public static string Lbl_RowTooFewColumns7Skipped => S("Lbl_RowTooFewColumns7Skipped", "Lbl_RowTooFewColumns7Skipped");
+    public static string Lbl_Run => S("Lbl_Run", "Lbl_Run");
+    public static string Lbl_RunMode => S("Lbl_RunMode", "Lbl_RunMode");
+    public static string Lbl_RunTime => S("Lbl_RunTime", "Lbl_RunTime");
+    public static string Lbl_RunWindowDueActual => S("Lbl_RunWindowDueActual", "Lbl_RunWindowDueActual");
+    public static string Lbl_Running => S("Lbl_Running", "Lbl_Running");
+    public static string Lbl_RunningNormally => S("Lbl_RunningNormally", "Lbl_RunningNormally");
+    public static string Lbl_RunningPausedAlarmUnknownIntervalsClick => S("Lbl_RunningPausedAlarmUnknownIntervalsClick", "Lbl_RunningPausedAlarmUnknownIntervalsClick");
+    public static string Lbl_RuntimeMonitoring => S("Lbl_RuntimeMonitoring", "Lbl_RuntimeMonitoring");
+    public static string Lbl_SNTraceability => S("Lbl_SNTraceability", "Lbl_SNTraceability");
+    public static string Lbl_Save => S("Lbl_Save", "Lbl_Save");
+    public static string Lbl_SaveDeviceConfig => S("Lbl_SaveDeviceConfig", "Lbl_SaveDeviceConfig");
+    public static string Lbl_SaveDeviceConfigCtrlS => S("Lbl_SaveDeviceConfigCtrlS", "Lbl_SaveDeviceConfigCtrlS");
+    public static string Lbl_SaveFailedConfigValidation => S("Lbl_SaveFailedConfigValidation", "Lbl_SaveFailedConfigValidation");
+    public static string Lbl_SaveRecipe => S("Lbl_SaveRecipe", "Lbl_SaveRecipe");
+    public static string Lbl_SaveSettings => S("Lbl_SaveSettings", "Lbl_SaveSettings");
+    public static string Lbl_SaveSettingsCtrlS => S("Lbl_SaveSettingsCtrlS", "Lbl_SaveSettingsCtrlS");
+    public static string Lbl_SavedDeviceSCounterAlarmS => S("Lbl_SavedDeviceSCounterAlarmS", "Lbl_SavedDeviceSCounterAlarmS");
+    public static string Lbl_SearchDevice => S("Lbl_SearchDevice", "Lbl_SearchDevice");
+    public static string Lbl_SearchDeviceAlarmName => S("Lbl_SearchDeviceAlarmName", "Lbl_SearchDeviceAlarmName");
+    public static string Lbl_SearchDeviceName => S("Lbl_SearchDeviceName", "Lbl_SearchDeviceName");
+    public static string Lbl_SearchOrderNoProductNameDevice => S("Lbl_SearchOrderNoProductNameDevice", "Lbl_SearchOrderNoProductNameDevice");
+    public static string Lbl_SearchOrderProductDevice => S("Lbl_SearchOrderProductDevice", "Lbl_SearchOrderProductDevice");
+    public static string Lbl_SearchRecipeNameParameter => S("Lbl_SearchRecipeNameParameter", "Lbl_SearchRecipeNameParameter");
+    public static string Lbl_SelectDeviceClickAdd => S("Lbl_SelectDeviceClickAdd", "Lbl_SelectDeviceClickAdd");
+    public static string Lbl_SelectDeviceEditParametersPLCAddresses => S("Lbl_SelectDeviceEditParametersPLCAddresses", "Lbl_SelectDeviceEditParametersPLCAddresses");
+    public static string Lbl_SelectDeviceFirst => S("Lbl_SelectDeviceFirst", "Lbl_SelectDeviceFirst");
+    public static string Lbl_SelectDeviceHomeProductionLine => S("Lbl_SelectDeviceHomeProductionLine", "Lbl_SelectDeviceHomeProductionLine");
+    public static string Lbl_SelectDeviceReview => S("Lbl_SelectDeviceReview", "Lbl_SelectDeviceReview");
+    public static string Lbl_SelectDeviceTimeRangeClickQuery => S("Lbl_SelectDeviceTimeRangeClickQuery", "Lbl_SelectDeviceTimeRangeClickQuery");
+    public static string Lbl_SelectRecordLeftViewDetails => S("Lbl_SelectRecordLeftViewDetails", "Lbl_SelectRecordLeftViewDetails");
+    public static string Lbl_SelectWorkOrderCSVFile => S("Lbl_SelectWorkOrderCSVFile", "Lbl_SelectWorkOrderCSVFile");
+    public static string Lbl_SelectWorkOrderLeftViewDetails => S("Lbl_SelectWorkOrderLeftViewDetails", "Lbl_SelectWorkOrderLeftViewDetails");
+    public static string Lbl_SendsResetCommandPLCIrreversibleUnavailable => S("Lbl_SendsResetCommandPLCIrreversibleUnavailable", "Lbl_SendsResetCommandPLCIrreversibleUnavailable");
+    public static string Lbl_Severity => S("Lbl_Severity", "Lbl_Severity");
+    public static string Lbl_Shift => S("Lbl_Shift", "Lbl_Shift");
+    public static string Lbl_Shift2 => S("Lbl_Shift2", "Lbl_Shift2");
+    public static string Lbl_ShiftComparison => S("Lbl_ShiftComparison", "Lbl_ShiftComparison");
+    public static string Lbl_ShiftConfiguration => S("Lbl_ShiftConfiguration", "Lbl_ShiftConfiguration");
+    public static string Lbl_ShiftEndTime => S("Lbl_ShiftEndTime", "Lbl_ShiftEndTime");
+    public static string Lbl_ShiftFilter => S("Lbl_ShiftFilter", "Lbl_ShiftFilter");
+    public static string Lbl_ShiftName => S("Lbl_ShiftName", "Lbl_ShiftName");
+    public static string Lbl_ShiftStart => S("Lbl_ShiftStart", "Lbl_ShiftStart");
+    public static string Lbl_ShiftStartTime => S("Lbl_ShiftStartTime", "Lbl_ShiftStartTime");
+    public static string Lbl_ShiftsApplyImmediatelyAcquisitionUsesThem => S("Lbl_ShiftsApplyImmediatelyAcquisitionUsesThem", "Lbl_ShiftsApplyImmediatelyAcquisitionUsesThem");
+    public static string Lbl_ShowAlarmsAllDevices => S("Lbl_ShowAlarmsAllDevices", "Lbl_ShowAlarmsAllDevices");
+    public static string Lbl_ShowNavigationMenu => S("Lbl_ShowNavigationMenu", "Lbl_ShowNavigationMenu");
+    public static string Lbl_ShowingFirstOnly => S("Lbl_ShowingFirstOnly", "Lbl_ShowingFirstOnly");
+    public static string Lbl_ShowsDeviceWorkOrderShiftTime => S("Lbl_ShowsDeviceWorkOrderShiftTime", "Lbl_ShowsDeviceWorkOrderShiftTime");
+    public static string Lbl_SiemensBatchInt32Limit => S("Lbl_SiemensBatchInt32Limit", "Lbl_SiemensBatchInt32Limit");
+    public static string Lbl_SiemensDataFormat => S("Lbl_SiemensDataFormat", "Lbl_SiemensDataFormat");
+    public static string Lbl_SiemensModel => S("Lbl_SiemensModel", "Lbl_SiemensModel");
+    public static string Lbl_Slot => S("Lbl_Slot", "Lbl_Slot");
+    public static string Lbl_Sort => S("Lbl_Sort", "Lbl_Sort");
+    public static string Lbl_StageDuration => S("Lbl_StageDuration", "Lbl_StageDuration");
+    public static string Lbl_Standard100 => S("Lbl_Standard100", "Lbl_Standard100");
+    public static string Lbl_Standby => S("Lbl_Standby", "Lbl_Standby");
+    public static string Lbl_StandbyDuration => S("Lbl_StandbyDuration", "Lbl_StandbyDuration");
+    public static string Lbl_Start => S("Lbl_Start", "Lbl_Start");
+    public static string Lbl_Status => S("Lbl_Status", "Lbl_Status");
+    public static string Lbl_StatusAddressEGD104 => S("Lbl_StatusAddressEGD104", "Lbl_StatusAddressEGD104");
+    public static string Lbl_StatusDistribution => S("Lbl_StatusDistribution", "Lbl_StatusDistribution");
+    public static string Lbl_StatusDuration => S("Lbl_StatusDuration", "Lbl_StatusDuration");
+    public static string Lbl_StatusDurationInclOffline => S("Lbl_StatusDurationInclOffline", "Lbl_StatusDurationInclOffline");
+    public static string Lbl_StatusDurationTab => S("Lbl_StatusDurationTab", "Lbl_StatusDurationTab");
+    public static string Lbl_StatusFilter => S("Lbl_StatusFilter", "Lbl_StatusFilter");
+    public static string Lbl_StatusPLCAddress => S("Lbl_StatusPLCAddress", "Lbl_StatusPLCAddress");
+    public static string Lbl_StatusTransitionTable => S("Lbl_StatusTransitionTable", "Lbl_StatusTransitionTable");
+    public static string Lbl_StatusTransitionTimeline => S("Lbl_StatusTransitionTimeline", "Lbl_StatusTransitionTimeline");
+    public static string Lbl_Success => S("Lbl_Success", "Lbl_Success");
+    public static string Lbl_Success2 => S("Lbl_Success2", "Lbl_Success2");
+    public static string Lbl_SuccessRate => S("Lbl_SuccessRate", "Lbl_SuccessRate");
+    public static string Lbl_SuccessfulReadsLastRound0Triggers => S("Lbl_SuccessfulReadsLastRound0Triggers", "Lbl_SuccessfulReadsLastRound0Triggers");
+    public static string Lbl_SystemHealth => S("Lbl_SystemHealth", "Lbl_SystemHealth");
+    public static string Lbl_Target => S("Lbl_Target", "Lbl_Target");
+    public static string Lbl_Target2 => S("Lbl_Target2", "Lbl_Target2");
+    public static string Lbl_TargetAchievement => S("Lbl_TargetAchievement", "Lbl_TargetAchievement");
+    public static string Lbl_TargetCycleTime => S("Lbl_TargetCycleTime", "Lbl_TargetCycleTime");
+    public static string Lbl_TargetDevice => S("Lbl_TargetDevice", "Lbl_TargetDevice");
+    public static string Lbl_TargetOutput => S("Lbl_TargetOutput", "Lbl_TargetOutput");
+    public static string Lbl_TargetOutputPcsHour => S("Lbl_TargetOutputPcsHour", "Lbl_TargetOutputPcsHour");
+    public static string Lbl_TargetPLCMayOnlyAllowSingle => S("Lbl_TargetPLCMayOnlyAllowSingle", "Lbl_TargetPLCMayOnlyAllowSingle");
+    public static string Lbl_TargetType => S("Lbl_TargetType", "Lbl_TargetType");
+    public static string Lbl_TestCollectorConnection => S("Lbl_TestCollectorConnection", "Lbl_TestCollectorConnection");
+    public static string Lbl_TestPLCConnectionCurrentIPPort => S("Lbl_TestPLCConnectionCurrentIPPort", "Lbl_TestPLCConnectionCurrentIPPort");
+    public static string Lbl_TestWhetherCollectorSignalRConnectionReachable => S("Lbl_TestWhetherCollectorSignalRConnectionReachable", "Lbl_TestWhetherCollectorSignalRConnectionReachable");
+    public static string Lbl_Time => S("Lbl_Time", "Lbl_Time");
+    public static string Lbl_Time2 => S("Lbl_Time2", "Lbl_Time2");
+    public static string Lbl_TimeAvailability => S("Lbl_TimeAvailability", "Lbl_TimeAvailability");
+    public static string Lbl_TimeAvailability2 => S("Lbl_TimeAvailability2", "Lbl_TimeAvailability2");
+    public static string Lbl_TimeAvailability3 => S("Lbl_TimeAvailability3", "Lbl_TimeAvailability3");
+    public static string Lbl_TimeRangeSelection => S("Lbl_TimeRangeSelection", "Lbl_TimeRangeSelection");
+    public static string Lbl_Timeline => S("Lbl_Timeline", "Lbl_Timeline");
+    public static string Lbl_Times => S("Lbl_Times", "Lbl_Times");
+    public static string Lbl_To => S("Lbl_To", "Lbl_To");
+    public static string Lbl_Today => S("Lbl_Today", "Lbl_Today");
+    public static string Lbl_Today2 => S("Lbl_Today2", "Lbl_Today2");
+    public static string Lbl_TodaySAlarms => S("Lbl_TodaySAlarms", "Lbl_TodaySAlarms");
+    public static string Lbl_ToggleSoundFlashingNewAlarmsSame => S("Lbl_ToggleSoundFlashingNewAlarmsSame", "Lbl_ToggleSoundFlashingNewAlarmsSame");
+    public static string Lbl_Top5Alarms => S("Lbl_Top5Alarms", "Lbl_Top5Alarms");
+    public static string Lbl_TopAlarmTriggerCountSelectedTime => S("Lbl_TopAlarmTriggerCountSelectedTime", "Lbl_TopAlarmTriggerCountSelectedTime");
+    public static string Lbl_Total => S("Lbl_Total", "Lbl_Total");
+    public static string Lbl_Total2 => S("Lbl_Total2", "Lbl_Total2");
+    public static string Lbl_TotalDowntime => S("Lbl_TotalDowntime", "Lbl_TotalDowntime");
+    public static string Lbl_TotalNGOutput => S("Lbl_TotalNGOutput", "Lbl_TotalNGOutput");
+    public static string Lbl_TotalOKOutput => S("Lbl_TotalOKOutput", "Lbl_TotalOKOutput");
+    public static string Lbl_TotalOutput => S("Lbl_TotalOutput", "Lbl_TotalOutput");
+    public static string Lbl_TotalOutput2 => S("Lbl_TotalOutput2", "Lbl_TotalOutput2");
+    public static string Lbl_TotalRecords => S("Lbl_TotalRecords", "Lbl_TotalRecords");
+    public static string Lbl_TotalRecoveryEventsSinceMidnightToday => S("Lbl_TotalRecoveryEventsSinceMidnightToday", "Lbl_TotalRecoveryEventsSinceMidnightToday");
+    public static string Lbl_TotalTriggerEventsSinceMidnightToday => S("Lbl_TotalTriggerEventsSinceMidnightToday", "Lbl_TotalTriggerEventsSinceMidnightToday");
+    public static string Lbl_TrendChange => S("Lbl_TrendChange", "Lbl_TrendChange");
+    public static string Lbl_TriggerCountTop10 => S("Lbl_TriggerCountTop10", "Lbl_TriggerCountTop10");
+    public static string Lbl_TriggeredCount => S("Lbl_TriggeredCount", "Lbl_TriggeredCount");
+    public static string Lbl_TriggeredToday => S("Lbl_TriggeredToday", "Lbl_TriggeredToday");
+    public static string Lbl_Triggers => S("Lbl_Triggers", "Lbl_Triggers");
+    public static string Lbl_Type => S("Lbl_Type", "Lbl_Type");
+    public static string Lbl_UIScale => S("Lbl_UIScale", "Lbl_UIScale");
+    public static string Lbl_UIScaleLargeScreenReadability => S("Lbl_UIScaleLargeScreenReadability", "Lbl_UIScaleLargeScreenReadability");
+    public static string Lbl_Unit => S("Lbl_Unit", "Lbl_Unit");
+    public static string Lbl_Unit2 => S("Lbl_Unit2", "Lbl_Unit2");
+    public static string Lbl_Unsaved => S("Lbl_Unsaved", "Lbl_Unsaved");
+    public static string Lbl_Updated => S("Lbl_Updated", "Lbl_Updated");
+    public static string Lbl_UpperThreshold => S("Lbl_UpperThreshold", "Lbl_UpperThreshold");
+    public static string Lbl_Validate => S("Lbl_Validate", "Lbl_Validate");
+    public static string Lbl_Validation => S("Lbl_Validation", "Lbl_Validation");
+    public static string Lbl_ValleyPeriod => S("Lbl_ValleyPeriod", "Lbl_ValleyPeriod");
+    public static string Lbl_Value => S("Lbl_Value", "Lbl_Value");
+    public static string Lbl_VersusYesterdaySameTimeYesterdayToday => S("Lbl_VersusYesterdaySameTimeYesterdayToday", "Lbl_VersusYesterdaySameTimeYesterdayToday");
+    public static string Lbl_ViewAlarmHistory => S("Lbl_ViewAlarmHistory", "Lbl_ViewAlarmHistory");
+    public static string Lbl_ViewDetails => S("Lbl_ViewDetails", "Lbl_ViewDetails");
+    public static string Lbl_ViewDetailsSelectedDevice => S("Lbl_ViewDetailsSelectedDevice", "Lbl_ViewDetailsSelectedDevice");
+    public static string Lbl_ViewHistory => S("Lbl_ViewHistory", "Lbl_ViewHistory");
+    public static string Lbl_ViewLicenseStatusReactivateBackUp => S("Lbl_ViewLicenseStatusReactivateBackUp", "Lbl_ViewLicenseStatusReactivateBackUp");
+    public static string Lbl_ViewOutputChangesTimeRange => S("Lbl_ViewOutputChangesTimeRange", "Lbl_ViewOutputChangesTimeRange");
+    public static string Lbl_ViewOutputDistributionAcrossDevicesPeriods => S("Lbl_ViewOutputDistributionAcrossDevicesPeriods", "Lbl_ViewOutputDistributionAcrossDevicesPeriods");
+    public static string Lbl_ViewerMode => S("Lbl_ViewerMode", "Lbl_ViewerMode");
+    public static string Lbl_ViewerModeDashboardOnly => S("Lbl_ViewerModeDashboardOnly", "Lbl_ViewerModeDashboardOnly");
+    public static string Lbl_ViewerModeKeepsOnlyDashboardPages => S("Lbl_ViewerModeKeepsOnlyDashboardPages", "Lbl_ViewerModeKeepsOnlyDashboardPages");
+    public static string Lbl_Week => S("Lbl_Week", "Lbl_Week");
+    public static string Lbl_WeightedOEE => S("Lbl_WeightedOEE", "Lbl_WeightedOEE");
+    public static string Lbl_WorkOrder => S("Lbl_WorkOrder", "Lbl_WorkOrder");
+    public static string Lbl_WorkOrderDetail => S("Lbl_WorkOrderDetail", "Lbl_WorkOrderDetail");
+    public static string Lbl_WorkOrderList => S("Lbl_WorkOrderList", "Lbl_WorkOrderList");
+    public static string Lbl_WorkOrderManagement => S("Lbl_WorkOrderManagement", "Lbl_WorkOrderManagement");
+    public static string Lbl_WorkOrderNo => S("Lbl_WorkOrderNo", "Lbl_WorkOrderNo");
+    public static string Lbl_WorkOrderSchedule => S("Lbl_WorkOrderSchedule", "Lbl_WorkOrderSchedule");
+    public static string Lbl_WorkOrders => S("Lbl_WorkOrders", "Lbl_WorkOrders");
+    public static string Lbl_WriteFailures => S("Lbl_WriteFailures", "Lbl_WriteFailures");
+    public static string Lbl_WritePLC => S("Lbl_WritePLC", "Lbl_WritePLC");
+    public static string Lbl_WriteRecipePLC => S("Lbl_WriteRecipePLC", "Lbl_WriteRecipePLC");
+    public static string Lbl_Writes1ShiftChangeManualReset => S("Lbl_Writes1ShiftChangeManualReset", "Lbl_Writes1ShiftChangeManualReset");
+    public static string Lbl_WritesOEEResetCommandEveryDevice => S("Lbl_WritesOEEResetCommandEveryDevice", "Lbl_WritesOEEResetCommandEveryDevice");
+    public static string Lbl_WritesRecipePLCVerifyDeviceAddress => S("Lbl_WritesRecipePLCVerifyDeviceAddress", "Lbl_WritesRecipePLCVerifyDeviceAddress");
+    public static string Lbl_Yesterday => S("Lbl_Yesterday", "Lbl_Yesterday");
+    public static string Level_High => S("Level_High", "Level_High");
+    public static string Level_Low => S("Level_Low", "Level_Low");
+    public static string Level_Medium => S("Level_Medium", "Level_Medium");
+    public static string License_ActivePermanent => S("License_ActivePermanent", "License_ActivePermanent");
+    public static string License_Expired => S("License_Expired", "License_Expired");
+    public static string License_Inactive => S("License_Inactive", "License_Inactive");
+    public static string License_MachineMismatch => S("License_MachineMismatch", "License_MachineMismatch");
+    public static string License_TrialExpired => S("License_TrialExpired", "License_TrialExpired");
+    public static string License_TrialManipulated => S("License_TrialManipulated", "License_TrialManipulated");
+    public static string Ln_ActualCapacity => S("Ln_ActualCapacity", "Ln_ActualCapacity");
+    public static string Ln_ApplyTargetCycleAll => S("Ln_ApplyTargetCycleAll", "Ln_ApplyTargetCycleAll");
+    public static string Ln_ApplyTargetCycleConfirm => S("Ln_ApplyTargetCycleConfirm", "Ln_ApplyTargetCycleConfirm");
+    public static string Ln_ApplyTargetCycleDone => S("Ln_ApplyTargetCycleDone", "Ln_ApplyTargetCycleDone");
+    public static string Ln_ApplyTargetCycleFailed => S("Ln_ApplyTargetCycleFailed", "Ln_ApplyTargetCycleFailed");
+    public static string Ln_ApplyTargetCycleTitle => S("Ln_ApplyTargetCycleTitle", "Ln_ApplyTargetCycleTitle");
+    public static string Ln_AvailabilityHint => S("Ln_AvailabilityHint", "Ln_AvailabilityHint");
+    public static string Ln_ShiftPace => S("Ln_ShiftPace", "Ln_ShiftPace");
+    public static string Ln_ShiftPaceExceeded => S("Ln_ShiftPaceExceeded", "Ln_ShiftPaceExceeded");
+    public static string Ln_Tip_CycleCompare => S("Ln_Tip_CycleCompare", "Ln_Tip_CycleCompare");
+    public static string Ln_Tip_ExtraAlarms => S("Ln_Tip_ExtraAlarms", "Ln_Tip_ExtraAlarms");
+    public static string Ln_Tip_SessionNg => S("Ln_Tip_SessionNg", "Ln_Tip_SessionNg");
+    public static string Ln_Tip_SessionOk => S("Ln_Tip_SessionOk", "Ln_Tip_SessionOk");
+    public static string Ln_Tip_ShiftPace => S("Ln_Tip_ShiftPace", "Ln_Tip_ShiftPace");
+    public static string Ln_Tip_StatusCount => S("Ln_Tip_StatusCount", "Ln_Tip_StatusCount");
+    public static string M_ConfirmAbort => S("M_ConfirmAbort", "M_ConfirmAbort");
+    public static string M_ConfirmDelete => S("M_ConfirmDelete", "M_ConfirmDelete");
+    public static string M_EarlierShift => S("M_EarlierShift", "M_EarlierShift");
+    public static string M_ExportWorkOrders => S("M_ExportWorkOrders", "M_ExportWorkOrders");
+    public static string M_LoginFailed => S("M_LoginFailed", "M_LoginFailed");
+    public static string M_LoginPersistFailed => S("M_LoginPersistFailed", "M_LoginPersistFailed");
+    public static string M_MoreNotShown => S("M_MoreNotShown", "M_MoreNotShown");
+    public static string M_NoDeviceForReview => S("M_NoDeviceForReview", "M_NoDeviceForReview");
+    public static string M_NoDeviceSelected => S("M_NoDeviceSelected", "M_NoDeviceSelected");
+    public static string M_NoSelfDelete => S("M_NoSelfDelete", "M_NoSelfDelete");
+    public static string M_RestoreDefaults => S("M_RestoreDefaults", "M_RestoreDefaults");
+    public static string M_ShiftConfigChangedTitle => S("M_ShiftConfigChangedTitle", "M_ShiftConfigChangedTitle");
+    public static string M_UnsavedChangesLeave => S("M_UnsavedChangesLeave", "M_UnsavedChangesLeave");
+    public static string Mo_Tip_AcqStatus => S("Mo_Tip_AcqStatus", "Mo_Tip_AcqStatus");
+    public static string Mo_Tip_AvgCycleMs => S("Mo_Tip_AvgCycleMs", "Mo_Tip_AvgCycleMs");
+    public static string Mo_Tip_CompletedCycles => S("Mo_Tip_CompletedCycles", "Mo_Tip_CompletedCycles");
+    public static string Mo_Tip_ConnStatus => S("Mo_Tip_ConnStatus", "Mo_Tip_ConnStatus");
+    public static string Mo_Tip_ConsecutiveFail => S("Mo_Tip_ConsecutiveFail", "Mo_Tip_ConsecutiveFail");
+    public static string Mo_Tip_DevicesRead => S("Mo_Tip_DevicesRead", "Mo_Tip_DevicesRead");
+    public static string Mo_Tip_DisconnectDuration => S("Mo_Tip_DisconnectDuration", "Mo_Tip_DisconnectDuration");
+    public static string Mo_Tip_FailedCycles => S("Mo_Tip_FailedCycles", "Mo_Tip_FailedCycles");
+    public static string Mo_Tip_Health => S("Mo_Tip_Health", "Mo_Tip_Health");
+    public static string Mo_Tip_LastCycleMs => S("Mo_Tip_LastCycleMs", "Mo_Tip_LastCycleMs");
+    public static string Mo_Tip_LastFailureAt => S("Mo_Tip_LastFailureAt", "Mo_Tip_LastFailureAt");
+    public static string Mo_Tip_LastSuccessAt => S("Mo_Tip_LastSuccessAt", "Mo_Tip_LastSuccessAt");
+    public static string Mo_Tip_MaxCycleMs => S("Mo_Tip_MaxCycleMs", "Mo_Tip_MaxCycleMs");
+    public static string Mo_Tip_PendingHistory => S("Mo_Tip_PendingHistory", "Mo_Tip_PendingHistory");
+    public static string Mo_Tip_SuccessRate => S("Mo_Tip_SuccessRate", "Mo_Tip_SuccessRate");
+    public static string Msg_Aborted => S("Msg_Aborted", "Msg_Aborted");
+    public static string Msg_AccountLockedMinutesRemaining => S("Msg_AccountLockedMinutesRemaining", "Msg_AccountLockedMinutesRemaining");
+    public static string Msg_AcquisitionStopped => S("Msg_AcquisitionStopped", "Msg_AcquisitionStopped");
+    public static string Msg_AcquisitionStrategy => S("Msg_AcquisitionStrategy", "Msg_AcquisitionStrategy");
+    public static string Msg_Activated => S("Msg_Activated", "Msg_Activated");
+    public static string Msg_ActivatedNoLicenseKeyCopy => S("Msg_ActivatedNoLicenseKeyCopy", "Msg_ActivatedNoLicenseKeyCopy");
+    public static string Msg_ActivatedPermanentLicense => S("Msg_ActivatedPermanentLicense", "Msg_ActivatedPermanentLicense");
+    public static string Msg_ActivationSuccessful => S("Msg_ActivationSuccessful", "Msg_ActivationSuccessful");
+    public static string Msg_Active => S("Msg_Active", "Msg_Active");
+    public static string Msg_Actual => S("Msg_Actual", "Msg_Actual");
+    public static string Msg_AddDevicesDeviceManagementFirst => S("Msg_AddDevicesDeviceManagementFirst", "Msg_AddDevicesDeviceManagementFirst");
+    public static string Msg_AddUser => S("Msg_AddUser", "Msg_AddUser");
+    public static string Msg_AddressConflict => S("Msg_AddressConflict", "Msg_AddressConflict");
+    public static string Msg_AddressEmpty => S("Msg_AddressEmpty", "Msg_AddressEmpty");
+    public static string Msg_Administrator => S("Msg_Administrator", "Msg_Administrator");
+    public static string Msg_Alarm => S("Msg_Alarm", "Msg_Alarm");
+    public static string Msg_AlarmCount => S("Msg_AlarmCount", "Msg_AlarmCount");
+    public static string Msg_AlarmCount2 => S("Msg_AlarmCount2", "Msg_AlarmCount2");
+    public static string Msg_AlarmDeviceCountDuration => S("Msg_AlarmDeviceCountDuration", "Msg_AlarmDeviceCountDuration");
+    public static string Msg_AlarmDurationMin => S("Msg_AlarmDurationMin", "Msg_AlarmDurationMin");
+    public static string Msg_AlarmDurationRanking => S("Msg_AlarmDurationRanking", "Msg_AlarmDurationRanking");
+    public static string Msg_AlarmInfoCopied => S("Msg_AlarmInfoCopied", "Msg_AlarmInfoCopied");
+    public static string Msg_AlarmTime => S("Msg_AlarmTime", "Msg_AlarmTime");
+    public static string Msg_AlarmTimeS => S("Msg_AlarmTimeS", "Msg_AlarmTimeS");
+    public static string Msg_All => S("Msg_All", "Msg_All");
+    public static string Msg_AllDataCollected => S("Msg_AllDataCollected", "Msg_AllDataCollected");
+    public static string Msg_AllDevices => S("Msg_AllDevices", "Msg_AllDevices");
+    public static string Msg_AllDevices2 => S("Msg_AllDevices2", "Msg_AllDevices2");
+    public static string Msg_AllFilteredResultsRows => S("Msg_AllFilteredResultsRows", "Msg_AllFilteredResultsRows");
+    public static string Msg_AllShifts => S("Msg_AllShifts", "Msg_AllShifts");
+    public static string Msg_Availability => S("Msg_Availability", "Msg_Availability");
+    public static string Msg_AvailabilityRateRunTimePlannedTime => S("Msg_AvailabilityRateRunTimePlannedTime", "Msg_AvailabilityRateRunTimePlannedTime");
+    public static string Msg_AvailabilityTrend => S("Msg_AvailabilityTrend", "Msg_AvailabilityTrend");
+    public static string Msg_BPerformanceRate => S("Msg_BPerformanceRate", "Msg_BPerformanceRate");
+    public static string Msg_BackupFileEmptyInvalid => S("Msg_BackupFileEmptyInvalid", "Msg_BackupFileEmptyInvalid");
+    public static string Msg_BehindSchedule => S("Msg_BehindSchedule", "Msg_BehindSchedule");
+    public static string Msg_Below => S("Msg_Below", "Msg_Below");
+    public static string Msg_BelowTarget => S("Msg_BelowTarget", "Msg_BelowTarget");
+    public static string Msg_CQualityRate => S("Msg_CQualityRate", "Msg_CQualityRate");
+    public static string Msg_CSVFilesCsvAllFiles => S("Msg_CSVFilesCsvAllFiles", "Msg_CSVFilesCsvAllFiles");
+    public static string Msg_CSVFilesCsvCsvAllFiles => S("Msg_CSVFilesCsvCsvAllFiles", "Msg_CSVFilesCsvCsvAllFiles");
+    public static string Msg_Cancelled => S("Msg_Cancelled", "Msg_Cancelled");
+    public static string Msg_CannotAbortCompletedOrder => S("Msg_CannotAbortCompletedOrder", "Msg_CannotAbortCompletedOrder");
+    public static string Msg_CannotChangeOwnRoleDisableYourself => S("Msg_CannotChangeOwnRoleDisableYourself", "Msg_CannotChangeOwnRoleDisableYourself");
+    public static string Msg_CannotDeleteLastAdminAccount => S("Msg_CannotDeleteLastAdminAccount", "Msg_CannotDeleteLastAdminAccount");
+    public static string Msg_CannotDisableDemoteLastAdministratorAccount => S("Msg_CannotDisableDemoteLastAdministratorAccount", "Msg_CannotDisableDemoteLastAdministratorAccount");
+    public static string Msg_CannotResumeAbortedOrder => S("Msg_CannotResumeAbortedOrder", "Msg_CannotResumeAbortedOrder");
+    public static string Msg_ChangePassword => S("Msg_ChangePassword", "Msg_ChangePassword");
+    public static string Msg_CollectorConnected => S("Msg_CollectorConnected", "Msg_CollectorConnected");
+    public static string Msg_CollectorConnected2 => S("Msg_CollectorConnected2", "Msg_CollectorConnected2");
+    public static string Msg_CollectorParametersSyncedPollingShiftsPLC => S("Msg_CollectorParametersSyncedPollingShiftsPLC", "Msg_CollectorParametersSyncedPollingShiftsPLC");
+    public static string Msg_CompleteSaveSnapshotPickNextOrder => S("Msg_CompleteSaveSnapshotPickNextOrder", "Msg_CompleteSaveSnapshotPickNextOrder");
+    public static string Msg_Completed => S("Msg_Completed", "Msg_Completed");
+    public static string Msg_ConfigFileCorrupted => S("Msg_ConfigFileCorrupted", "Msg_ConfigFileCorrupted");
+    public static string Msg_ConfigIssuesDetectedSomeFeaturesUnavailable => S("Msg_ConfigIssuesDetectedSomeFeaturesUnavailable", "Msg_ConfigIssuesDetectedSomeFeaturesUnavailable");
+    public static string Msg_ConfigValidationWarning => S("Msg_ConfigValidationWarning", "Msg_ConfigValidationWarning");
+    public static string Msg_ConfigurationOK => S("Msg_ConfigurationOK", "Msg_ConfigurationOK");
+    public static string Msg_Configured => S("Msg_Configured", "Msg_Configured");
+    public static string Msg_ConfirmClearCounterAlarm => S("Msg_ConfirmClearCounterAlarm", "Msg_ConfirmClearCounterAlarm");
+    public static string Msg_ConfirmDelete => S("Msg_ConfirmDelete", "Msg_ConfirmDelete");
+    public static string Msg_ConfirmImport => S("Msg_ConfirmImport", "Msg_ConfirmImport");
+    public static string Msg_ConfirmImportAlarms => S("Msg_ConfirmImportAlarms", "Msg_ConfirmImportAlarms");
+    public static string Msg_ConfirmOEEReset => S("Msg_ConfirmOEEReset", "Msg_ConfirmOEEReset");
+    public static string Msg_ConfirmResetOEEAll => S("Msg_ConfirmResetOEEAll", "Msg_ConfirmResetOEEAll");
+    public static string Msg_ConnectionSuccessful => S("Msg_ConnectionSuccessful", "Msg_ConnectionSuccessful");
+    public static string Msg_CopyFailedRecordLicenseKeyManually => S("Msg_CopyFailedRecordLicenseKeyManually", "Msg_CopyFailedRecordLicenseKeyManually");
+    public static string Msg_CopyFailedRecordMachineCodeManually => S("Msg_CopyFailedRecordMachineCodeManually", "Msg_CopyFailedRecordMachineCodeManually");
+    public static string Msg_CoreMetrics => S("Msg_CoreMetrics", "Msg_CoreMetrics");
+    public static string Msg_Count => S("Msg_Count", "Msg_Count");
+    public static string Msg_Count2 => S("Msg_Count2", "Msg_Count2");
+    public static string Msg_Created => S("Msg_Created", "Msg_Created");
+    public static string Msg_CumulativeRatio => S("Msg_CumulativeRatio", "Msg_CumulativeRatio");
+    public static string Msg_CurrentChange => S("Msg_CurrentChange", "Msg_CurrentChange");
+    public static string Msg_CurrentShift => S("Msg_CurrentShift", "Msg_CurrentShift");
+    public static string Msg_CycleFailed => S("Msg_CycleFailed", "Msg_CycleFailed");
+    public static string Msg_CycleSucceeded => S("Msg_CycleSucceeded", "Msg_CycleSucceeded");
+    public static string Msg_DashboardTitleCannotEmpty => S("Msg_DashboardTitleCannotEmpty", "Msg_DashboardTitleCannotEmpty");
+    public static string Msg_DataCouldFullySavedExitData => S("Msg_DataCouldFullySavedExitData", "Msg_DataCouldFullySavedExitData");
+    public static string Msg_DatabaseReady => S("Msg_DatabaseReady", "Msg_DatabaseReady");
+    public static string Msg_DefaultPassword => S("Msg_DefaultPassword", "Msg_DefaultPassword");
+    public static string Msg_DefaultsRestoredClickSaveSettingsApply => S("Msg_DefaultsRestoredClickSaveSettingsApply", "Msg_DefaultsRestoredClickSaveSettingsApply");
+    public static string Msg_Defect => S("Msg_Defect", "Msg_Defect");
+    public static string Msg_DefectDistribution => S("Msg_DefectDistribution", "Msg_DefectDistribution");
+    public static string Msg_DefectPareto => S("Msg_DefectPareto", "Msg_DefectPareto");
+    public static string Msg_DeleteUser => S("Msg_DeleteUser", "Msg_DeleteUser");
+    public static string Msg_Device => S("Msg_Device", "Msg_Device");
+    public static string Msg_Device2 => S("Msg_Device2", "Msg_Device2");
+    public static string Msg_DeviceDeleted => S("Msg_DeviceDeleted", "Msg_DeviceDeleted");
+    public static string Msg_DeviceDetails => S("Msg_DeviceDetails", "Msg_DeviceDetails");
+    public static string Msg_DeviceHasActiveOrder => S("Msg_DeviceHasActiveOrder", "Msg_DeviceHasActiveOrder");
+    public static string Msg_DeviceOKNGQualityOEERun => S("Msg_DeviceOKNGQualityOEERun", "Msg_DeviceOKNGQualityOEERun");
+    public static string Msg_Disabled => S("Msg_Disabled", "Msg_Disabled");
+    public static string Msg_Disconnected => S("Msg_Disconnected", "Msg_Disconnected");
+    public static string Msg_Disconnected2 => S("Msg_Disconnected2", "Msg_Disconnected2");
+    public static string Msg_DisplayName => S("Msg_DisplayName", "Msg_DisplayName");
+    public static string Msg_DowntimeAnalysis => S("Msg_DowntimeAnalysis", "Msg_DowntimeAnalysis");
+    public static string Msg_DowntimeAnalysis2 => S("Msg_DowntimeAnalysis2", "Msg_DowntimeAnalysis2");
+    public static string Msg_DowntimeMin => S("Msg_DowntimeMin", "Msg_DowntimeMin");
+    public static string Msg_DurationMin => S("Msg_DurationMin", "Msg_DurationMin");
+    public static string Msg_Engineer => S("Msg_Engineer", "Msg_Engineer");
+    public static string Msg_EnterActivationCodeContinue => S("Msg_EnterActivationCodeContinue", "Msg_EnterActivationCodeContinue");
+    public static string Msg_EnterActivationCodeContinue2 => S("Msg_EnterActivationCodeContinue2", "Msg_EnterActivationCodeContinue2");
+    public static string Msg_EnterNewActivationCodeReplaceCurrent => S("Msg_EnterNewActivationCodeReplaceCurrent", "Msg_EnterNewActivationCodeReplaceCurrent");
+    public static string Msg_EnterNewActivationCodeReplaceCurrent2 => S("Msg_EnterNewActivationCodeReplaceCurrent2", "Msg_EnterNewActivationCodeReplaceCurrent2");
+    public static string Msg_EnterPasswordRestore => S("Msg_EnterPasswordRestore", "Msg_EnterPasswordRestore");
+    public static string Msg_ExecutingPLCOperation => S("Msg_ExecutingPLCOperation", "Msg_ExecutingPLCOperation");
+    public static string Msg_ExportAlarmConfig => S("Msg_ExportAlarmConfig", "Msg_ExportAlarmConfig");
+    public static string Msg_ExportAllFilteredResultsYesExports => S("Msg_ExportAllFilteredResultsYesExports", "Msg_ExportAllFilteredResultsYesExports");
+    public static string Msg_ExportCounterAlarmsConfiguration => S("Msg_ExportCounterAlarmsConfiguration", "Msg_ExportCounterAlarmsConfiguration");
+    public static string Msg_ExportDefectsConfiguration => S("Msg_ExportDefectsConfiguration", "Msg_ExportDefectsConfiguration");
+    public static string Msg_ExportDeviceConfig => S("Msg_ExportDeviceConfig", "Msg_ExportDeviceConfig");
+    public static string Msg_ExportReviewPDF => S("Msg_ExportReviewPDF", "Msg_ExportReviewPDF");
+    public static string Msg_ExportReviewReport => S("Msg_ExportReviewReport", "Msg_ExportReviewReport");
+    public static string Msg_ExportScope => S("Msg_ExportScope", "Msg_ExportScope");
+    public static string Msg_Field => S("Msg_Field", "Msg_Field");
+    public static string Msg_Gap => S("Msg_Gap", "Msg_Gap");
+    public static string Msg_General => S("Msg_General", "Msg_General");
+    public static string Msg_GenerateDemoDevices => S("Msg_GenerateDemoDevices", "Msg_GenerateDemoDevices");
+    public static string Msg_GenerateSampleWorkOrders => S("Msg_GenerateSampleWorkOrders", "Msg_GenerateSampleWorkOrders");
+    public static string Msg_HourlyOutput => S("Msg_HourlyOutput", "Msg_HourlyOutput");
+    public static string Msg_Hours => S("Msg_Hours", "Msg_Hours");
+    public static string Msg_Hours2 => S("Msg_Hours2", "Msg_Hours2");
+    public static string Msg_IPAddressCannotEmpty => S("Msg_IPAddressCannotEmpty", "Msg_IPAddressCannotEmpty");
+    public static string Msg_IdleTime => S("Msg_IdleTime", "Msg_IdleTime");
+    public static string Msg_ImportAlarmConfig => S("Msg_ImportAlarmConfig", "Msg_ImportAlarmConfig");
+    public static string Msg_ImportCounterAlarmsConfiguration => S("Msg_ImportCounterAlarmsConfiguration", "Msg_ImportCounterAlarmsConfiguration");
+    public static string Msg_ImportDefectsConfiguration => S("Msg_ImportDefectsConfiguration", "Msg_ImportDefectsConfiguration");
+    public static string Msg_ImportDeviceConfig => S("Msg_ImportDeviceConfig", "Msg_ImportDeviceConfig");
+    public static string Msg_InsufficientDataReview => S("Msg_InsufficientDataReview", "Msg_InsufficientDataReview");
+    public static string Msg_InsufficientPermissionAdministratorRequired => S("Msg_InsufficientPermissionAdministratorRequired", "Msg_InsufficientPermissionAdministratorRequired");
+    public static string Msg_InsufficientPermissionEngineerAboveRequired => S("Msg_InsufficientPermissionEngineerAboveRequired", "Msg_InsufficientPermissionEngineerAboveRequired");
+    public static string Msg_InvalidIPAddress => S("Msg_InvalidIPAddress", "Msg_InvalidIPAddress");
+    public static string Msg_InvalidPLCDataFormat => S("Msg_InvalidPLCDataFormat", "Msg_InvalidPLCDataFormat");
+    public static string Msg_InvalidUsernamePasswordAccountDisabled => S("Msg_InvalidUsernamePasswordAccountDisabled", "Msg_InvalidUsernamePasswordAccountDisabled");
+    public static string Msg_JSONFilesJsonJsonAllFiles => S("Msg_JSONFilesJsonJsonAllFiles", "Msg_JSONFilesJsonJsonAllFiles");
+    public static string Msg_KB => S("Msg_KB", "Msg_KB");
+    public static string Msg_KeepLeastOneShift => S("Msg_KeepLeastOneShift", "Msg_KeepLeastOneShift");
+    public static string Msg_Last8Hours => S("Msg_Last8Hours", "Msg_Last8Hours");
+    public static string Msg_LicenseDoesMatchMachinePleaseReactivate => S("Msg_LicenseDoesMatchMachinePleaseReactivate", "Msg_LicenseDoesMatchMachinePleaseReactivate");
+    public static string Msg_LicenseDoesMatchMachinePleaseReactivate2 => S("Msg_LicenseDoesMatchMachinePleaseReactivate2", "Msg_LicenseDoesMatchMachinePleaseReactivate2");
+    public static string Msg_LicenseDoesMatchMachinePleaseReactivate3 => S("Msg_LicenseDoesMatchMachinePleaseReactivate3", "Msg_LicenseDoesMatchMachinePleaseReactivate3");
+    public static string Msg_LicenseExpired => S("Msg_LicenseExpired", "Msg_LicenseExpired");
+    public static string Msg_LicenseExpiredEnterNewActivationCode => S("Msg_LicenseExpiredEnterNewActivationCode", "Msg_LicenseExpiredEnterNewActivationCode");
+    public static string Msg_LicenseExpiredEnterNewActivationCode2 => S("Msg_LicenseExpiredEnterNewActivationCode2", "Msg_LicenseExpiredEnterNewActivationCode2");
+    public static string Msg_LicenseHasExpiredPleaseEnterNew => S("Msg_LicenseHasExpiredPleaseEnterNew", "Msg_LicenseHasExpiredPleaseEnterNew");
+    public static string Msg_LicenseKeyCopiedClipboard => S("Msg_LicenseKeyCopiedClipboard", "Msg_LicenseKeyCopiedClipboard");
+    public static string Msg_LicenseMachineMismatch => S("Msg_LicenseMachineMismatch", "Msg_LicenseMachineMismatch");
+    public static string Msg_LiveDataTodayAlarms24hOutput => S("Msg_LiveDataTodayAlarms24hOutput", "Msg_LiveDataTodayAlarms24hOutput");
+    public static string Msg_LoadComplete => S("Msg_LoadComplete", "Msg_LoadComplete");
+    public static string Msg_LoadFailed => S("Msg_LoadFailed", "Msg_LoadFailed");
+    public static string Msg_Loading => S("Msg_Loading", "Msg_Loading");
+    public static string Msg_LoadingConfiguration => S("Msg_LoadingConfiguration", "Msg_LoadingConfiguration");
+    public static string Msg_Locked => S("Msg_Locked", "Msg_Locked");
+    public static string Msg_Log => S("Msg_Log", "Msg_Log");
+    public static string Msg_Login => S("Msg_Login", "Msg_Login");
+    public static string Msg_LongAlarm => S("Msg_LongAlarm", "Msg_LongAlarm");
+    public static string Msg_LongestAlarm => S("Msg_LongestAlarm", "Msg_LongestAlarm");
+    public static string Msg_MB => S("Msg_MB", "Msg_MB");
+    public static string Msg_MachineCodeCopiedClipboard => S("Msg_MachineCodeCopiedClipboard", "Msg_MachineCodeCopiedClipboard");
+    public static string Msg_Met => S("Msg_Met", "Msg_Met");
+    public static string Msg_MetPending => S("Msg_MetPending", "Msg_MetPending");
+    public static string Msg_Metric => S("Msg_Metric", "Msg_Metric");
+    public static string Msg_MetricValue => S("Msg_MetricValue", "Msg_MetricValue");
+    public static string Msg_MicrosoftYaHeiFontFoundCannotGenerate => S("Msg_MicrosoftYaHeiFontFoundCannotGenerate", "Msg_MicrosoftYaHeiFontFoundCannotGenerate");
+    public static string Msg_Ms => S("Msg_Ms", "Msg_Ms");
+    public static string Msg_MustChangePasswordFirstLogin => S("Msg_MustChangePasswordFirstLogin", "Msg_MustChangePasswordFirstLogin");
+    public static string Msg_NGCountAddress => S("Msg_NGCountAddress", "Msg_NGCountAddress");
+    public static string Msg_NGCountAddress2 => S("Msg_NGCountAddress2", "Msg_NGCountAddress2");
+    public static string Msg_NGOutput => S("Msg_NGOutput", "Msg_NGOutput");
+    public static string Msg_NGQty => S("Msg_NGQty", "Msg_NGQty");
+    public static string Msg_NeverLogged => S("Msg_NeverLogged", "Msg_NeverLogged");
+    public static string Msg_NoActiveFaults => S("Msg_NoActiveFaults", "Msg_NoActiveFaults");
+    public static string Msg_NoActiveWorkOrder => S("Msg_NoActiveWorkOrder", "Msg_NoActiveWorkOrder");
+    public static string Msg_NoAddressConfigured => S("Msg_NoAddressConfigured", "Msg_NoAddressConfigured");
+    public static string Msg_NoBacklog => S("Msg_NoBacklog", "Msg_NoBacklog");
+    public static string Msg_NoChartData => S("Msg_NoChartData", "Msg_NoChartData");
+    public static string Msg_NoData => S("Msg_NoData", "Msg_NoData");
+    public static string Msg_NoDataCurrentTabExport => S("Msg_NoDataCurrentTabExport", "Msg_NoDataCurrentTabExport");
+    public static string Msg_NoDataFound => S("Msg_NoDataFound", "Msg_NoDataFound");
+    public static string Msg_NoDevice => S("Msg_NoDevice", "Msg_NoDevice");
+    public static string Msg_NoDeviceDataSelectedFile => S("Msg_NoDeviceDataSelectedFile", "Msg_NoDeviceDataSelectedFile");
+    public static string Msg_NoDevicesReset => S("Msg_NoDevicesReset", "Msg_NoDevicesReset");
+    public static string Msg_NoHistoryDataRange => S("Msg_NoHistoryDataRange", "Msg_NoHistoryDataRange");
+    public static string Msg_NoInsights => S("Msg_NoInsights", "Msg_NoInsights");
+    public static string Msg_NoMatchingAlarms => S("Msg_NoMatchingAlarms", "Msg_NoMatchingAlarms");
+    public static string Msg_NoMatchingShift => S("Msg_NoMatchingShift", "Msg_NoMatchingShift");
+    public static string Msg_NoMatchingUsers => S("Msg_NoMatchingUsers", "Msg_NoMatchingUsers");
+    public static string Msg_NoProductInfo => S("Msg_NoProductInfo", "Msg_NoProductInfo");
+    public static string Msg_NoRecipeInfo => S("Msg_NoRecipeInfo", "Msg_NoRecipeInfo");
+    public static string Msg_NoShiftsConfigured => S("Msg_NoShiftsConfigured", "Msg_NoShiftsConfigured");
+    public static string Msg_NoWorkOrdersMatchCurrentFilter => S("Msg_NoWorkOrdersMatchCurrentFilter", "Msg_NoWorkOrdersMatchCurrentFilter");
+    public static string Msg_OEE => S("Msg_OEE", "Msg_OEE");
+    public static string Msg_OEEAvailabilityXPerformanceXQuality => S("Msg_OEEAvailabilityXPerformanceXQuality", "Msg_OEEAvailabilityXPerformanceXQuality");
+    public static string Msg_OEELossBreakdown => S("Msg_OEELossBreakdown", "Msg_OEELossBreakdown");
+    public static string Msg_OEEMetrics => S("Msg_OEEMetrics", "Msg_OEEMetrics");
+    public static string Msg_OEEResetAddress => S("Msg_OEEResetAddress", "Msg_OEEResetAddress");
+    public static string Msg_OEEResetAddress2 => S("Msg_OEEResetAddress2", "Msg_OEEResetAddress2");
+    public static string Msg_OEEResetAddress3 => S("Msg_OEEResetAddress3", "Msg_OEEResetAddress3");
+    public static string Msg_OEEResetAddress4 => S("Msg_OEEResetAddress4", "Msg_OEEResetAddress4");
+    public static string Msg_OEEResetAddress5 => S("Msg_OEEResetAddress5", "Msg_OEEResetAddress5");
+    public static string Msg_OEEResetAddressConfigured => S("Msg_OEEResetAddressConfigured", "Msg_OEEResetAddressConfigured");
+    public static string Msg_OKCountAddress => S("Msg_OKCountAddress", "Msg_OKCountAddress");
+    public static string Msg_OKCountAddress2 => S("Msg_OKCountAddress2", "Msg_OKCountAddress2");
+    public static string Msg_OKOutput => S("Msg_OKOutput", "Msg_OKOutput");
+    public static string Msg_OKQty => S("Msg_OKQty", "Msg_OKQty");
+    public static string Msg_OffShiftPeriod => S("Msg_OffShiftPeriod", "Msg_OffShiftPeriod");
+    public static string Msg_OfflineDisconnected => S("Msg_OfflineDisconnected", "Msg_OfflineDisconnected");
+    public static string Msg_OnlyActiveOrdersCanComplete => S("Msg_OnlyActiveOrdersCanComplete", "Msg_OnlyActiveOrdersCanComplete");
+    public static string Msg_OnlyPendingOrdersCanStart => S("Msg_OnlyPendingOrdersCanStart", "Msg_OnlyPendingOrdersCanStart");
+    public static string Msg_OnlyStatusDataNoOutput => S("Msg_OnlyStatusDataNoOutput", "Msg_OnlyStatusDataNoOutput");
+    public static string Msg_OperatorText => S("Msg_OperatorText", "Msg_OperatorText");
+    public static string Msg_Output => S("Msg_Output", "Msg_Output");
+    public static string Msg_OutputDataNoAlarms => S("Msg_OutputDataNoAlarms", "Msg_OutputDataNoAlarms");
+    public static string Msg_OutputPcs => S("Msg_OutputPcs", "Msg_OutputPcs");
+    public static string Msg_OutputTrend => S("Msg_OutputTrend", "Msg_OutputTrend");
+    public static string Msg_OverdueIncomplete => S("Msg_OverdueIncomplete", "Msg_OverdueIncomplete");
+    public static string Msg_PLCConnectedCannotClear => S("Msg_PLCConnectedCannotClear", "Msg_PLCConnectedCannotClear");
+    public static string Msg_PLCConnectedCannotRead => S("Msg_PLCConnectedCannotRead", "Msg_PLCConnectedCannotRead");
+    public static string Msg_PLCConnectedCannotReset => S("Msg_PLCConnectedCannotReset", "Msg_PLCConnectedCannotReset");
+    public static string Msg_PLCConnectedCannotWriteRecipe => S("Msg_PLCConnectedCannotWriteRecipe", "Msg_PLCConnectedCannotWriteRecipe");
+    public static string Msg_PLCConnection => S("Msg_PLCConnection", "Msg_PLCConnection");
+    public static string Msg_PLCDisconnected => S("Msg_PLCDisconnected", "Msg_PLCDisconnected");
+    public static string Msg_PageExported => S("Msg_PageExported", "Msg_PageExported");
+    public static string Msg_PartialFunctionality => S("Msg_PartialFunctionality", "Msg_PartialFunctionality");
+    public static string Msg_Password => S("Msg_Password", "Msg_Password");
+    public static string Msg_PasswordMustLeast8Characters => S("Msg_PasswordMustLeast8Characters", "Msg_PasswordMustLeast8Characters");
+    public static string Msg_PasswordStrengthMedium => S("Msg_PasswordStrengthMedium", "Msg_PasswordStrengthMedium");
+    public static string Msg_PasswordStrengthStrong => S("Msg_PasswordStrengthStrong", "Msg_PasswordStrengthStrong");
+    public static string Msg_PasswordStrengthWeak => S("Msg_PasswordStrengthWeak", "Msg_PasswordStrengthWeak");
+    public static string Msg_PasswordlessAccount => S("Msg_PasswordlessAccount", "Msg_PasswordlessAccount");
+    public static string Msg_Pending => S("Msg_Pending", "Msg_Pending");
+    public static string Msg_Percentage => S("Msg_Percentage", "Msg_Percentage");
+    public static string Msg_Performance => S("Msg_Performance", "Msg_Performance");
+    public static string Msg_PerformanceRateActualOutputTheoreticalOutput => S("Msg_PerformanceRateActualOutputTheoreticalOutput", "Msg_PerformanceRateActualOutputTheoreticalOutput");
+    public static string Msg_PerformanceTrend => S("Msg_PerformanceTrend", "Msg_PerformanceTrend");
+    public static string Msg_PeriodComparison => S("Msg_PeriodComparison", "Msg_PeriodComparison");
+    public static string Msg_Permanent => S("Msg_Permanent", "Msg_Permanent");
+    public static string Msg_PermanentLicense => S("Msg_PermanentLicense", "Msg_PermanentLicense");
+    public static string Msg_PermanentLicense2 => S("Msg_PermanentLicense2", "Msg_PermanentLicense2");
+    public static string Msg_PersistenceFailed => S("Msg_PersistenceFailed", "Msg_PersistenceFailed");
+    public static string Msg_PlannedEnd => S("Msg_PlannedEnd", "Msg_PlannedEnd");
+    public static string Msg_PlannedStart => S("Msg_PlannedStart", "Msg_PlannedStart");
+    public static string Msg_PleaseEnterActivationCodeContinue => S("Msg_PleaseEnterActivationCodeContinue", "Msg_PleaseEnterActivationCodeContinue");
+    public static string Msg_PleaseEnterCollectorAddress => S("Msg_PleaseEnterCollectorAddress", "Msg_PleaseEnterCollectorAddress");
+    public static string Msg_PleaseFixSettingsPage => S("Msg_PleaseFixSettingsPage", "Msg_PleaseFixSettingsPage");
+    public static string Msg_Previous1Hour => S("Msg_Previous1Hour", "Msg_Previous1Hour");
+    public static string Msg_Previous24Hours => S("Msg_Previous24Hours", "Msg_Previous24Hours");
+    public static string Msg_Previous7Days => S("Msg_Previous7Days", "Msg_Previous7Days");
+    public static string Msg_Previous8Hours => S("Msg_Previous8Hours", "Msg_Previous8Hours");
+    public static string Msg_PreviousPeriod => S("Msg_PreviousPeriod", "Msg_PreviousPeriod");
+    public static string Msg_PreviousShift => S("Msg_PreviousShift", "Msg_PreviousShift");
+    public static string Msg_PreviousVersionBackupFound => S("Msg_PreviousVersionBackupFound", "Msg_PreviousVersionBackupFound");
+    public static string Msg_Product => S("Msg_Product", "Msg_Product");
+    public static string Msg_ProductionHeatmap => S("Msg_ProductionHeatmap", "Msg_ProductionHeatmap");
+    public static string Msg_ProductionReviewReport => S("Msg_ProductionReviewReport", "Msg_ProductionReviewReport");
+    public static string Msg_ProductionTrend => S("Msg_ProductionTrend", "Msg_ProductionTrend");
+    public static string Msg_ProgramAlreadyRunningCannotStartedAgain => S("Msg_ProgramAlreadyRunningCannotStartedAgain", "Msg_ProgramAlreadyRunningCannotStartedAgain");
+    public static string Msg_Progress => S("Msg_Progress", "Msg_Progress");
+    public static string Msg_QualityRate => S("Msg_QualityRate", "Msg_QualityRate");
+    public static string Msg_QualityRate2 => S("Msg_QualityRate2", "Msg_QualityRate2");
+    public static string Msg_QualityRateOKOKNG => S("Msg_QualityRateOKOKNG", "Msg_QualityRateOKOKNG");
+    public static string Msg_QualityRateTrend => S("Msg_QualityRateTrend", "Msg_QualityRateTrend");
+    public static string Msg_Queried => S("Msg_Queried", "Msg_Queried");
+    public static string Msg_QueryFailed => S("Msg_QueryFailed", "Msg_QueryFailed");
+    public static string Msg_Reached => S("Msg_Reached", "Msg_Reached");
+    public static string Msg_Ready => S("Msg_Ready", "Msg_Ready");
+    public static string Msg_RecipeAddress => S("Msg_RecipeAddress", "Msg_RecipeAddress");
+    public static string Msg_RecipeAddressConfigured => S("Msg_RecipeAddressConfigured", "Msg_RecipeAddressConfigured");
+    public static string Msg_RefreshComplete => S("Msg_RefreshComplete", "Msg_RefreshComplete");
+    public static string Msg_RefreshFailed => S("Msg_RefreshFailed", "Msg_RefreshFailed");
+    public static string Msg_Refreshing => S("Msg_Refreshing", "Msg_Refreshing");
+    public static string Msg_ReplaceExistingAlarmsImport => S("Msg_ReplaceExistingAlarmsImport", "Msg_ReplaceExistingAlarmsImport");
+    public static string Msg_ResetFailed => S("Msg_ResetFailed", "Msg_ResetFailed");
+    public static string Msg_ResetPassword => S("Msg_ResetPassword", "Msg_ResetPassword");
+    public static string Msg_RestoreDefaultSettingsUnsavedChangesOverwritten => S("Msg_RestoreDefaultSettingsUnsavedChangesOverwritten", "Msg_RestoreDefaultSettingsUnsavedChangesOverwritten");
+    public static string Msg_Role => S("Msg_Role", "Msg_Role");
+    public static string Msg_RunTime => S("Msg_RunTime", "Msg_RunTime");
+    public static string Msg_Running => S("Msg_Running", "Msg_Running");
+    public static string Msg_RunningRemote => S("Msg_RunningRemote", "Msg_RunningRemote");
+    public static string Msg_RuntimeHAlarmHIdleH => S("Msg_RuntimeHAlarmHIdleH", "Msg_RuntimeHAlarmHIdleH");
+    public static string Msg_RuntimeS => S("Msg_RuntimeS", "Msg_RuntimeS");
+    public static string Msg_SaveSettings => S("Msg_SaveSettings", "Msg_SaveSettings");
+    public static string Msg_Saved => S("Msg_Saved", "Msg_Saved");
+    public static string Msg_SavedSuccessfully => S("Msg_SavedSuccessfully", "Msg_SavedSuccessfully");
+    public static string Msg_Saving => S("Msg_Saving", "Msg_Saving");
+    public static string Msg_SearchUsernameDisplayName => S("Msg_SearchUsernameDisplayName", "Msg_SearchUsernameDisplayName");
+    public static string Msg_SecurityReminders => S("Msg_SecurityReminders", "Msg_SecurityReminders");
+    public static string Msg_SelectWorkOrder => S("Msg_SelectWorkOrder", "Msg_SelectWorkOrder");
+    public static string Msg_ServiceDisconnected => S("Msg_ServiceDisconnected", "Msg_ServiceDisconnected");
+    public static string Msg_SettingsSaved => S("Msg_SettingsSaved", "Msg_SettingsSaved");
+    public static string Msg_ShiftComparison => S("Msg_ShiftComparison", "Msg_ShiftComparison");
+    public static string Msg_ShiftConfig => S("Msg_ShiftConfig", "Msg_ShiftConfig");
+    public static string Msg_ShiftConfigurationChanged => S("Msg_ShiftConfigurationChanged", "Msg_ShiftConfigurationChanged");
+    public static string Msg_ShiftOKNGTotalQualityAlarms => S("Msg_ShiftOKNGTotalQualityAlarms", "Msg_ShiftOKNGTotalQualityAlarms");
+    public static string Msg_ShiftOutputComparison => S("Msg_ShiftOutputComparison", "Msg_ShiftOutputComparison");
+    public static string Msg_SpeedPcsH => S("Msg_SpeedPcsH", "Msg_SpeedPcsH");
+    public static string Msg_StartCannotEnd => S("Msg_StartCannotEnd", "Msg_StartCannotEnd");
+    public static string Msg_StartOrder => S("Msg_StartOrder", "Msg_StartOrder");
+    public static string Msg_Starting => S("Msg_Starting", "Msg_Starting");
+    public static string Msg_StartingDataCollection => S("Msg_StartingDataCollection", "Msg_StartingDataCollection");
+    public static string Msg_StartupFailed => S("Msg_StartupFailed", "Msg_StartupFailed");
+    public static string Msg_Status => S("Msg_Status", "Msg_Status");
+    public static string Msg_StatusAddress => S("Msg_StatusAddress", "Msg_StatusAddress");
+    public static string Msg_StatusTime => S("Msg_StatusTime", "Msg_StatusTime");
+    public static string Msg_SwitchUser => S("Msg_SwitchUser", "Msg_SwitchUser");
+    public static string Msg_SystemTimeAnomalyDetectedTrialHas => S("Msg_SystemTimeAnomalyDetectedTrialHas", "Msg_SystemTimeAnomalyDetectedTrialHas");
+    public static string Msg_Target => S("Msg_Target", "Msg_Target");
+    public static string Msg_TargetAchievementRate => S("Msg_TargetAchievementRate", "Msg_TargetAchievementRate");
+    public static string Msg_TargetMet => S("Msg_TargetMet", "Msg_TargetMet");
+    public static string Msg_TargetOutput => S("Msg_TargetOutput", "Msg_TargetOutput");
+    public static string Msg_TargetOutputPcsH => S("Msg_TargetOutputPcsH", "Msg_TargetOutputPcsH");
+    public static string Msg_TemporaryLicense => S("Msg_TemporaryLicense", "Msg_TemporaryLicense");
+    public static string Msg_TestConnection => S("Msg_TestConnection", "Msg_TestConnection");
+    public static string Msg_Testing => S("Msg_Testing", "Msg_Testing");
+    public static string Msg_Time => S("Msg_Time", "Msg_Time");
+    public static string Msg_TimeAvailability => S("Msg_TimeAvailability", "Msg_TimeAvailability");
+    public static string Msg_Tip => S("Msg_Tip", "Msg_Tip");
+    public static string Msg_Today => S("Msg_Today", "Msg_Today");
+    public static string Msg_TopAlarms => S("Msg_TopAlarms", "Msg_TopAlarms");
+    public static string Msg_TotalDuration => S("Msg_TotalDuration", "Msg_TotalDuration");
+    public static string Msg_TotalNG => S("Msg_TotalNG", "Msg_TotalNG");
+    public static string Msg_TotalOK => S("Msg_TotalOK", "Msg_TotalOK");
+    public static string Msg_Track => S("Msg_Track", "Msg_Track");
+    public static string Msg_TrialAnomaly => S("Msg_TrialAnomaly", "Msg_TrialAnomaly");
+    public static string Msg_TrialExpired => S("Msg_TrialExpired", "Msg_TrialExpired");
+    public static string Msg_TrialExpiredEnterActivationCodeContinue => S("Msg_TrialExpiredEnterActivationCodeContinue", "Msg_TrialExpiredEnterActivationCodeContinue");
+    public static string Msg_TrialExpiredEnterActivationCodeContinue2 => S("Msg_TrialExpiredEnterActivationCodeContinue2", "Msg_TrialExpiredEnterActivationCodeContinue2");
+    public static string Msg_TrialLicense => S("Msg_TrialLicense", "Msg_TrialLicense");
+    public static string Msg_TwoPasswordsDoMatch => S("Msg_TwoPasswordsDoMatch", "Msg_TwoPasswordsDoMatch");
+    public static string Msg_Unavailable => S("Msg_Unavailable", "Msg_Unavailable");
+    public static string Msg_Unlock => S("Msg_Unlock", "Msg_Unlock");
+    public static string Msg_UnsavedChanges => S("Msg_UnsavedChanges", "Msg_UnsavedChanges");
+    public static string Msg_UnsavedChanges2 => S("Msg_UnsavedChanges2", "Msg_UnsavedChanges2");
+    public static string Msg_UnsavedChanges3 => S("Msg_UnsavedChanges3", "Msg_UnsavedChanges3");
+    public static string Msg_UnsavedChangesDiscarded => S("Msg_UnsavedChangesDiscarded", "Msg_UnsavedChangesDiscarded");
+    public static string Msg_UnsavedChangesExistExitAnyway => S("Msg_UnsavedChangesExistExitAnyway", "Msg_UnsavedChangesExistExitAnyway");
+    public static string Msg_UpShifts => S("Msg_UpShifts", "Msg_UpShifts");
+    public static string Msg_UpgradingHistoryDB => S("Msg_UpgradingHistoryDB", "Msg_UpgradingHistoryDB");
+    public static string Msg_UserCancelled => S("Msg_UserCancelled", "Msg_UserCancelled");
+    public static string Msg_UserManagement => S("Msg_UserManagement", "Msg_UserManagement");
+    public static string Msg_Username => S("Msg_Username", "Msg_Username");
+    public static string Msg_UsernameAlreadyExists => S("Msg_UsernameAlreadyExists", "Msg_UsernameAlreadyExists");
+    public static string Msg_Value => S("Msg_Value", "Msg_Value");
+    public static string Msg_WorkOrderDeleted => S("Msg_WorkOrderDeleted", "Msg_WorkOrderDeleted");
+    public static string Msg_WorkOrderNoProductCodeProductNameDeviceNameTarge => S("Msg_WorkOrderNoProductCodeProductNameDeviceNameTarge", "Msg_WorkOrderNoProductCodeProductNameDeviceNameTarge");
+    public static string Msg_WrongPasswordRestoreCancelled => S("Msg_WrongPasswordRestoreCancelled", "Msg_WrongPasswordRestoreCancelled");
+    public static string Nav_AlarmCenter => S("Nav_AlarmCenter", "Nav_AlarmCenter");
+    public static string Nav_Assistant => S("Nav_Assistant", "Nav_Assistant");
+    public static string Nav_Assistant_Tip => S("Nav_Assistant_Tip", "Nav_Assistant_Tip");
+    public static string Nav_Audit => S("Nav_Audit", "Nav_Audit");
+    public static string Nav_DataSourceMonitoring => S("Nav_DataSourceMonitoring", "Nav_DataSourceMonitoring");
+    public static string Nav_DeviceDetail => S("Nav_DeviceDetail", "Nav_DeviceDetail");
+    public static string Nav_DeviceManager => S("Nav_DeviceManager", "Nav_DeviceManager");
+    public static string Nav_HistoryQuery => S("Nav_HistoryQuery", "Nav_HistoryQuery");
+    public static string Nav_Home => S("Nav_Home", "Nav_Home");
+    public static string Nav_Overview => S("Nav_Overview", "Nav_Overview");
+    public static string Nav_Overview_Tip => S("Nav_Overview_Tip", "Nav_Overview_Tip");
+    public static string Nav_ProductionLine => S("Nav_ProductionLine", "Nav_ProductionLine");
+    public static string Nav_RecipeManager => S("Nav_RecipeManager", "Nav_RecipeManager");
+    public static string Nav_RuntimeMonitoring => S("Nav_RuntimeMonitoring", "Nav_RuntimeMonitoring");
+    public static string Nav_Settings => S("Nav_Settings", "Nav_Settings");
+    public static string Nav_UserManager => S("Nav_UserManager", "Nav_UserManager");
+    public static string Nav_WorkOrder => S("Nav_WorkOrder", "Nav_WorkOrder");
+    public static string Overview_ScopeHint => S("Overview_ScopeHint", "Overview_ScopeHint");
+    public static string Prompt_AbortWorkOrderCannotRestoredRunning => S("Prompt_AbortWorkOrderCannotRestoredRunning", "Prompt_AbortWorkOrderCannotRestoredRunning");
+    public static string Prompt_Achievement => S("Prompt_Achievement", "Prompt_Achievement");
+    public static string Prompt_Activated => S("Prompt_Activated", "Prompt_Activated");
+    public static string Prompt_ActivatedExpires => S("Prompt_ActivatedExpires", "Prompt_ActivatedExpires");
+    public static string Prompt_ActivatedSuccessfully => S("Prompt_ActivatedSuccessfully", "Prompt_ActivatedSuccessfully");
+    public static string Prompt_AddressConflict => S("Prompt_AddressConflict", "Prompt_AddressConflict");
+    public static string Prompt_AddressConflictSharedDevices => S("Prompt_AddressConflictSharedDevices", "Prompt_AddressConflictSharedDevices");
+    public static string Prompt_AddressConflictsDetected => S("Prompt_AddressConflictsDetected", "Prompt_AddressConflictsDetected");
+    public static string Prompt_Addresses => S("Prompt_Addresses", "Prompt_Addresses");
+    public static string Prompt_Addresses2 => S("Prompt_Addresses2", "Prompt_Addresses2");
+    public static string Prompt_Alarm => S("Prompt_Alarm", "Prompt_Alarm");
+    public static string Prompt_AlarmAddress => S("Prompt_AlarmAddress", "Prompt_AlarmAddress");
+    public static string Prompt_AlarmCsv => S("Prompt_AlarmCsv", "Prompt_AlarmCsv");
+    public static string Prompt_AlarmH => S("Prompt_AlarmH", "Prompt_AlarmH");
+    public static string Prompt_AlarmRatioAboveThreshold => S("Prompt_AlarmRatioAboveThreshold", "Prompt_AlarmRatioAboveThreshold");
+    public static string Prompt_AlarmSurgePeriodLastPeriod => S("Prompt_AlarmSurgePeriodLastPeriod", "Prompt_AlarmSurgePeriodLastPeriod");
+    public static string Prompt_AlarmsImportedClickSavePersist => S("Prompt_AlarmsImportedClickSavePersist", "Prompt_AlarmsImportedClickSavePersist");
+    public static string Prompt_AlarmsImportedCurrentDeviceExisting => S("Prompt_AlarmsImportedCurrentDeviceExisting", "Prompt_AlarmsImportedCurrentDeviceExisting");
+    public static string Prompt_AlarmsImportedCurrentDeviceExisting2 => S("Prompt_AlarmsImportedCurrentDeviceExisting2", "Prompt_AlarmsImportedCurrentDeviceExisting2");
+    public static string Prompt_AlarmsImportedRowsSkipped => S("Prompt_AlarmsImportedRowsSkipped", "Prompt_AlarmsImportedRowsSkipped");
+    public static string Prompt_AlarmsTriggeredCurrentRangeCheckTop => S("Prompt_AlarmsTriggeredCurrentRangeCheckTop", "Prompt_AlarmsTriggeredCurrentRangeCheckTop");
+    public static string Prompt_AllRecipesFileFailedValidationInvalid => S("Prompt_AllRecipesFileFailedValidationInvalid", "Prompt_AllRecipesFileFailedValidationInvalid");
+    public static string Prompt_AvailabilityLoss => S("Prompt_AvailabilityLoss", "Prompt_AvailabilityLoss");
+    public static string Prompt_AvgMs => S("Prompt_AvgMs", "Prompt_AvgMs");
+    public static string Prompt_BackupFileReadParseFailed => S("Prompt_BackupFileReadParseFailed", "Prompt_BackupFileReadParseFailed");
+    public static string Prompt_BelowBestShift => S("Prompt_BelowBestShift", "Prompt_BelowBestShift");
+    public static string Prompt_BottleneckFactorOnlyMainDragOEE => S("Prompt_BottleneckFactorOnlyMainDragOEE", "Prompt_BottleneckFactorOnlyMainDragOEE");
+    public static string Prompt_CSVFileEmptyHasNoData => S("Prompt_CSVFileEmptyHasNoData", "Prompt_CSVFileEmptyHasNoData");
+    public static string Prompt_CSVHasRowsTotalRowsFailed => S("Prompt_CSVHasRowsTotalRowsFailed", "Prompt_CSVHasRowsTotalRowsFailed");
+    public static string Prompt_ChainTriggerTimesWithin5Minute => S("Prompt_ChainTriggerTimesWithin5Minute", "Prompt_ChainTriggerTimesWithin5Minute");
+    public static string Prompt_ChooseImportModeYesReplaceClear => S("Prompt_ChooseImportModeYesReplaceClear", "Prompt_ChooseImportModeYesReplaceClear");
+    public static string Prompt_ClearCurrentValueCounterAlarmReset => S("Prompt_ClearCurrentValueCounterAlarmReset", "Prompt_ClearCurrentValueCounterAlarmReset");
+    public static string Prompt_ClearError => S("Prompt_ClearError", "Prompt_ClearError");
+    public static string Prompt_ClearFailed => S("Prompt_ClearFailed", "Prompt_ClearFailed");
+    public static string Prompt_ClearedCurrentValue => S("Prompt_ClearedCurrentValue", "Prompt_ClearedCurrentValue");
+    public static string Prompt_CollectionServiceDisconnected => S("Prompt_CollectionServiceDisconnected", "Prompt_CollectionServiceDisconnected");
+    public static string Prompt_CollectionServiceDisconnectedRetry => S("Prompt_CollectionServiceDisconnectedRetry", "Prompt_CollectionServiceDisconnectedRetry");
+    public static string Prompt_CollectionServiceParameterSyncFailedSaved => S("Prompt_CollectionServiceParameterSyncFailedSaved", "Prompt_CollectionServiceParameterSyncFailedSaved");
+    public static string Prompt_CollectionServiceReconnectedDowntime => S("Prompt_CollectionServiceReconnectedDowntime", "Prompt_CollectionServiceReconnectedDowntime");
+    public static string Prompt_CollectorRunning => S("Prompt_CollectorRunning", "Prompt_CollectorRunning");
+    public static string Prompt_Conflict => S("Prompt_Conflict", "Prompt_Conflict");
+    public static string Prompt_Connected => S("Prompt_Connected", "Prompt_Connected");
+    public static string Prompt_Connecting => S("Prompt_Connecting", "Prompt_Connecting");
+    public static string Prompt_Connecting2 => S("Prompt_Connecting2", "Prompt_Connecting2");
+    public static string Prompt_ConnectingCollectionService => S("Prompt_ConnectingCollectionService", "Prompt_ConnectingCollectionService");
+    public static string Prompt_ConnectionError => S("Prompt_ConnectionError", "Prompt_ConnectionError");
+    public static string Prompt_ConnectionFailed => S("Prompt_ConnectionFailed", "Prompt_ConnectionFailed");
+    public static string Prompt_ConnectionFailed2 => S("Prompt_ConnectionFailed2", "Prompt_ConnectionFailed2");
+    public static string Prompt_ConnectionTimedOutNoResponse5 => S("Prompt_ConnectionTimedOutNoResponse5", "Prompt_ConnectionTimedOutNoResponse5");
+    public static string Prompt_ConsecutiveFailures => S("Prompt_ConsecutiveFailures", "Prompt_ConsecutiveFailures");
+    public static string Prompt_Copy => S("Prompt_Copy", "Prompt_Copy");
+    public static string Prompt_CountAlarm => S("Prompt_CountAlarm", "Prompt_CountAlarm");
+    public static string Prompt_CountAlarmAddress => S("Prompt_CountAlarmAddress", "Prompt_CountAlarmAddress");
+    public static string Prompt_CounterAlarmsImportedCurrentDeviceExisting => S("Prompt_CounterAlarmsImportedCurrentDeviceExisting", "Prompt_CounterAlarmsImportedCurrentDeviceExisting");
+    public static string Prompt_Critical => S("Prompt_Critical", "Prompt_Critical");
+    public static string Prompt_Current => S("Prompt_Current", "Prompt_Current");
+    public static string Prompt_CurrentShift => S("Prompt_CurrentShift", "Prompt_CurrentShift");
+    public static string Prompt_CurrentThreshold => S("Prompt_CurrentThreshold", "Prompt_CurrentThreshold");
+    public static string Prompt_CurrentValue => S("Prompt_CurrentValue", "Prompt_CurrentValue");
+    public static string Prompt_DBWAL => S("Prompt_DBWAL", "Prompt_DBWAL");
+    public static string Prompt_DWordMsMBitMsDefect => S("Prompt_DWordMsMBitMsDefect", "Prompt_DWordMsMBitMsDefect");
+    public static string Prompt_DataStalledSCollectionServiceMay => S("Prompt_DataStalledSCollectionServiceMay", "Prompt_DataStalledSCollectionServiceMay");
+    public static string Prompt_DataStalledSPLCAcquisitionMay => S("Prompt_DataStalledSPLCAcquisitionMay", "Prompt_DataStalledSPLCAcquisitionMay");
+    public static string Prompt_DatabaseAcquisitionInitializationFailedSomeFeatu => S("Prompt_DatabaseAcquisitionInitializationFailedSomeFeatu", "Prompt_DatabaseAcquisitionInitializationFailedSomeFeatu");
+    public static string Prompt_Defect => S("Prompt_Defect", "Prompt_Defect");
+    public static string Prompt_DefectAddress => S("Prompt_DefectAddress", "Prompt_DefectAddress");
+    public static string Prompt_DefectRateSurgePeriodLastPeriod => S("Prompt_DefectRateSurgePeriodLastPeriod", "Prompt_DefectRateSurgePeriodLastPeriod");
+    public static string Prompt_DefectsImportedCurrentDeviceExisting => S("Prompt_DefectsImportedCurrentDeviceExisting", "Prompt_DefectsImportedCurrentDeviceExisting");
+    public static string Prompt_DeleteAlarmActionCannotUndone => S("Prompt_DeleteAlarmActionCannotUndone", "Prompt_DeleteAlarmActionCannotUndone");
+    public static string Prompt_DeleteCounterAlarmActionCannotUndone => S("Prompt_DeleteCounterAlarmActionCannotUndone", "Prompt_DeleteCounterAlarmActionCannotUndone");
+    public static string Prompt_DeleteDefectActionCannotUndone => S("Prompt_DeleteDefectActionCannotUndone", "Prompt_DeleteDefectActionCannotUndone");
+    public static string Prompt_DeleteDeviceAlarmsDefectsCounterAlarms => S("Prompt_DeleteDeviceAlarmsDefectsCounterAlarms", "Prompt_DeleteDeviceAlarmsDefectsCounterAlarms");
+    public static string Prompt_DeleteShift => S("Prompt_DeleteShift", "Prompt_DeleteShift");
+    public static string Prompt_DeleteWorkOrderCannotUndone => S("Prompt_DeleteWorkOrderCannotUndone", "Prompt_DeleteWorkOrderCannotUndone");
+    public static string Prompt_DeviceAlreadyHasProgressWorkOrder => S("Prompt_DeviceAlreadyHasProgressWorkOrder", "Prompt_DeviceAlreadyHasProgressWorkOrder");
+    public static string Prompt_DeviceConfigured => S("Prompt_DeviceConfigured", "Prompt_DeviceConfigured");
+    public static string Prompt_DeviceCopied => S("Prompt_DeviceCopied", "Prompt_DeviceCopied");
+    public static string Prompt_DeviceDuplicateAlarmName => S("Prompt_DeviceDuplicateAlarmName", "Prompt_DeviceDuplicateAlarmName");
+    public static string Prompt_DeviceDuplicateAlarmPLCAddressAlarm => S("Prompt_DeviceDuplicateAlarmPLCAddressAlarm", "Prompt_DeviceDuplicateAlarmPLCAddressAlarm");
+    public static string Prompt_DeviceDuplicateDefectName => S("Prompt_DeviceDuplicateDefectName", "Prompt_DeviceDuplicateDefectName");
+    public static string Prompt_DeviceInvalid => S("Prompt_DeviceInvalid", "Prompt_DeviceInvalid");
+    public static string Prompt_DeviceScheduledTimeOverlapsWorkOrder => S("Prompt_DeviceScheduledTimeOverlapsWorkOrder", "Prompt_DeviceScheduledTimeOverlapsWorkOrder");
+    public static string Prompt_DeviceTargetOutputMust0Current => S("Prompt_DeviceTargetOutputMust0Current", "Prompt_DeviceTargetOutputMust0Current");
+    public static string Prompt_DevicesImportedClickSavePersist => S("Prompt_DevicesImportedClickSavePersist", "Prompt_DevicesImportedClickSavePersist");
+    public static string Prompt_DevicesTotal => S("Prompt_DevicesTotal", "Prompt_DevicesTotal");
+    public static string Prompt_Drop => S("Prompt_Drop", "Prompt_Drop");
+    public static string Prompt_DropsDetectedWorstDownPcs => S("Prompt_DropsDetectedWorstDownPcs", "Prompt_DropsDetectedWorstDownPcs");
+    public static string Prompt_DuplicateDeviceNameUnitsDeviceNames => S("Prompt_DuplicateDeviceNameUnitsDeviceNames", "Prompt_DuplicateDeviceNameUnitsDeviceNames");
+    public static string Prompt_Error => S("Prompt_Error", "Prompt_Error");
+    public static string Prompt_EveryPolls => S("Prompt_EveryPolls", "Prompt_EveryPolls");
+    public static string Prompt_ExpectedTypeAddressCurrent => S("Prompt_ExpectedTypeAddressCurrent", "Prompt_ExpectedTypeAddressCurrent");
+    public static string Prompt_Expires => S("Prompt_Expires", "Prompt_Expires");
+    public static string Prompt_ExportFailed => S("Prompt_ExportFailed", "Prompt_ExportFailed");
+    public static string Prompt_ExportFailed2 => S("Prompt_ExportFailed2", "Prompt_ExportFailed2");
+    public static string Prompt_ExportedAlarms => S("Prompt_ExportedAlarms", "Prompt_ExportedAlarms");
+    public static string Prompt_ExportedCounterAlarms => S("Prompt_ExportedCounterAlarms", "Prompt_ExportedCounterAlarms");
+    public static string Prompt_ExportedDefects => S("Prompt_ExportedDefects", "Prompt_ExportedDefects");
+    public static string Prompt_ExportedDevices => S("Prompt_ExportedDevices", "Prompt_ExportedDevices");
+    public static string Prompt_ExportedRecipes => S("Prompt_ExportedRecipes", "Prompt_ExportedRecipes");
+    public static string Prompt_ExportedSourcesValues => S("Prompt_ExportedSourcesValues", "Prompt_ExportedSourcesValues");
+    public static string Prompt_ExportedWorkOrders => S("Prompt_ExportedWorkOrders", "Prompt_ExportedWorkOrders");
+    public static string Prompt_Failed => S("Prompt_Failed", "Prompt_Failed");
+    public static string Prompt_FailedDetails => S("Prompt_FailedDetails", "Prompt_FailedDetails");
+    public static string Prompt_FailedLoadReviewData => S("Prompt_FailedLoadReviewData", "Prompt_FailedLoadReviewData");
+    public static string Prompt_FailedPolls => S("Prompt_FailedPolls", "Prompt_FailedPolls");
+    public static string Prompt_FailedQueryAlarmEvents => S("Prompt_FailedQueryAlarmEvents", "Prompt_FailedQueryAlarmEvents");
+    public static string Prompt_FailedQueryAlarmHistory => S("Prompt_FailedQueryAlarmHistory", "Prompt_FailedQueryAlarmHistory");
+    public static string Prompt_FailedQueryOEEHistory => S("Prompt_FailedQueryOEEHistory", "Prompt_FailedQueryOEEHistory");
+    public static string Prompt_FailedQueryOutputData => S("Prompt_FailedQueryOutputData", "Prompt_FailedQueryOutputData");
+    public static string Prompt_FailedQueryOutputHistory => S("Prompt_FailedQueryOutputHistory", "Prompt_FailedQueryOutputHistory");
+    public static string Prompt_FailedQueryStatusHistory => S("Prompt_FailedQueryStatusHistory", "Prompt_FailedQueryStatusHistory");
+    public static string Prompt_FailedRefreshAlarmStatistics => S("Prompt_FailedRefreshAlarmStatistics", "Prompt_FailedRefreshAlarmStatistics");
+    public static string Prompt_FailedSaveApplicationSettings => S("Prompt_FailedSaveApplicationSettings", "Prompt_FailedSaveApplicationSettings");
+    public static string Prompt_FailedSaveDeviceData => S("Prompt_FailedSaveDeviceData", "Prompt_FailedSaveDeviceData");
+    public static string Prompt_FailedStopAutoDailyReportService => S("Prompt_FailedStopAutoDailyReportService", "Prompt_FailedStopAutoDailyReportService");
+    public static string Prompt_FailedStopCollectionService => S("Prompt_FailedStopCollectionService", "Prompt_FailedStopCollectionService");
+    public static string Prompt_FileReadParseFailed => S("Prompt_FileReadParseFailed", "Prompt_FileReadParseFailed");
+    public static string Prompt_GBFree => S("Prompt_GBFree", "Prompt_GBFree");
+    public static string Prompt_HasHighestOutputPcsTotalQuality => S("Prompt_HasHighestOutputPcsTotalQuality", "Prompt_HasHighestOutputPcsTotalQuality");
+    public static string Prompt_HistoryQueryFailed => S("Prompt_HistoryQueryFailed", "Prompt_HistoryQueryFailed");
+    public static string Prompt_HistoryWriteIntervalMustLess1 => S("Prompt_HistoryWriteIntervalMustLess1", "Prompt_HistoryWriteIntervalMustLess1");
+    public static string Prompt_HourlyOutput => S("Prompt_HourlyOutput", "Prompt_HourlyOutput");
+    public static string Prompt_IdleH => S("Prompt_IdleH", "Prompt_IdleH");
+    public static string Prompt_ImportFailed => S("Prompt_ImportFailed", "Prompt_ImportFailed");
+    public static string Prompt_ImportFailed2 => S("Prompt_ImportFailed2", "Prompt_ImportFailed2");
+    public static string Prompt_ImportReplaceCurrentDevicesDevicesFile => S("Prompt_ImportReplaceCurrentDevicesDevicesFile", "Prompt_ImportReplaceCurrentDevicesDevicesFile");
+    public static string Prompt_ImportSourcesValuesDeviceCurrentlyHas => S("Prompt_ImportSourcesValuesDeviceCurrentlyHas", "Prompt_ImportSourcesValuesDeviceCurrentlyHas");
+    public static string Prompt_ImportedCounterAlarmsClickSavePersist => S("Prompt_ImportedCounterAlarmsClickSavePersist", "Prompt_ImportedCounterAlarmsClickSavePersist");
+    public static string Prompt_ImportedCounterAlarmsRowsSkipped => S("Prompt_ImportedCounterAlarmsRowsSkipped", "Prompt_ImportedCounterAlarmsRowsSkipped");
+    public static string Prompt_ImportedDefectsClickSavePersist => S("Prompt_ImportedDefectsClickSavePersist", "Prompt_ImportedDefectsClickSavePersist");
+    public static string Prompt_ImportedDefectsRowsSkipped => S("Prompt_ImportedDefectsRowsSkipped", "Prompt_ImportedDefectsRowsSkipped");
+    public static string Prompt_ImportedRecipesSkipped => S("Prompt_ImportedRecipesSkipped", "Prompt_ImportedRecipesSkipped");
+    public static string Prompt_ImportedSourcesValues => S("Prompt_ImportedSourcesValues", "Prompt_ImportedSourcesValues");
+    public static string Prompt_ImportedSourcesValuesValidationErrors => S("Prompt_ImportedSourcesValuesValidationErrors", "Prompt_ImportedSourcesValuesValidationErrors");
+    public static string Prompt_InvalidAddressFormatDWordAddress => S("Prompt_InvalidAddressFormatDWordAddress", "Prompt_InvalidAddressFormatDWordAddress");
+    public static string Prompt_InvalidAddressFormatDWordAddress2 => S("Prompt_InvalidAddressFormatDWordAddress2", "Prompt_InvalidAddressFormatDWordAddress2");
+    public static string Prompt_InvalidIPAddress => S("Prompt_InvalidIPAddress", "Prompt_InvalidIPAddress");
+    public static string Prompt_InvalidOEEResetAddressDWord => S("Prompt_InvalidOEEResetAddressDWord", "Prompt_InvalidOEEResetAddressDWord");
+    public static string Prompt_InvalidRecipeAddressFormat => S("Prompt_InvalidRecipeAddressFormat", "Prompt_InvalidRecipeAddressFormat");
+    public static string Prompt_IssuesFound => S("Prompt_IssuesFound", "Prompt_IssuesFound");
+    public static string Prompt_LastOccurred => S("Prompt_LastOccurred", "Prompt_LastOccurred");
+    public static string Prompt_LastRefresh => S("Prompt_LastRefresh", "Prompt_LastRefresh");
+    public static string Prompt_LastShift => S("Prompt_LastShift", "Prompt_LastShift");
+    public static string Prompt_LevelTriggeredDuration => S("Prompt_LevelTriggeredDuration", "Prompt_LevelTriggeredDuration");
+    public static string Prompt_Limit => S("Prompt_Limit", "Prompt_Limit");
+    public static string Prompt_LiveRefresh => S("Prompt_LiveRefresh", "Prompt_LiveRefresh");
+    public static string Prompt_LongestDowntimeHoursDeviceAlarm => S("Prompt_LongestDowntimeHoursDeviceAlarm", "Prompt_LongestDowntimeHoursDeviceAlarm");
+    public static string Prompt_LongestPauseMin => S("Prompt_LongestPauseMin", "Prompt_LongestPauseMin");
+    public static string Prompt_LongestRunMin => S("Prompt_LongestRunMin", "Prompt_LongestRunMin");
+    public static string Prompt_LowOutputActualPcsHourTarget => S("Prompt_LowOutputActualPcsHourTarget", "Prompt_LowOutputActualPcsHourTarget");
+    public static string Prompt_MachineCode => S("Prompt_MachineCode", "Prompt_MachineCode");
+    public static string Prompt_MachineCodeLicenseDoesMatchMachine => S("Prompt_MachineCodeLicenseDoesMatchMachine", "Prompt_MachineCodeLicenseDoesMatchMachine");
+    public static string Prompt_MachineCodeLicenseExpiredPleaseActivate => S("Prompt_MachineCodeLicenseExpiredPleaseActivate", "Prompt_MachineCodeLicenseExpiredPleaseActivate");
+    public static string Prompt_MachineCodePermanentLicense => S("Prompt_MachineCodePermanentLicense", "Prompt_MachineCodePermanentLicense");
+    public static string Prompt_MachineCodeProductKeyExpires => S("Prompt_MachineCodeProductKeyExpires", "Prompt_MachineCodeProductKeyExpires");
+    public static string Prompt_MachineCodeSystemTimeAnomalyDetected => S("Prompt_MachineCodeSystemTimeAnomalyDetected", "Prompt_MachineCodeSystemTimeAnomalyDetected");
+    public static string Prompt_MachineCodeTrialDaysRemaining => S("Prompt_MachineCodeTrialDaysRemaining", "Prompt_MachineCodeTrialDaysRemaining");
+    public static string Prompt_MachineCodeTrialExpiredPleaseActivate => S("Prompt_MachineCodeTrialExpiredPleaseActivate", "Prompt_MachineCodeTrialExpiredPleaseActivate");
+    public static string Prompt_Main => S("Prompt_Main", "Prompt_Main");
+    public static string Prompt_MainDefectCumulativePcs => S("Prompt_MainDefectCumulativePcs", "Prompt_MainDefectCumulativePcs");
+    public static string Prompt_MainDragVs => S("Prompt_MainDragVs", "Prompt_MainDragVs");
+    public static string Prompt_Major => S("Prompt_Major", "Prompt_Major");
+    public static string Prompt_ManuallyResetOEEOKNGOutput => S("Prompt_ManuallyResetOEEOKNGOutput", "Prompt_ManuallyResetOEEOKNGOutput");
+    public static string Prompt_Min => S("Prompt_Min", "Prompt_Min");
+    public static string Prompt_Minor => S("Prompt_Minor", "Prompt_Minor");
+    public static string Prompt_MissingRequiredColumns => S("Prompt_MissingRequiredColumns", "Prompt_MissingRequiredColumns");
+    public static string Prompt_ModbusBitFunctionCodeMust1 => S("Prompt_ModbusBitFunctionCodeMust1", "Prompt_ModbusBitFunctionCodeMust1");
+    public static string Prompt_ModbusRegisterFunctionCodeMust3 => S("Prompt_ModbusRegisterFunctionCodeMust3", "Prompt_ModbusRegisterFunctionCodeMust3");
+    public static string Prompt_ModbusUnitIdMustBetween1247 => S("Prompt_ModbusUnitIdMustBetween1247", "Prompt_ModbusUnitIdMustBetween1247");
+    public static string Prompt_MustBetween => S("Prompt_MustBetween", "Prompt_MustBetween");
+    public static string Prompt_MustEmpty => S("Prompt_MustEmpty", "Prompt_MustEmpty");
+    public static string Prompt_MustInteger => S("Prompt_MustInteger", "Prompt_MustInteger");
+    public static string Prompt_NG => S("Prompt_NG", "Prompt_NG");
+    public static string Prompt_NewDevice => S("Prompt_NewDevice", "Prompt_NewDevice");
+    public static string Prompt_NoAlarmDataCSVFile => S("Prompt_NoAlarmDataCSVFile", "Prompt_NoAlarmDataCSVFile");
+    public static string Prompt_NoAlarmsImported => S("Prompt_NoAlarmsImported", "Prompt_NoAlarmsImported");
+    public static string Prompt_NoCounterAlarmDataCSVFile => S("Prompt_NoCounterAlarmDataCSVFile", "Prompt_NoCounterAlarmDataCSVFile");
+    public static string Prompt_NoCounterAlarmsImported => S("Prompt_NoCounterAlarmsImported", "Prompt_NoCounterAlarmsImported");
+    public static string Prompt_NoDefectDataCSVFile => S("Prompt_NoDefectDataCSVFile", "Prompt_NoDefectDataCSVFile");
+    public static string Prompt_NoDefectsImported => S("Prompt_NoDefectsImported", "Prompt_NoDefectsImported");
+    public static string Prompt_OEEResetTriggered => S("Prompt_OEEResetTriggered", "Prompt_OEEResetTriggered");
+    public static string Prompt_OEEResetTriggeredAllDevices => S("Prompt_OEEResetTriggeredAllDevices", "Prompt_OEEResetTriggeredAllDevices");
+    public static string Prompt_OEETarget => S("Prompt_OEETarget", "Prompt_OEETarget");
+    public static string Prompt_OK => S("Prompt_OK", "Prompt_OK");
+    public static string Prompt_OmronFINSReadSplitLengthMust => S("Prompt_OmronFINSReadSplitLengthMust", "Prompt_OmronFINSReadSplitLengthMust");
+    public static string Prompt_OrderNumberAlreadyExistsOrderId => S("Prompt_OrderNumberAlreadyExistsOrderId", "Prompt_OrderNumberAlreadyExistsOrderId");
+    public static string Prompt_OutputAlarmTimes => S("Prompt_OutputAlarmTimes", "Prompt_OutputAlarmTimes");
+    public static string Prompt_OutputCsv => S("Prompt_OutputCsv", "Prompt_OutputCsv");
+    public static string Prompt_OutputDroppedPcs => S("Prompt_OutputDroppedPcs", "Prompt_OutputDroppedPcs");
+    public static string Prompt_OutputFluctuatedSteadilyMeanOKPcs => S("Prompt_OutputFluctuatedSteadilyMeanOKPcs", "Prompt_OutputFluctuatedSteadilyMeanOKPcs");
+    public static string Prompt_OutputPcsQualityRateOEE => S("Prompt_OutputPcsQualityRateOEE", "Prompt_OutputPcsQualityRateOEE");
+    public static string Prompt_OutputQualityRateOEE => S("Prompt_OutputQualityRateOEE", "Prompt_OutputQualityRateOEE");
+    public static string Prompt_OutputQualityRateOEE2 => S("Prompt_OutputQualityRateOEE2", "Prompt_OutputQualityRateOEE2");
+    public static string Prompt_PDFExportFailed => S("Prompt_PDFExportFailed", "Prompt_PDFExportFailed");
+    public static string Prompt_PLCBatchReadAddressGapMust => S("Prompt_PLCBatchReadAddressGapMust", "Prompt_PLCBatchReadAddressGapMust");
+    public static string Prompt_PLCBatchReadCountMustBetween => S("Prompt_PLCBatchReadCountMustBetween", "Prompt_PLCBatchReadCountMustBetween");
+    public static string Prompt_PLCConnecting => S("Prompt_PLCConnecting", "Prompt_PLCConnecting");
+    public static string Prompt_PLCDisconnected => S("Prompt_PLCDisconnected", "Prompt_PLCDisconnected");
+    public static string Prompt_PLCDisconnectedIPRetry => S("Prompt_PLCDisconnectedIPRetry", "Prompt_PLCDisconnectedIPRetry");
+    public static string Prompt_PLCReconnectedDowntime => S("Prompt_PLCReconnectedDowntime", "Prompt_PLCReconnectedDowntime");
+    public static string Prompt_PLCTimeoutMustBetween10060000 => S("Prompt_PLCTimeoutMustBetween10060000", "Prompt_PLCTimeoutMustBetween10060000");
+    public static string Prompt_PausedRatioAboveThreshold => S("Prompt_PausedRatioAboveThreshold", "Prompt_PausedRatioAboveThreshold");
+    public static string Prompt_Pcs => S("Prompt_Pcs", "Prompt_Pcs");
+    public static string Prompt_Pcs2 => S("Prompt_Pcs2", "Prompt_Pcs2");
+    public static string Prompt_Pcs3 => S("Prompt_Pcs3", "Prompt_Pcs3");
+    public static string Prompt_Pcs4 => S("Prompt_Pcs4", "Prompt_Pcs4");
+    public static string Prompt_Pcs5 => S("Prompt_Pcs5", "Prompt_Pcs5");
+    public static string Prompt_Pcs6 => S("Prompt_Pcs6", "Prompt_Pcs6");
+    public static string Prompt_Pcs7 => S("Prompt_Pcs7", "Prompt_Pcs7");
+    public static string Prompt_PcsH => S("Prompt_PcsH", "Prompt_PcsH");
+    public static string Prompt_PcsH2 => S("Prompt_PcsH2", "Prompt_PcsH2");
+    public static string Prompt_PcsHS => S("Prompt_PcsHS", "Prompt_PcsHS");
+    public static string Prompt_PeakOKPcsAboveMean => S("Prompt_PeakOKPcsAboveMean", "Prompt_PeakOKPcsAboveMean");
+    public static string Prompt_Pending => S("Prompt_Pending", "Prompt_Pending");
+    public static string Prompt_PerformanceLoss => S("Prompt_PerformanceLoss", "Prompt_PerformanceLoss");
+    public static string Prompt_PerformsBestLow => S("Prompt_PerformsBestLow", "Prompt_PerformsBestLow");
+    public static string Prompt_PollIntervalMustLess50Ms => S("Prompt_PollIntervalMustLess50Ms", "Prompt_PollIntervalMustLess50Ms");
+    public static string Prompt_PortMustBetween165535Current => S("Prompt_PortMustBetween165535Current", "Prompt_PortMustBetween165535Current");
+    public static string Prompt_PortMustBetween165535Current2 => S("Prompt_PortMustBetween165535Current2", "Prompt_PortMustBetween165535Current2");
+    public static string Prompt_Present => S("Prompt_Present", "Prompt_Present");
+    public static string Prompt_PreviousShift => S("Prompt_PreviousShift", "Prompt_PreviousShift");
+    public static string Prompt_PrimaryAddressDeviceReusedMultipleFields => S("Prompt_PrimaryAddressDeviceReusedMultipleFields", "Prompt_PrimaryAddressDeviceReusedMultipleFields");
+    public static string Prompt_ProcessMBAvailableMB => S("Prompt_ProcessMBAvailableMB", "Prompt_ProcessMBAvailableMB");
+    public static string Prompt_ProgressBasisDeviceCumulativeOutputCurrent => S("Prompt_ProgressBasisDeviceCumulativeOutputCurrent", "Prompt_ProgressBasisDeviceCumulativeOutputCurrent");
+    public static string Prompt_QualityRateLoss => S("Prompt_QualityRateLoss", "Prompt_QualityRateLoss");
+    public static string Prompt_QualityRateTarget => S("Prompt_QualityRateTarget", "Prompt_QualityRateTarget");
+    public static string Prompt_QualityRateTargetOEETarget => S("Prompt_QualityRateTargetOEETarget", "Prompt_QualityRateTargetOEETarget");
+    public static string Prompt_QueryExceedsResultLimit100000 => S("Prompt_QueryExceedsResultLimit100000", "Prompt_QueryExceedsResultLimit100000");
+    public static string Prompt_QueryFailed => S("Prompt_QueryFailed", "Prompt_QueryFailed");
+    public static string Prompt_Range => S("Prompt_Range", "Prompt_Range");
+    public static string Prompt_ReadError => S("Prompt_ReadError", "Prompt_ReadError");
+    public static string Prompt_ReadFailed => S("Prompt_ReadFailed", "Prompt_ReadFailed");
+    public static string Prompt_RebuildsLastMs => S("Prompt_RebuildsLastMs", "Prompt_RebuildsLastMs");
+    public static string Prompt_RecipeValueOutReasonableRange0 => S("Prompt_RecipeValueOutReasonableRange0", "Prompt_RecipeValueOutReasonableRange0");
+    public static string Prompt_RecipesImportedSkippedFailingValidationContinue => S("Prompt_RecipesImportedSkippedFailingValidationContinue", "Prompt_RecipesImportedSkippedFailingValidationContinue");
+    public static string Prompt_Recovered => S("Prompt_Recovered", "Prompt_Recovered");
+    public static string Prompt_Refreshed => S("Prompt_Refreshed", "Prompt_Refreshed");
+    public static string Prompt_RefreshedOutputDataWorkOrders => S("Prompt_RefreshedOutputDataWorkOrders", "Prompt_RefreshedOutputDataWorkOrders");
+    public static string Prompt_ReplaceCurrentDeviceConfigs20Virtual => S("Prompt_ReplaceCurrentDeviceConfigs20Virtual", "Prompt_ReplaceCurrentDeviceConfigs20Virtual");
+    public static string Prompt_ReportExportFailed => S("Prompt_ReportExportFailed", "Prompt_ReportExportFailed");
+    public static string Prompt_ResetError => S("Prompt_ResetError", "Prompt_ResetError");
+    public static string Prompt_ResetOEEAllDevicesClearsOK => S("Prompt_ResetOEEAllDevicesClearsOK", "Prompt_ResetOEEAllDevicesClearsOK");
+    public static string Prompt_ResetOEEAllDevicesFailed => S("Prompt_ResetOEEAllDevicesFailed", "Prompt_ResetOEEAllDevicesFailed");
+    public static string Prompt_RestoredPreviousVersionDevicesClickSave => S("Prompt_RestoredPreviousVersionDevicesClickSave", "Prompt_RestoredPreviousVersionDevicesClickSave");
+    public static string Prompt_ReviewPDFExported => S("Prompt_ReviewPDFExported", "Prompt_ReviewPDFExported");
+    public static string Prompt_ReviewReportExported => S("Prompt_ReviewReportExported", "Prompt_ReviewReportExported");
+    public static string Prompt_RowAddressInvalid => S("Prompt_RowAddressInvalid", "Prompt_RowAddressInvalid");
+    public static string Prompt_RowAddressTypeMismatchExpectedActual => S("Prompt_RowAddressTypeMismatchExpectedActual", "Prompt_RowAddressTypeMismatchExpectedActual");
+    public static string Prompt_RowAlarmLevelInvalidExpectLow => S("Prompt_RowAlarmLevelInvalidExpectLow", "Prompt_RowAlarmLevelInvalidExpectLow");
+    public static string Prompt_RowAlarmNameEmpty => S("Prompt_RowAlarmNameEmpty", "Prompt_RowAlarmNameEmpty");
+    public static string Prompt_RowCounterAlarmNameEmpty => S("Prompt_RowCounterAlarmNameEmpty", "Prompt_RowCounterAlarmNameEmpty");
+    public static string Prompt_RowDefectCategoryInvalidExpectedAppearance => S("Prompt_RowDefectCategoryInvalidExpectedAppearance", "Prompt_RowDefectCategoryInvalidExpectedAppearance");
+    public static string Prompt_RowDefectNameEmpty => S("Prompt_RowDefectNameEmpty", "Prompt_RowDefectNameEmpty");
+    public static string Prompt_RowDefectSeverityInvalidExpectedMinor => S("Prompt_RowDefectSeverityInvalidExpectedMinor", "Prompt_RowDefectSeverityInvalidExpectedMinor");
+    public static string Prompt_RowDuplicateEnumValues => S("Prompt_RowDuplicateEnumValues", "Prompt_RowDuplicateEnumValues");
+    public static string Prompt_RowDuplicateValueSource => S("Prompt_RowDuplicateValueSource", "Prompt_RowDuplicateValueSource");
+    public static string Prompt_RowEnabledInvalidExpectedTrueFalse => S("Prompt_RowEnabledInvalidExpectedTrueFalse", "Prompt_RowEnabledInvalidExpectedTrueFalse");
+    public static string Prompt_RowInconsistentConfigurationSameSource => S("Prompt_RowInconsistentConfigurationSameSource", "Prompt_RowInconsistentConfigurationSameSource");
+    public static string Prompt_RowInvalidEnumJSON => S("Prompt_RowInvalidEnumJSON", "Prompt_RowInvalidEnumJSON");
+    public static string Prompt_RowInvalidValueField => S("Prompt_RowInvalidValueField", "Prompt_RowInvalidValueField");
+    public static string Prompt_RowInvalidValueType => S("Prompt_RowInvalidValueType", "Prompt_RowInvalidValueType");
+    public static string Prompt_RowPLCAddressEmpty => S("Prompt_RowPLCAddressEmpty", "Prompt_RowPLCAddressEmpty");
+    public static string Prompt_RowPLCAddressInvalid => S("Prompt_RowPLCAddressInvalid", "Prompt_RowPLCAddressInvalid");
+    public static string Prompt_RowPLCAddressShouldDWordType => S("Prompt_RowPLCAddressShouldDWordType", "Prompt_RowPLCAddressShouldDWordType");
+    public static string Prompt_RowPLCAddressShouldDWordType2 => S("Prompt_RowPLCAddressShouldDWordType2", "Prompt_RowPLCAddressShouldDWordType2");
+    public static string Prompt_RowPLCAddressShouldMBit => S("Prompt_RowPLCAddressShouldMBit", "Prompt_RowPLCAddressShouldMBit");
+    public static string Prompt_RowSourceNameEmpty => S("Prompt_RowSourceNameEmpty", "Prompt_RowSourceNameEmpty");
+    public static string Prompt_RowValueNameEmpty => S("Prompt_RowValueNameEmpty", "Prompt_RowValueNameEmpty");
+    public static string Prompt_RunningH => S("Prompt_RunningH", "Prompt_RunningH");
+    public static string Prompt_RunningRemaining => S("Prompt_RunningRemaining", "Prompt_RunningRemaining");
+    public static string Prompt_RunningWithoutOutputLastedMin => S("Prompt_RunningWithoutOutputLastedMin", "Prompt_RunningWithoutOutputLastedMin");
+    public static string Prompt_SFaster => S("Prompt_SFaster", "Prompt_SFaster");
+    public static string Prompt_SSlower => S("Prompt_SSlower", "Prompt_SSlower");
+    public static string Prompt_SampleWorkOrdersGenerated => S("Prompt_SampleWorkOrdersGenerated", "Prompt_SampleWorkOrdersGenerated");
+    public static string Prompt_SaveFailed => S("Prompt_SaveFailed", "Prompt_SaveFailed");
+    public static string Prompt_SaveFailedConfigurationIssuesFoundPlease => S("Prompt_SaveFailedConfigurationIssuesFoundPlease", "Prompt_SaveFailedConfigurationIssuesFoundPlease");
+    public static string Prompt_Shift => S("Prompt_Shift", "Prompt_Shift");
+    public static string Prompt_ShowingItems => S("Prompt_ShowingItems", "Prompt_ShowingItems");
+    public static string Prompt_SiemensBatchInt32LimitMustBetween => S("Prompt_SiemensBatchInt32LimitMustBetween", "Prompt_SiemensBatchInt32LimitMustBetween");
+    public static string Prompt_SiemensRackMustBetween07 => S("Prompt_SiemensRackMustBetween07", "Prompt_SiemensRackMustBetween07");
+    public static string Prompt_SiemensSlotMustBetween031 => S("Prompt_SiemensSlotMustBetween031", "Prompt_SiemensSlotMustBetween031");
+    public static string Prompt_Since => S("Prompt_Since", "Prompt_Since");
+    public static string Prompt_StartupFailedAppExit => S("Prompt_StartupFailedAppExit", "Prompt_StartupFailedAppExit");
+    public static string Prompt_StateDurationCsv => S("Prompt_StateDurationCsv", "Prompt_StateDurationCsv");
+    public static string Prompt_StatsRefresh => S("Prompt_StatsRefresh", "Prompt_StatsRefresh");
+    public static string Prompt_Status => S("Prompt_Status", "Prompt_Status");
+    public static string Prompt_Status2 => S("Prompt_Status2", "Prompt_Status2");
+    public static string Prompt_StatusWord => S("Prompt_StatusWord", "Prompt_StatusWord");
+    public static string Prompt_Success => S("Prompt_Success", "Prompt_Success");
+    public static string Prompt_Target => S("Prompt_Target", "Prompt_Target");
+    public static string Prompt_Target2 => S("Prompt_Target2", "Prompt_Target2");
+    public static string Prompt_TargetMet => S("Prompt_TargetMet", "Prompt_TargetMet");
+    public static string Prompt_TargetPcs => S("Prompt_TargetPcs", "Prompt_TargetPcs");
+    public static string Prompt_TargetPcsH => S("Prompt_TargetPcsH", "Prompt_TargetPcsH");
+    public static string Prompt_Text => S("Prompt_Text", "Prompt_Text");
+    public static string Prompt_Text2 => S("Prompt_Text2", "Prompt_Text2");
+    public static string Prompt_Text3 => S("Prompt_Text3", "Prompt_Text3");
+    public static string Prompt_ThreadsHandles => S("Prompt_ThreadsHandles", "Prompt_ThreadsHandles");
+    public static string Prompt_ThreeMetricsBalancedOEE => S("Prompt_ThreeMetricsBalancedOEE", "Prompt_ThreeMetricsBalancedOEE");
+    public static string Prompt_Times => S("Prompt_Times", "Prompt_Times");
+    public static string Prompt_Times2 => S("Prompt_Times2", "Prompt_Times2");
+    public static string Prompt_Times3 => S("Prompt_Times3", "Prompt_Times3");
+    public static string Prompt_Times4 => S("Prompt_Times4", "Prompt_Times4");
+    public static string Prompt_TopAlarms => S("Prompt_TopAlarms", "Prompt_TopAlarms");
+    public static string Prompt_TopPendingDuration => S("Prompt_TopPendingDuration", "Prompt_TopPendingDuration");
+    public static string Prompt_Total => S("Prompt_Total", "Prompt_Total");
+    public static string Prompt_Total2 => S("Prompt_Total2", "Prompt_Total2");
+    public static string Prompt_TotalsUseAllRowsPage => S("Prompt_TotalsUseAllRowsPage", "Prompt_TotalsUseAllRowsPage");
+    public static string Prompt_TrialDaysLeft => S("Prompt_TrialDaysLeft", "Prompt_TrialDaysLeft");
+    public static string Prompt_TrialDaysLeft2 => S("Prompt_TrialDaysLeft2", "Prompt_TrialDaysLeft2");
+    public static string Prompt_TrialExpiredDaysEnterActivationCode => S("Prompt_TrialExpiredDaysEnterActivationCode", "Prompt_TrialExpiredDaysEnterActivationCode");
+    public static string Prompt_TrialPeriodDaysRemainingEnterActivation => S("Prompt_TrialPeriodDaysRemainingEnterActivation", "Prompt_TrialPeriodDaysRemainingEnterActivation");
+    public static string Prompt_TrialPeriodDaysRemainingEnterActivation2 => S("Prompt_TrialPeriodDaysRemainingEnterActivation2", "Prompt_TrialPeriodDaysRemainingEnterActivation2");
+    public static string Prompt_Triggered => S("Prompt_Triggered", "Prompt_Triggered");
+    public static string Prompt_TroughOKPcsBelowMean => S("Prompt_TroughOKPcsBelowMean", "Prompt_TroughOKPcsBelowMean");
+    public static string Prompt_Type => S("Prompt_Type", "Prompt_Type");
+    public static string Prompt_UnitsRunningAlarmPausedOffline => S("Prompt_UnitsRunningAlarmPausedOffline", "Prompt_UnitsRunningAlarmPausedOffline");
+    public static string Prompt_UnknownQueryTab => S("Prompt_UnknownQueryTab", "Prompt_UnknownQueryTab");
+    public static string Prompt_UnrecognizedAddress => S("Prompt_UnrecognizedAddress", "Prompt_UnrecognizedAddress");
+    public static string Prompt_UnsupportedPLCBrand => S("Prompt_UnsupportedPLCBrand", "Prompt_UnsupportedPLCBrand");
+    public static string Prompt_UnsupportedSiemensModel => S("Prompt_UnsupportedSiemensModel", "Prompt_UnsupportedSiemensModel");
+    public static string Prompt_Updated => S("Prompt_Updated", "Prompt_Updated");
+    public static string Prompt_ValidCounterAlarmsImportedCurrentDevice => S("Prompt_ValidCounterAlarmsImportedCurrentDevice", "Prompt_ValidCounterAlarmsImportedCurrentDevice");
+    public static string Prompt_ValidDefectsImportedCurrentDeviceExisting => S("Prompt_ValidDefectsImportedCurrentDeviceExisting", "Prompt_ValidDefectsImportedCurrentDeviceExisting");
+    public static string Prompt_VirtualDevicesGeneratedClickSavePersist => S("Prompt_VirtualDevicesGeneratedClickSavePersist", "Prompt_VirtualDevicesGeneratedClickSavePersist");
+    public static string Prompt_Warning => S("Prompt_Warning", "Prompt_Warning");
+    public static string Prompt_WorkOrderAborted => S("Prompt_WorkOrderAborted", "Prompt_WorkOrderAborted");
+    public static string Prompt_WorkOrderAdded => S("Prompt_WorkOrderAdded", "Prompt_WorkOrderAdded");
+    public static string Prompt_WorkOrderCompleted => S("Prompt_WorkOrderCompleted", "Prompt_WorkOrderCompleted");
+    public static string Prompt_WorkOrderCopied => S("Prompt_WorkOrderCopied", "Prompt_WorkOrderCopied");
+    public static string Prompt_WorkOrderReachedTargetPcs => S("Prompt_WorkOrderReachedTargetPcs", "Prompt_WorkOrderReachedTargetPcs");
+    public static string Prompt_WorkOrderStarted => S("Prompt_WorkOrderStarted", "Prompt_WorkOrderStarted");
+    public static string Prompt_WorkOrderUpdated => S("Prompt_WorkOrderUpdated", "Prompt_WorkOrderUpdated");
+    public static string Prompt_WorkOrdersAlreadyExistSampleWork => S("Prompt_WorkOrdersAlreadyExistSampleWork", "Prompt_WorkOrdersAlreadyExistSampleWork");
+    public static string Prompt_WorstShiftOEE => S("Prompt_WorstShiftOEE", "Prompt_WorstShiftOEE");
+    public static string Prompt_WriteError => S("Prompt_WriteError", "Prompt_WriteError");
+    public static string Prompt_WriteFailed => S("Prompt_WriteFailed", "Prompt_WriteFailed");
+    public static string Prompt_WriteOK => S("Prompt_WriteOK", "Prompt_WriteOK");
+    public static string Recipe_ApplyUnsaved => S("Recipe_ApplyUnsaved", "Recipe_ApplyUnsaved");
+    public static string Recipe_SwitchDiscardConfirm => S("Recipe_SwitchDiscardConfirm", "Recipe_SwitchDiscardConfirm");
+    public static string Rtmon_AddressConflict => S("Rtmon_AddressConflict", "Rtmon_AddressConflict");
+    public static string Rtmon_CollectorUnreachable => S("Rtmon_CollectorUnreachable", "Rtmon_CollectorUnreachable");
+    public static string Rtmon_CopyDiagnostics => S("Rtmon_CopyDiagnostics", "Rtmon_CopyDiagnostics");
+    public static string Rtmon_CopyFailed => S("Rtmon_CopyFailed", "Rtmon_CopyFailed");
+    public static string Rtmon_DataSourceDatabase => S("Rtmon_DataSourceDatabase", "Rtmon_DataSourceDatabase");
+    public static string Rtmon_DataSourcePending => S("Rtmon_DataSourcePending", "Rtmon_DataSourcePending");
+    public static string Rtmon_DataSourceRecovery => S("Rtmon_DataSourceRecovery", "Rtmon_DataSourceRecovery");
+    public static string Rtmon_DiagOverview => S("Rtmon_DiagOverview", "Rtmon_DiagOverview");
+    public static string Rtmon_DiagnosticsCopied => S("Rtmon_DiagnosticsCopied", "Rtmon_DiagnosticsCopied");
+    public static string Rtmon_DiagnosticsExported => S("Rtmon_DiagnosticsExported", "Rtmon_DiagnosticsExported");
+    public static string Rtmon_DiagnosticsGeneratedAt => S("Rtmon_DiagnosticsGeneratedAt", "Rtmon_DiagnosticsGeneratedAt");
+    public static string Rtmon_DiagnosticsTitle => S("Rtmon_DiagnosticsTitle", "Rtmon_DiagnosticsTitle");
+    public static string Rtmon_ExportDiagnostics => S("Rtmon_ExportDiagnostics", "Rtmon_ExportDiagnostics");
+    public static string Rtmon_FlushLatency => S("Rtmon_FlushLatency", "Rtmon_FlushLatency");
+    public static string Rtmon_HistoryFlushSummary => S("Rtmon_HistoryFlushSummary", "Rtmon_HistoryFlushSummary");
+    public static string Rtmon_HistoryQueueSummary => S("Rtmon_HistoryQueueSummary", "Rtmon_HistoryQueueSummary");
+    public static string Rtmon_InvalidAddress => S("Rtmon_InvalidAddress", "Rtmon_InvalidAddress");
+    public static string Rtmon_P95Cycle => S("Rtmon_P95Cycle", "Rtmon_P95Cycle");
+    public static string Rtmon_P99Cycle => S("Rtmon_P99Cycle", "Rtmon_P99Cycle");
+    public static string Rtmon_PauseAutoRefresh => S("Rtmon_PauseAutoRefresh", "Rtmon_PauseAutoRefresh");
+    public static string Rtmon_QueuePeakOverflow => S("Rtmon_QueuePeakOverflow", "Rtmon_QueuePeakOverflow");
+    public static string Rtmon_RefreshFailed => S("Rtmon_RefreshFailed", "Rtmon_RefreshFailed");
+    public static string Rtmon_ResumeAutoRefresh => S("Rtmon_ResumeAutoRefresh", "Rtmon_ResumeAutoRefresh");
+    public static string Rtmon_RetryConnect => S("Rtmon_RetryConnect", "Rtmon_RetryConnect");
+    public static string Rtmon_RuntimeMode => S("Rtmon_RuntimeMode", "Rtmon_RuntimeMode");
+    public static string Rtmon_TotalDatabase => S("Rtmon_TotalDatabase", "Rtmon_TotalDatabase");
+    public static string Rtmon_TxtFilter => S("Rtmon_TxtFilter", "Rtmon_TxtFilter");
+    public static string Rv_Tip_AlarmCount => S("Rv_Tip_AlarmCount", "Rv_Tip_AlarmCount");
+    public static string Rv_Tip_Health => S("Rv_Tip_Health", "Rv_Tip_Health");
+    public static string Rv_Tip_LongestDowntime => S("Rv_Tip_LongestDowntime", "Rv_Tip_LongestDowntime");
+    public static string Rv_Tip_PeakHour => S("Rv_Tip_PeakHour", "Rv_Tip_PeakHour");
+    public static string Rv_Tip_ValleyHour => S("Rv_Tip_ValleyHour", "Rv_Tip_ValleyHour");
+    public static string Settings_CollapseDetails => S("Settings_CollapseDetails", "Settings_CollapseDetails");
+    public static string Settings_CollectorConfirmed => S("Settings_CollectorConfirmed", "Settings_CollectorConfirmed");
+    public static string Settings_CollectorLocalMode => S("Settings_CollectorLocalMode", "Settings_CollectorLocalMode");
+    public static string Settings_CollectorNotConnected => S("Settings_CollectorNotConnected", "Settings_CollectorNotConnected");
+    public static string Settings_CollectorNotConnectedPending => S("Settings_CollectorNotConnectedPending", "Settings_CollectorNotConnectedPending");
+    public static string Settings_CollectorPending => S("Settings_CollectorPending", "Settings_CollectorPending");
+    public static string Settings_ConfirmSave => S("Settings_ConfirmSave", "Settings_ConfirmSave");
+    public static string Settings_ConnectionParams => S("Settings_ConnectionParams", "Settings_ConnectionParams");
+    public static string Settings_DailyReportMaster => S("Settings_DailyReportMaster", "Settings_DailyReportMaster");
+    public static string Settings_DailyReportMasterHint => S("Settings_DailyReportMasterHint", "Settings_DailyReportMasterHint");
+    public static string Settings_DangerConfirmTitle => S("Settings_DangerConfirmTitle", "Settings_DangerConfirmTitle");
+    public static string Settings_DataModeRestartPrompt => S("Settings_DataModeRestartPrompt", "Settings_DataModeRestartPrompt");
+    public static string Settings_DataModeRestartTitle => S("Settings_DataModeRestartTitle", "Settings_DataModeRestartTitle");
+    public static string Settings_DisplayCarousel => S("Settings_DisplayCarousel", "Settings_DisplayCarousel");
+    public static string Settings_DisplayCarouselHint => S("Settings_DisplayCarouselHint", "Settings_DisplayCarouselHint");
+    public static string Settings_DisplayHint => S("Settings_DisplayHint", "Settings_DisplayHint");
+    public static string Settings_DisplaySettings => S("Settings_DisplaySettings", "Settings_DisplaySettings");
+    public static string Settings_ExpandDetails => S("Settings_ExpandDetails", "Settings_ExpandDetails");
+    public static string Settings_LanguageHint => S("Settings_LanguageHint", "Settings_LanguageHint");
+    public static string Settings_LicenseDetails => S("Settings_LicenseDetails", "Settings_LicenseDetails");
+    public static string Settings_LocalSavedCollectorPending => S("Settings_LocalSavedCollectorPending", "Settings_LocalSavedCollectorPending");
+    public static string Settings_ProtocolParams => S("Settings_ProtocolParams", "Settings_ProtocolParams");
+    public static string Settings_ShowHideProductKey => S("Settings_ShowHideProductKey", "Settings_ShowHideProductKey");
+    public static string Settings_Warn_DataModeChanged => S("Settings_Warn_DataModeChanged", "Settings_Warn_DataModeChanged");
+    public static string Settings_Warn_PlcChanged => S("Settings_Warn_PlcChanged", "Settings_Warn_PlcChanged");
+    public static string Settings_Warn_RunModeChanged => S("Settings_Warn_RunModeChanged", "Settings_Warn_RunModeChanged");
+    public static string Severity_Critical => S("Severity_Critical", "Severity_Critical");
+    public static string Severity_Major => S("Severity_Major", "Severity_Major");
+    public static string Severity_Minor => S("Severity_Minor", "Severity_Minor");
+    public static string Status_Alarm => S("Status_Alarm", "Status_Alarm");
+    public static string Status_Idle => S("Status_Idle", "Status_Idle");
+    public static string Status_Offline => S("Status_Offline", "Status_Offline");
+    public static string Status_Offline_AcquisitionStopped => S("Status_Offline_AcquisitionStopped", "Status_Offline_AcquisitionStopped");
+    public static string Status_Offline_CommsLost => S("Status_Offline_CommsLost", "Status_Offline_CommsLost");
+    public static string Status_Offline_GapFilled => S("Status_Offline_GapFilled", "Status_Offline_GapFilled");
+    public static string Status_Offline_PlcReported => S("Status_Offline_PlcReported", "Status_Offline_PlcReported");
+    public static string Status_Paused => S("Status_Paused", "Status_Paused");
+    public static string Status_Running => S("Status_Running", "Status_Running");
+    public static string Status_Unknown => S("Status_Unknown", "Status_Unknown");
+    public static string Um_Actions => S("Um_Actions", "Um_Actions");
+    public static string Um_LastLogin => S("Um_LastLogin", "Um_LastLogin");
+    public static string Um_Role => S("Um_Role", "Um_Role");
+    public static string Um_Security => S("Um_Security", "Um_Security");
+    public static string Um_User => S("Um_User", "Um_User");
+    public static string Ux_ConfirmPassword => S("Ux_ConfirmPassword", "Ux_ConfirmPassword");
+    public static string Ux_DeviceWizardAddressHint => S("Ux_DeviceWizardAddressHint", "Ux_DeviceWizardAddressHint");
+    public static string Ux_DeviceWizardAddressRequired => S("Ux_DeviceWizardAddressRequired", "Ux_DeviceWizardAddressRequired");
+    public static string Ux_DeviceWizardBack => S("Ux_DeviceWizardBack", "Ux_DeviceWizardBack");
+    public static string Ux_DeviceWizardCreated => S("Ux_DeviceWizardCreated", "Ux_DeviceWizardCreated");
+    public static string Ux_DeviceWizardFinish => S("Ux_DeviceWizardFinish", "Ux_DeviceWizardFinish");
+    public static string Ux_DeviceWizardIntro => S("Ux_DeviceWizardIntro", "Ux_DeviceWizardIntro");
+    public static string Ux_DeviceWizardNameDuplicate => S("Ux_DeviceWizardNameDuplicate", "Ux_DeviceWizardNameDuplicate");
+    public static string Ux_DeviceWizardNameRequired => S("Ux_DeviceWizardNameRequired", "Ux_DeviceWizardNameRequired");
+    public static string Ux_DeviceWizardNext => S("Ux_DeviceWizardNext", "Ux_DeviceWizardNext");
+    public static string Ux_DeviceWizardSaveReminder => S("Ux_DeviceWizardSaveReminder", "Ux_DeviceWizardSaveReminder");
+    public static string Ux_DeviceWizardStepAddresses => S("Ux_DeviceWizardStepAddresses", "Ux_DeviceWizardStepAddresses");
+    public static string Ux_DeviceWizardStepBasic => S("Ux_DeviceWizardStepBasic", "Ux_DeviceWizardStepBasic");
+    public static string Ux_DeviceWizardTargetCycleHint => S("Ux_DeviceWizardTargetCycleHint", "Ux_DeviceWizardTargetCycleHint");
+    public static string Ux_DeviceWizardTargetCycleInvalid => S("Ux_DeviceWizardTargetCycleInvalid", "Ux_DeviceWizardTargetCycleInvalid");
+    public static string Ux_DeviceWizardTitle => S("Ux_DeviceWizardTitle", "Ux_DeviceWizardTitle");
+    public static string Ux_FirstRunFinishBody => S("Ux_FirstRunFinishBody", "Ux_FirstRunFinishBody");
+    public static string Ux_FirstRunFinishTitle => S("Ux_FirstRunFinishTitle", "Ux_FirstRunFinishTitle");
+    public static string Ux_FirstRunGoSettings => S("Ux_FirstRunGoSettings", "Ux_FirstRunGoSettings");
+    public static string Ux_FirstRunNavBody => S("Ux_FirstRunNavBody", "Ux_FirstRunNavBody");
+    public static string Ux_FirstRunNavTitle => S("Ux_FirstRunNavTitle", "Ux_FirstRunNavTitle");
+    public static string Ux_FirstRunOpenManual => S("Ux_FirstRunOpenManual", "Ux_FirstRunOpenManual");
+    public static string Ux_FirstRunPlcBody => S("Ux_FirstRunPlcBody", "Ux_FirstRunPlcBody");
+    public static string Ux_FirstRunPlcTitle => S("Ux_FirstRunPlcTitle", "Ux_FirstRunPlcTitle");
+    public static string Ux_FirstRunSkip => S("Ux_FirstRunSkip", "Ux_FirstRunSkip");
+    public static string Ux_FirstRunTitle => S("Ux_FirstRunTitle", "Ux_FirstRunTitle");
+    public static string Ux_FirstRunWelcomeBody => S("Ux_FirstRunWelcomeBody", "Ux_FirstRunWelcomeBody");
+    public static string Ux_FirstRunWelcomeTitle => S("Ux_FirstRunWelcomeTitle", "Ux_FirstRunWelcomeTitle");
+    public static string Ux_HelpManualMissing => S("Ux_HelpManualMissing", "Ux_HelpManualMissing");
+    public static string Ux_HelpTooltip => S("Ux_HelpTooltip", "Ux_HelpTooltip");
+    public static string Ux_HelpWindowTitle => S("Ux_HelpWindowTitle", "Ux_HelpWindowTitle");
+    public static string Ux_Kb1 => S("Ux_Kb1", "Ux_Kb1");
+    public static string Ux_Kb10 => S("Ux_Kb10", "Ux_Kb10");
+    public static string Ux_Kb11 => S("Ux_Kb11", "Ux_Kb11");
+    public static string Ux_Kb12 => S("Ux_Kb12", "Ux_Kb12");
+    public static string Ux_Kb2 => S("Ux_Kb2", "Ux_Kb2");
+    public static string Ux_Kb3 => S("Ux_Kb3", "Ux_Kb3");
+    public static string Ux_Kb4 => S("Ux_Kb4", "Ux_Kb4");
+    public static string Ux_Kb5 => S("Ux_Kb5", "Ux_Kb5");
+    public static string Ux_Kb6 => S("Ux_Kb6", "Ux_Kb6");
+    public static string Ux_Kb7 => S("Ux_Kb7", "Ux_Kb7");
+    public static string Ux_Kb8 => S("Ux_Kb8", "Ux_Kb8");
+    public static string Ux_Kb9 => S("Ux_Kb9", "Ux_Kb9");
+    public static string Ux_PageHelpMissing => S("Ux_PageHelpMissing", "Ux_PageHelpMissing");
+    public static string Ux_PageHelpOpenManual => S("Ux_PageHelpOpenManual", "Ux_PageHelpOpenManual");
+    public static string Ux_PageHelpTitle => S("Ux_PageHelpTitle", "Ux_PageHelpTitle");
+    public static string Ux_QueryFinished => S("Ux_QueryFinished", "Ux_QueryFinished");
+    public static string Ux_Querying => S("Ux_Querying", "Ux_Querying");
+    public static string Ux_ResetQuery => S("Ux_ResetQuery", "Ux_ResetQuery");
+    public static string Ux_ShortcutHelpTitle => S("Ux_ShortcutHelpTitle", "Ux_ShortcutHelpTitle");
+    public static string Ux_StatusSaved => S("Ux_StatusSaved", "Ux_StatusSaved");
+    public static string Ux_StatusSaving => S("Ux_StatusSaving", "Ux_StatusSaving");
+    public static string Ux_StatusUnsaved => S("Ux_StatusUnsaved", "Ux_StatusUnsaved");
+    public static string Ux_ViewerRecoveryFailed => S("Ux_ViewerRecoveryFailed", "Ux_ViewerRecoveryFailed");
+    public static string Ux_ViewerRecoveryPrompt => S("Ux_ViewerRecoveryPrompt", "Ux_ViewerRecoveryPrompt");
+    public static string Ux_ViewerRecoverySuccess => S("Ux_ViewerRecoverySuccess", "Ux_ViewerRecoverySuccess");
+    public static string Ux_ViewerRecoveryTitle => S("Ux_ViewerRecoveryTitle", "Ux_ViewerRecoveryTitle");
+    public static string Validator_AddressReuseInDevice => S("Validator_AddressReuseInDevice", "Validator_AddressReuseInDevice");
+    public static string Validator_AlarmKind => S("Validator_AlarmKind", "Validator_AlarmKind");
+    public static string Validator_AlarmParametersNegative => S("Validator_AlarmParametersNegative", "Validator_AlarmParametersNegative");
+    public static string Validator_ChildIdentityInvalid => S("Validator_ChildIdentityInvalid", "Validator_ChildIdentityInvalid");
+    public static string Validator_CounterAlarmKind => S("Validator_CounterAlarmKind", "Validator_CounterAlarmKind");
+    public static string Validator_DWordAddressOverlap => S("Validator_DWordAddressOverlap", "Validator_DWordAddressOverlap");
+    public static string Validator_DefectKind => S("Validator_DefectKind", "Validator_DefectKind");
+    public static string Validator_DeviceIdDuplicate => S("Validator_DeviceIdDuplicate", "Validator_DeviceIdDuplicate");
+    public static string Validator_DeviceIdRequired => S("Validator_DeviceIdRequired", "Validator_DeviceIdRequired");
+    public static string Validator_DuplicateChildId => S("Validator_DuplicateChildId", "Validator_DuplicateChildId");
+    public static string Validator_DuplicateSourceName => S("Validator_DuplicateSourceName", "Validator_DuplicateSourceName");
+    public static string Validator_DuplicateValueName => S("Validator_DuplicateValueName", "Validator_DuplicateValueName");
+    public static string Validator_EmptyChildName => S("Validator_EmptyChildName", "Validator_EmptyChildName");
+    public static string Validator_EmptySourceName => S("Validator_EmptySourceName", "Validator_EmptySourceName");
+    public static string Validator_EmptyValueId => S("Validator_EmptyValueId", "Validator_EmptyValueId");
+    public static string Validator_EmptyValueName => S("Validator_EmptyValueName", "Validator_EmptyValueName");
+    public static string Validator_EnumMappingInvalid => S("Validator_EnumMappingInvalid", "Validator_EnumMappingInvalid");
+    public static string Validator_FloatLimitsInvalid => S("Validator_FloatLimitsInvalid", "Validator_FloatLimitsInvalid");
+    public static string Validator_LimitExpectedConflict => S("Validator_LimitExpectedConflict", "Validator_LimitExpectedConflict");
+    public static string Validator_LimitOrderInvalid => S("Validator_LimitOrderInvalid", "Validator_LimitOrderInvalid");
+    public static string Validator_PrimaryRecipe => S("Validator_PrimaryRecipe", "Validator_PrimaryRecipe");
+    public static string Validator_PrimaryReset => S("Validator_PrimaryReset", "Validator_PrimaryReset");
+    public static string Validator_PrimaryStatus => S("Validator_PrimaryStatus", "Validator_PrimaryStatus");
+    public static string Validator_RoleCounterAlarm => S("Validator_RoleCounterAlarm", "Validator_RoleCounterAlarm");
+    public static string Validator_RoleDefect => S("Validator_RoleDefect", "Validator_RoleDefect");
+    public static string Validator_RoleSourceTrigger => S("Validator_RoleSourceTrigger", "Validator_RoleSourceTrigger");
+    public static string Validator_RoleSourceValue => S("Validator_RoleSourceValue", "Validator_RoleSourceValue");
+    public static string Validator_SourceConfirmSecondsNegative => S("Validator_SourceConfirmSecondsNegative", "Validator_SourceConfirmSecondsNegative");
+    public static string Validator_SourceDuplicateAddress => S("Validator_SourceDuplicateAddress", "Validator_SourceDuplicateAddress");
+    public static string Validator_SourceHysteresisNegative => S("Validator_SourceHysteresisNegative", "Validator_SourceHysteresisNegative");
+    public static string Validator_SourceIdentityInvalid => S("Validator_SourceIdentityInvalid", "Validator_SourceIdentityInvalid");
+    public static string Validator_SourceNeedsValue => S("Validator_SourceNeedsValue", "Validator_SourceNeedsValue");
+    public static string Validator_SourceTriggerAddressInvalid => S("Validator_SourceTriggerAddressInvalid", "Validator_SourceTriggerAddressInvalid");
+    public static string Validator_SourceValueAddressInvalid => S("Validator_SourceValueAddressInvalid", "Validator_SourceValueAddressInvalid");
+    public static string Validator_SourceValueAddressMissing => S("Validator_SourceValueAddressMissing", "Validator_SourceValueAddressMissing");
+    public static string Validator_SourceValueAddressSameAsTrigger => S("Validator_SourceValueAddressSameAsTrigger", "Validator_SourceValueAddressSameAsTrigger");
+    public static string Validator_StringLengthInvalid => S("Validator_StringLengthInvalid", "Validator_StringLengthInvalid");
+    public static string Validator_TriggerAckConflict => S("Validator_TriggerAckConflict", "Validator_TriggerAckConflict");
+    public static string Viewer_ExitConfirm => S("Viewer_ExitConfirm", "Viewer_ExitConfirm");
+    public static string Viewer_ExitTitle => S("Viewer_ExitTitle", "Viewer_ExitTitle");
+    public static string Web_Ac_ActiveCount => S("Web_Ac_ActiveCount", "Web_Ac_ActiveCount");
+    public static string Web_Ac_ActiveTitle => S("Web_Ac_ActiveTitle", "Web_Ac_ActiveTitle");
+    public static string Web_Ac_AffectedDevices => S("Web_Ac_AffectedDevices", "Web_Ac_AffectedDevices");
+    public static string Web_Ac_AlarmName => S("Web_Ac_AlarmName", "Web_Ac_AlarmName");
+    public static string Web_Ac_Copy => S("Web_Ac_Copy", "Web_Ac_Copy");
+    public static string Web_Ac_Count => S("Web_Ac_Count", "Web_Ac_Count");
+    public static string Web_Ac_Device => S("Web_Ac_Device", "Web_Ac_Device");
+    public static string Web_Ac_GroupAlarms => S("Web_Ac_GroupAlarms", "Web_Ac_GroupAlarms");
+    public static string Web_Ac_Level => S("Web_Ac_Level", "Web_Ac_Level");
+    public static string Web_Ac_LevelHigh => S("Web_Ac_LevelHigh", "Web_Ac_LevelHigh");
+    public static string Web_Ac_LevelLow => S("Web_Ac_LevelLow", "Web_Ac_LevelLow");
+    public static string Web_Ac_LevelMedium => S("Web_Ac_LevelMedium", "Web_Ac_LevelMedium");
+    public static string Web_Ac_Longest => S("Web_Ac_Longest", "Web_Ac_Longest");
+    public static string Web_Ac_MutedCount => S("Web_Ac_MutedCount", "Web_Ac_MutedCount");
+    public static string Web_Ac_Range1h => S("Web_Ac_Range1h", "Web_Ac_Range1h");
+    public static string Web_Ac_Range24h => S("Web_Ac_Range24h", "Web_Ac_Range24h");
+    public static string Web_Ac_Range4h => S("Web_Ac_Range4h", "Web_Ac_Range4h");
+    public static string Web_Ac_Rank => S("Web_Ac_Rank", "Web_Ac_Rank");
+    public static string Web_Ac_RecentTitle => S("Web_Ac_RecentTitle", "Web_Ac_RecentTitle");
+    public static string Web_Ac_StatsTitle => S("Web_Ac_StatsTitle", "Web_Ac_StatsTitle");
+    public static string Web_Ac_TodayRecover => S("Web_Ac_TodayRecover", "Web_Ac_TodayRecover");
+    public static string Web_Ac_TodayTrigger => S("Web_Ac_TodayTrigger", "Web_Ac_TodayTrigger");
+    public static string Web_Ac_TopTitle => S("Web_Ac_TopTitle", "Web_Ac_TopTitle");
+    public static string Web_Ac_TotalDuration => S("Web_Ac_TotalDuration", "Web_Ac_TotalDuration");
+    public static string Web_Ac_VsYesterday => S("Web_Ac_VsYesterday", "Web_Ac_VsYesterday");
+    public static string Web_App_Title => S("Web_App_Title", "Web_App_Title");
+    public static string Web_Au_Action => S("Web_Au_Action", "Web_Au_Action");
+    public static string Web_Au_ActionHint => S("Web_Au_ActionHint", "Web_Au_ActionHint");
+    public static string Web_Au_AllResults => S("Web_Au_AllResults", "Web_Au_AllResults");
+    public static string Web_Au_Detail => S("Web_Au_Detail", "Web_Au_Detail");
+    public static string Web_Au_Failed => S("Web_Au_Failed", "Web_Au_Failed");
+    public static string Web_Au_List => S("Web_Au_List", "Web_Au_List");
+    public static string Web_Au_None => S("Web_Au_None", "Web_Au_None");
+    public static string Web_Au_Operator => S("Web_Au_Operator", "Web_Au_Operator");
+    public static string Web_Au_OperatorHint => S("Web_Au_OperatorHint", "Web_Au_OperatorHint");
+    public static string Web_Au_Result => S("Web_Au_Result", "Web_Au_Result");
+    public static string Web_Au_Success => S("Web_Au_Success", "Web_Au_Success");
+    public static string Web_Au_TargetId => S("Web_Au_TargetId", "Web_Au_TargetId");
+    public static string Web_Au_TargetType => S("Web_Au_TargetType", "Web_Au_TargetType");
+    public static string Web_Au_Title => S("Web_Au_Title", "Web_Au_Title");
+    public static string Web_Badge_Recent1Min => S("Web_Badge_Recent1Min", "Web_Badge_Recent1Min");
+    public static string Web_Card_Alarms => S("Web_Card_Alarms", "Web_Card_Alarms");
+    public static string Web_Card_DevCount => S("Web_Card_DevCount", "Web_Card_DevCount");
+    public static string Web_Card_DevStatus => S("Web_Card_DevStatus", "Web_Card_DevStatus");
+    public static string Web_Card_Oee => S("Web_Card_Oee", "Web_Card_Oee");
+    public static string Web_Card_Output => S("Web_Card_Output", "Web_Card_Output");
+    public static string Web_Card_ProdStatus => S("Web_Card_ProdStatus", "Web_Card_ProdStatus");
+    public static string Web_Card_Shift => S("Web_Card_Shift", "Web_Card_Shift");
+    public static string Web_Card_Source => S("Web_Card_Source", "Web_Card_Source");
+    public static string Web_Card_Trend => S("Web_Card_Trend", "Web_Card_Trend");
+    public static string Web_Card_WorkOrder => S("Web_Card_WorkOrder", "Web_Card_WorkOrder");
+    public static string Web_ConnLost => S("Web_ConnLost", "Web_ConnLost");
+    public static string Web_ConnStale => S("Web_ConnStale", "Web_ConnStale");
+    public static string Web_Csv_AlarmId => S("Web_Csv_AlarmId", "Web_Csv_AlarmId");
+    public static string Web_Csv_AlarmName => S("Web_Csv_AlarmName", "Web_Csv_AlarmName");
+    public static string Web_Csv_AlarmSeconds => S("Web_Csv_AlarmSeconds", "Web_Csv_AlarmSeconds");
+    public static string Web_Csv_CurrState => S("Web_Csv_CurrState", "Web_Csv_CurrState");
+    public static string Web_Csv_CurrStateText => S("Web_Csv_CurrStateText", "Web_Csv_CurrStateText");
+    public static string Web_Csv_DeviceId => S("Web_Csv_DeviceId", "Web_Csv_DeviceId");
+    public static string Web_Csv_DeviceName => S("Web_Csv_DeviceName", "Web_Csv_DeviceName");
+    public static string Web_Csv_EventTime => S("Web_Csv_EventTime", "Web_Csv_EventTime");
+    public static string Web_Csv_EventType => S("Web_Csv_EventType", "Web_Csv_EventType");
+    public static string Web_Csv_EventTypeText => S("Web_Csv_EventTypeText", "Web_Csv_EventTypeText");
+    public static string Web_Csv_FileAlarm => S("Web_Csv_FileAlarm", "Web_Csv_FileAlarm");
+    public static string Web_Csv_FileProd => S("Web_Csv_FileProd", "Web_Csv_FileProd");
+    public static string Web_Csv_FileSn => S("Web_Csv_FileSn", "Web_Csv_FileSn");
+    public static string Web_Csv_FileStatus => S("Web_Csv_FileStatus", "Web_Csv_FileStatus");
+    public static string Web_Csv_Metric => S("Web_Csv_Metric", "Web_Csv_Metric");
+    public static string Web_Csv_NgCount => S("Web_Csv_NgCount", "Web_Csv_NgCount");
+    public static string Web_Csv_OkCount => S("Web_Csv_OkCount", "Web_Csv_OkCount");
+    public static string Web_Csv_PlcAddress => S("Web_Csv_PlcAddress", "Web_Csv_PlcAddress");
+    public static string Web_Csv_PrevState => S("Web_Csv_PrevState", "Web_Csv_PrevState");
+    public static string Web_Csv_PrevStateText => S("Web_Csv_PrevStateText", "Web_Csv_PrevStateText");
+    public static string Web_Csv_RunSeconds => S("Web_Csv_RunSeconds", "Web_Csv_RunSeconds");
+    public static string Web_Csv_Shift => S("Web_Csv_Shift", "Web_Csv_Shift");
+    public static string Web_Csv_StatusWord => S("Web_Csv_StatusWord", "Web_Csv_StatusWord");
+    public static string Web_Csv_SumAlarm => S("Web_Csv_SumAlarm", "Web_Csv_SumAlarm");
+    public static string Web_Csv_SumDevice => S("Web_Csv_SumDevice", "Web_Csv_SumDevice");
+    public static string Web_Csv_SumProd => S("Web_Csv_SumProd", "Web_Csv_SumProd");
+    public static string Web_Csv_SumRange => S("Web_Csv_SumRange", "Web_Csv_SumRange");
+    public static string Web_Csv_SumStatus => S("Web_Csv_SumStatus", "Web_Csv_SumStatus");
+    public static string Web_Csv_TargetCycle => S("Web_Csv_TargetCycle", "Web_Csv_TargetCycle");
+    public static string Web_Csv_Time => S("Web_Csv_Time", "Web_Csv_Time");
+    public static string Web_Csv_Value => S("Web_Csv_Value", "Web_Csv_Value");
+    public static string Web_Dd_Actual => S("Web_Dd_Actual", "Web_Dd_Actual");
+    public static string Web_Dd_Back => S("Web_Dd_Back", "Web_Dd_Back");
+    public static string Web_Dd_HourBoard => S("Web_Dd_HourBoard", "Web_Dd_HourBoard");
+    public static string Web_Dd_NoDevice => S("Web_Dd_NoDevice", "Web_Dd_NoDevice");
+    public static string Web_Dd_NoShift => S("Web_Dd_NoShift", "Web_Dd_NoShift");
+    public static string Web_Dd_OpenRuntime => S("Web_Dd_OpenRuntime", "Web_Dd_OpenRuntime");
+    public static string Web_Dd_Plan => S("Web_Dd_Plan", "Web_Dd_Plan");
+    public static string Web_Dd_RecentAlarms => S("Web_Dd_RecentAlarms", "Web_Dd_RecentAlarms");
+    public static string Web_Dd_Sources => S("Web_Dd_Sources", "Web_Dd_Sources");
+    public static string Web_Dd_Title => S("Web_Dd_Title", "Web_Dd_Title");
+    public static string Web_DefectTop => S("Web_DefectTop", "Web_DefectTop");
+    public static string Web_Dv_AddressConfig => S("Web_Dv_AddressConfig", "Web_Dv_AddressConfig");
+    public static string Web_Dv_AlarmConfig => S("Web_Dv_AlarmConfig", "Web_Dv_AlarmConfig");
+    public static string Web_Dv_AlarmCount => S("Web_Dv_AlarmCount", "Web_Dv_AlarmCount");
+    public static string Web_Dv_Category => S("Web_Dv_Category", "Web_Dv_Category");
+    public static string Web_Dv_CountAlarmConfig => S("Web_Dv_CountAlarmConfig", "Web_Dv_CountAlarmConfig");
+    public static string Web_Dv_CountAlarmCount => S("Web_Dv_CountAlarmCount", "Web_Dv_CountAlarmCount");
+    public static string Web_Dv_DefectConfig => S("Web_Dv_DefectConfig", "Web_Dv_DefectConfig");
+    public static string Web_Dv_DefectCount => S("Web_Dv_DefectCount", "Web_Dv_DefectCount");
+    public static string Web_Dv_Description => S("Web_Dv_Description", "Web_Dv_Description");
+    public static string Web_Dv_Detail => S("Web_Dv_Detail", "Web_Dv_Detail");
+    public static string Web_Dv_DeviceId => S("Web_Dv_DeviceId", "Web_Dv_DeviceId");
+    public static string Web_Dv_LoadFailed => S("Web_Dv_LoadFailed", "Web_Dv_LoadFailed");
+    public static string Web_Dv_LoadFailedHint => S("Web_Dv_LoadFailedHint", "Web_Dv_LoadFailedHint");
+    public static string Web_Dv_Loading => S("Web_Dv_Loading", "Web_Dv_Loading");
+    public static string Web_Dv_MachineType => S("Web_Dv_MachineType", "Web_Dv_MachineType");
+    public static string Web_Dv_Name => S("Web_Dv_Name", "Web_Dv_Name");
+    public static string Web_Dv_NgCountAddr => S("Web_Dv_NgCountAddr", "Web_Dv_NgCountAddr");
+    public static string Web_Dv_NoDevices => S("Web_Dv_NoDevices", "Web_Dv_NoDevices");
+    public static string Web_Dv_None => S("Web_Dv_None", "Web_Dv_None");
+    public static string Web_Dv_OkCountAddr => S("Web_Dv_OkCountAddr", "Web_Dv_OkCountAddr");
+    public static string Web_Dv_PlcAddr => S("Web_Dv_PlcAddr", "Web_Dv_PlcAddr");
+    public static string Web_Dv_ReadOnly => S("Web_Dv_ReadOnly", "Web_Dv_ReadOnly");
+    public static string Web_Dv_RecipeAddr => S("Web_Dv_RecipeAddr", "Web_Dv_RecipeAddr");
+    public static string Web_Dv_ResetAddr => S("Web_Dv_ResetAddr", "Web_Dv_ResetAddr");
+    public static string Web_Dv_Retry => S("Web_Dv_Retry", "Web_Dv_Retry");
+    public static string Web_Dv_Severity => S("Web_Dv_Severity", "Web_Dv_Severity");
+    public static string Web_Dv_SourceEnabled => S("Web_Dv_SourceEnabled", "Web_Dv_SourceEnabled");
+    public static string Web_Dv_SourceType => S("Web_Dv_SourceType", "Web_Dv_SourceType");
+    public static string Web_Dv_Sources => S("Web_Dv_Sources", "Web_Dv_Sources");
+    public static string Web_Dv_StatusAddr => S("Web_Dv_StatusAddr", "Web_Dv_StatusAddr");
+    public static string Web_Dv_Threshold => S("Web_Dv_Threshold", "Web_Dv_Threshold");
+    public static string Web_Dv_Title => S("Web_Dv_Title", "Web_Dv_Title");
+    public static string Web_Dv_TriggerAddr => S("Web_Dv_TriggerAddr", "Web_Dv_TriggerAddr");
+    public static string Web_Dv_ValueItems => S("Web_Dv_ValueItems", "Web_Dv_ValueItems");
+    public static string Web_Fresh_Live => S("Web_Fresh_Live", "Web_Fresh_Live");
+    public static string Web_Fresh_Mins => S("Web_Fresh_Mins", "Web_Fresh_Mins");
+    public static string Web_Fresh_None => S("Web_Fresh_None", "Web_Fresh_None");
+    public static string Web_Fresh_Secs => S("Web_Fresh_Secs", "Web_Fresh_Secs");
+    public static string Web_Home_HourlyFlag => S("Web_Home_HourlyFlag", "Web_Home_HourlyFlag");
+    public static string Web_Home_NoDataSpan => S("Web_Home_NoDataSpan", "Web_Home_NoDataSpan");
+    public static string Web_Hq_AlarmChart => S("Web_Hq_AlarmChart", "Web_Hq_AlarmChart");
+    public static string Web_Hq_AlarmEvents => S("Web_Hq_AlarmEvents", "Web_Hq_AlarmEvents");
+    public static string Web_Hq_AlarmHintBody => S("Web_Hq_AlarmHintBody", "Web_Hq_AlarmHintBody");
+    public static string Web_Hq_AlarmHintTitle => S("Web_Hq_AlarmHintTitle", "Web_Hq_AlarmHintTitle");
+    public static string Web_Hq_AlarmId => S("Web_Hq_AlarmId", "Web_Hq_AlarmId");
+    public static string Web_Hq_AlarmName => S("Web_Hq_AlarmName", "Web_Hq_AlarmName");
+    public static string Web_Hq_AlarmPending => S("Web_Hq_AlarmPending", "Web_Hq_AlarmPending");
+    public static string Web_Hq_AlarmPlc => S("Web_Hq_AlarmPlc", "Web_Hq_AlarmPlc");
+    public static string Web_Hq_AlarmRecovered => S("Web_Hq_AlarmRecovered", "Web_Hq_AlarmRecovered");
+    public static string Web_Hq_AlarmTriggered => S("Web_Hq_AlarmTriggered", "Web_Hq_AlarmTriggered");
+    public static string Web_Hq_AlarmType => S("Web_Hq_AlarmType", "Web_Hq_AlarmType");
+    public static string Web_Hq_AllAlarms => S("Web_Hq_AllAlarms", "Web_Hq_AllAlarms");
+    public static string Web_Hq_AllDevices => S("Web_Hq_AllDevices", "Web_Hq_AllDevices");
+    public static string Web_Hq_AllShifts => S("Web_Hq_AllShifts", "Web_Hq_AllShifts");
+    public static string Web_Hq_Analyzing => S("Web_Hq_Analyzing", "Web_Hq_Analyzing");
+    public static string Web_Hq_ChartNg => S("Web_Hq_ChartNg", "Web_Hq_ChartNg");
+    public static string Web_Hq_ChartOk => S("Web_Hq_ChartOk", "Web_Hq_ChartOk");
+    public static string Web_Hq_ChartTitle => S("Web_Hq_ChartTitle", "Web_Hq_ChartTitle");
+    public static string Web_Hq_CurrState => S("Web_Hq_CurrState", "Web_Hq_CurrState");
+    public static string Web_Hq_Custom => S("Web_Hq_Custom", "Web_Hq_Custom");
+    public static string Web_Hq_Device => S("Web_Hq_Device", "Web_Hq_Device");
+    public static string Web_Hq_DeviceId => S("Web_Hq_DeviceId", "Web_Hq_DeviceId");
+    public static string Web_Hq_DeviceName => S("Web_Hq_DeviceName", "Web_Hq_DeviceName");
+    public static string Web_Hq_EventTime => S("Web_Hq_EventTime", "Web_Hq_EventTime");
+    public static string Web_Hq_Export => S("Web_Hq_Export", "Web_Hq_Export");
+    public static string Web_Hq_ExportEmpty => S("Web_Hq_ExportEmpty", "Web_Hq_ExportEmpty");
+    public static string Web_Hq_From => S("Web_Hq_From", "Web_Hq_From");
+    public static string Web_Hq_HintBody => S("Web_Hq_HintBody", "Web_Hq_HintBody");
+    public static string Web_Hq_HintTitle => S("Web_Hq_HintTitle", "Web_Hq_HintTitle");
+    public static string Web_Hq_InsAlarmChain => S("Web_Hq_InsAlarmChain", "Web_Hq_InsAlarmChain");
+    public static string Web_Hq_InsAlarmPending => S("Web_Hq_InsAlarmPending", "Web_Hq_InsAlarmPending");
+    public static string Web_Hq_InsAlarmPendingItem => S("Web_Hq_InsAlarmPendingItem", "Web_Hq_InsAlarmPendingItem");
+    public static string Web_Hq_InsAlarmRatio => S("Web_Hq_InsAlarmRatio", "Web_Hq_InsAlarmRatio");
+    public static string Web_Hq_InsAlarmTop => S("Web_Hq_InsAlarmTop", "Web_Hq_InsAlarmTop");
+    public static string Web_Hq_InsAlarmTop3 => S("Web_Hq_InsAlarmTop3", "Web_Hq_InsAlarmTop3");
+    public static string Web_Hq_InsLongestAlarm => S("Web_Hq_InsLongestAlarm", "Web_Hq_InsLongestAlarm");
+    public static string Web_Hq_InsLongestAlarmLong => S("Web_Hq_InsLongestAlarmLong", "Web_Hq_InsLongestAlarmLong");
+    public static string Web_Hq_InsLongestPause => S("Web_Hq_InsLongestPause", "Web_Hq_InsLongestPause");
+    public static string Web_Hq_InsLongestRun => S("Web_Hq_InsLongestRun", "Web_Hq_InsLongestRun");
+    public static string Web_Hq_InsOeeBalance => S("Web_Hq_InsOeeBalance", "Web_Hq_InsOeeBalance");
+    public static string Web_Hq_InsOeeGap => S("Web_Hq_InsOeeGap", "Web_Hq_InsOeeGap");
+    public static string Web_Hq_InsOeeWeak => S("Web_Hq_InsOeeWeak", "Web_Hq_InsOeeWeak");
+    public static string Web_Hq_InsPauseRatio => S("Web_Hq_InsPauseRatio", "Web_Hq_InsPauseRatio");
+    public static string Web_Hq_InsShiftDrag => S("Web_Hq_InsShiftDrag", "Web_Hq_InsShiftDrag");
+    public static string Web_Hq_InsShiftWorst => S("Web_Hq_InsShiftWorst", "Web_Hq_InsShiftWorst");
+    public static string Web_Hq_InsightDrop => S("Web_Hq_InsightDrop", "Web_Hq_InsightDrop");
+    public static string Web_Hq_InsightPeakHigh => S("Web_Hq_InsightPeakHigh", "Web_Hq_InsightPeakHigh");
+    public static string Web_Hq_InsightPeakLow => S("Web_Hq_InsightPeakLow", "Web_Hq_InsightPeakLow");
+    public static string Web_Hq_InsightSteady => S("Web_Hq_InsightSteady", "Web_Hq_InsightSteady");
+    public static string Web_Hq_Last30d => S("Web_Hq_Last30d", "Web_Hq_Last30d");
+    public static string Web_Hq_Last7d => S("Web_Hq_Last7d", "Web_Hq_Last7d");
+    public static string Web_Hq_Loading => S("Web_Hq_Loading", "Web_Hq_Loading");
+    public static string Web_Hq_NeedDevice => S("Web_Hq_NeedDevice", "Web_Hq_NeedDevice");
+    public static string Web_Hq_NextPage => S("Web_Hq_NextPage", "Web_Hq_NextPage");
+    public static string Web_Hq_NgCol => S("Web_Hq_NgCol", "Web_Hq_NgCol");
+    public static string Web_Hq_NoData => S("Web_Hq_NoData", "Web_Hq_NoData");
+    public static string Web_Hq_NoDataHint => S("Web_Hq_NoDataHint", "Web_Hq_NoDataHint");
+    public static string Web_Hq_OeeDetails => S("Web_Hq_OeeDetails", "Web_Hq_OeeDetails");
+    public static string Web_Hq_OeeHintBody => S("Web_Hq_OeeHintBody", "Web_Hq_OeeHintBody");
+    public static string Web_Hq_OeeHintTitle => S("Web_Hq_OeeHintTitle", "Web_Hq_OeeHintTitle");
+    public static string Web_Hq_OeeOverview => S("Web_Hq_OeeOverview", "Web_Hq_OeeOverview");
+    public static string Web_Hq_OeeTrend => S("Web_Hq_OeeTrend", "Web_Hq_OeeTrend");
+    public static string Web_Hq_OkCol => S("Web_Hq_OkCol", "Web_Hq_OkCol");
+    public static string Web_Hq_PageInfo => S("Web_Hq_PageInfo", "Web_Hq_PageInfo");
+    public static string Web_Hq_PrevPage => S("Web_Hq_PrevPage", "Web_Hq_PrevPage");
+    public static string Web_Hq_PrevState => S("Web_Hq_PrevState", "Web_Hq_PrevState");
+    public static string Web_Hq_QualityRate => S("Web_Hq_QualityRate", "Web_Hq_QualityRate");
+    public static string Web_Hq_QueryFailed => S("Web_Hq_QueryFailed", "Web_Hq_QueryFailed");
+    public static string Web_Hq_QuickRange => S("Web_Hq_QuickRange", "Web_Hq_QuickRange");
+    public static string Web_Hq_Reset => S("Web_Hq_Reset", "Web_Hq_Reset");
+    public static string Web_Hq_Search => S("Web_Hq_Search", "Web_Hq_Search");
+    public static string Web_Hq_Shift => S("Web_Hq_Shift", "Web_Hq_Shift");
+    public static string Web_Hq_ShiftChange => S("Web_Hq_ShiftChange", "Web_Hq_ShiftChange");
+    public static string Web_Hq_ShiftTime => S("Web_Hq_ShiftTime", "Web_Hq_ShiftTime");
+    public static string Web_Hq_SnCol => S("Web_Hq_SnCol", "Web_Hq_SnCol");
+    public static string Web_Hq_SnSource => S("Web_Hq_SnSource", "Web_Hq_SnSource");
+    public static string Web_Hq_SnWorkOrder => S("Web_Hq_SnWorkOrder", "Web_Hq_SnWorkOrder");
+    public static string Web_Hq_StateUnknown => S("Web_Hq_StateUnknown", "Web_Hq_StateUnknown");
+    public static string Web_Hq_StatusAlarm => S("Web_Hq_StatusAlarm", "Web_Hq_StatusAlarm");
+    public static string Web_Hq_StatusDaily => S("Web_Hq_StatusDaily", "Web_Hq_StatusDaily");
+    public static string Web_Hq_StatusGantt => S("Web_Hq_StatusGantt", "Web_Hq_StatusGantt");
+    public static string Web_Hq_StatusHintBody => S("Web_Hq_StatusHintBody", "Web_Hq_StatusHintBody");
+    public static string Web_Hq_StatusHintTitle => S("Web_Hq_StatusHintTitle", "Web_Hq_StatusHintTitle");
+    public static string Web_Hq_StatusOffline => S("Web_Hq_StatusOffline", "Web_Hq_StatusOffline");
+    public static string Web_Hq_StatusPause => S("Web_Hq_StatusPause", "Web_Hq_StatusPause");
+    public static string Web_Hq_StatusPie => S("Web_Hq_StatusPie", "Web_Hq_StatusPie");
+    public static string Web_Hq_StatusRun => S("Web_Hq_StatusRun", "Web_Hq_StatusRun");
+    public static string Web_Hq_StatusTransitions => S("Web_Hq_StatusTransitions", "Web_Hq_StatusTransitions");
+    public static string Web_Hq_StatusWord => S("Web_Hq_StatusWord", "Web_Hq_StatusWord");
+    public static string Web_Hq_ThisMonth => S("Web_Hq_ThisMonth", "Web_Hq_ThisMonth");
+    public static string Web_Hq_ThisWeek => S("Web_Hq_ThisWeek", "Web_Hq_ThisWeek");
+    public static string Web_Hq_Time => S("Web_Hq_Time", "Web_Hq_Time");
+    public static string Web_Hq_To => S("Web_Hq_To", "Web_Hq_To");
+    public static string Web_Hq_Today => S("Web_Hq_Today", "Web_Hq_Today");
+    public static string Web_Hq_TotalNg => S("Web_Hq_TotalNg", "Web_Hq_TotalNg");
+    public static string Web_Hq_TotalOk => S("Web_Hq_TotalOk", "Web_Hq_TotalOk");
+    public static string Web_Hq_Truncated => S("Web_Hq_Truncated", "Web_Hq_Truncated");
+    public static string Web_Hq_ValidationRange => S("Web_Hq_ValidationRange", "Web_Hq_ValidationRange");
+    public static string Web_Hq_Yesterday => S("Web_Hq_Yesterday", "Web_Hq_Yesterday");
+    public static string Web_LastShift => S("Web_LastShift", "Web_LastShift");
+    public static string Web_LastShiftLine => S("Web_LastShiftLine", "Web_LastShiftLine");
+    public static string Web_Lbl_Achievement => S("Web_Lbl_Achievement", "Web_Lbl_Achievement");
+    public static string Web_Lbl_ActualCycle => S("Web_Lbl_ActualCycle", "Web_Lbl_ActualCycle");
+    public static string Web_Lbl_Availability => S("Web_Lbl_Availability", "Web_Lbl_Availability");
+    public static string Web_Lbl_ConnStatus => S("Web_Lbl_ConnStatus", "Web_Lbl_ConnStatus");
+    public static string Web_Lbl_DataFresh => S("Web_Lbl_DataFresh", "Web_Lbl_DataFresh");
+    public static string Web_Lbl_DevTotal => S("Web_Lbl_DevTotal", "Web_Lbl_DevTotal");
+    public static string Web_Lbl_Elapsed => S("Web_Lbl_Elapsed", "Web_Lbl_Elapsed");
+    public static string Web_Lbl_Ng => S("Web_Lbl_Ng", "Web_Lbl_Ng");
+    public static string Web_Lbl_NgRate => S("Web_Lbl_NgRate", "Web_Lbl_NgRate");
+    public static string Web_Lbl_Ok => S("Web_Lbl_Ok", "Web_Lbl_Ok");
+    public static string Web_Lbl_Performance => S("Web_Lbl_Performance", "Web_Lbl_Performance");
+    public static string Web_Lbl_Quality => S("Web_Lbl_Quality", "Web_Lbl_Quality");
+    public static string Web_Lbl_RealTimeSpeed => S("Web_Lbl_RealTimeSpeed", "Web_Lbl_RealTimeSpeed");
+    public static string Web_Lbl_Remaining => S("Web_Lbl_Remaining", "Web_Lbl_Remaining");
+    public static string Web_Lbl_SnapSeq => S("Web_Lbl_SnapSeq", "Web_Lbl_SnapSeq");
+    public static string Web_Lbl_SvcAddr => S("Web_Lbl_SvcAddr", "Web_Lbl_SvcAddr");
+    public static string Web_Lbl_SvcVersion => S("Web_Lbl_SvcVersion", "Web_Lbl_SvcVersion");
+    public static string Web_Lbl_TargetCapacity => S("Web_Lbl_TargetCapacity", "Web_Lbl_TargetCapacity");
+    public static string Web_Lbl_TargetCycle => S("Web_Lbl_TargetCycle", "Web_Lbl_TargetCycle");
+    public static string Web_Lbl_TotalOutput => S("Web_Lbl_TotalOutput", "Web_Lbl_TotalOutput");
+    public static string Web_Ln_AvailabilityHint => S("Web_Ln_AvailabilityHint", "Web_Ln_AvailabilityHint");
+    public static string Web_Ln_CurrentShift => S("Web_Ln_CurrentShift", "Web_Ln_CurrentShift");
+    public static string Web_Ln_Cycle => S("Web_Ln_Cycle", "Web_Ln_Cycle");
+    public static string Web_Ln_DevCount => S("Web_Ln_DevCount", "Web_Ln_DevCount");
+    public static string Web_Ln_Downtime => S("Web_Ln_Downtime", "Web_Ln_Downtime");
+    public static string Web_Ln_EmptyFilter => S("Web_Ln_EmptyFilter", "Web_Ln_EmptyFilter");
+    public static string Web_Ln_FilterAll => S("Web_Ln_FilterAll", "Web_Ln_FilterAll");
+    public static string Web_Ln_NoDevices => S("Web_Ln_NoDevices", "Web_Ln_NoDevices");
+    public static string Web_Ln_NoDevicesHint => S("Web_Ln_NoDevicesHint", "Web_Ln_NoDevicesHint");
+    public static string Web_Ln_Search => S("Web_Ln_Search", "Web_Ln_Search");
+    public static string Web_Ln_ShiftProgress => S("Web_Ln_ShiftProgress", "Web_Ln_ShiftProgress");
+    public static string Web_Ln_SortName => S("Web_Ln_SortName", "Web_Ln_SortName");
+    public static string Web_Ln_SortOee => S("Web_Ln_SortOee", "Web_Ln_SortOee");
+    public static string Web_Ln_SortOutput => S("Web_Ln_SortOutput", "Web_Ln_SortOutput");
+    public static string Web_Ln_Title => S("Web_Ln_Title", "Web_Ln_Title");
+    public static string Web_Ln_WeightedOee => S("Web_Ln_WeightedOee", "Web_Ln_WeightedOee");
+    public static string Web_MainNav => S("Web_MainNav", "Web_MainNav");
+    public static string Web_Meta_PlanWo => S("Web_Meta_PlanWo", "Web_Meta_PlanWo");
+    public static string Web_Meta_QualityRate => S("Web_Meta_QualityRate", "Web_Meta_QualityRate");
+    public static string Web_Meta_ShiftAuto => S("Web_Meta_ShiftAuto", "Web_Meta_ShiftAuto");
+    public static string Web_Meta_StatusWord => S("Web_Meta_StatusWord", "Web_Meta_StatusWord");
+    public static string Web_Meta_TrendCurrent => S("Web_Meta_TrendCurrent", "Web_Meta_TrendCurrent");
+    public static string Web_Mo_AcqRunning => S("Web_Mo_AcqRunning", "Web_Mo_AcqRunning");
+    public static string Web_Mo_AcqStatus => S("Web_Mo_AcqStatus", "Web_Mo_AcqStatus");
+    public static string Web_Mo_AcqStopped => S("Web_Mo_AcqStopped", "Web_Mo_AcqStopped");
+    public static string Web_Mo_AvgCycleMs => S("Web_Mo_AvgCycleMs", "Web_Mo_AvgCycleMs");
+    public static string Web_Mo_CompletedCycles => S("Web_Mo_CompletedCycles", "Web_Mo_CompletedCycles");
+    public static string Web_Mo_ConsecutiveFail => S("Web_Mo_ConsecutiveFail", "Web_Mo_ConsecutiveFail");
+    public static string Web_Mo_CycleHealth => S("Web_Mo_CycleHealth", "Web_Mo_CycleHealth");
+    public static string Web_Mo_DbSize => S("Web_Mo_DbSize", "Web_Mo_DbSize");
+    public static string Web_Mo_DeviceLive => S("Web_Mo_DeviceLive", "Web_Mo_DeviceLive");
+    public static string Web_Mo_DevicesRead => S("Web_Mo_DevicesRead", "Web_Mo_DevicesRead");
+    public static string Web_Mo_Disconnects => S("Web_Mo_Disconnects", "Web_Mo_Disconnects");
+    public static string Web_Mo_EstimatedOps => S("Web_Mo_EstimatedOps", "Web_Mo_EstimatedOps");
+    public static string Web_Mo_FailedCycles => S("Web_Mo_FailedCycles", "Web_Mo_FailedCycles");
+    public static string Web_Mo_FlushFailures => S("Web_Mo_FlushFailures", "Web_Mo_FlushFailures");
+    public static string Web_Mo_HistoryHealth => S("Web_Mo_HistoryHealth", "Web_Mo_HistoryHealth");
+    public static string Web_Mo_LastCycleMs => S("Web_Mo_LastCycleMs", "Web_Mo_LastCycleMs");
+    public static string Web_Mo_LastFailureAt => S("Web_Mo_LastFailureAt", "Web_Mo_LastFailureAt");
+    public static string Web_Mo_LastFlushAt => S("Web_Mo_LastFlushAt", "Web_Mo_LastFlushAt");
+    public static string Web_Mo_LastSuccessAt => S("Web_Mo_LastSuccessAt", "Web_Mo_LastSuccessAt");
+    public static string Web_Mo_Live3s => S("Web_Mo_Live3s", "Web_Mo_Live3s");
+    public static string Web_Mo_MaxCycleMs => S("Web_Mo_MaxCycleMs", "Web_Mo_MaxCycleMs");
+    public static string Web_Mo_PendingHistory => S("Web_Mo_PendingHistory", "Web_Mo_PendingHistory");
+    public static string Web_Mo_RecoveryFile => S("Web_Mo_RecoveryFile", "Web_Mo_RecoveryFile");
+    public static string Web_Mo_Refresh10s => S("Web_Mo_Refresh10s", "Web_Mo_Refresh10s");
+    public static string Web_Mo_SourceEmpty => S("Web_Mo_SourceEmpty", "Web_Mo_SourceEmpty");
+    public static string Web_Mo_SourceEmptyHint => S("Web_Mo_SourceEmptyHint", "Web_Mo_SourceEmptyHint");
+    public static string Web_Mo_Sources => S("Web_Mo_Sources", "Web_Mo_Sources");
+    public static string Web_Mo_SuccessRate => S("Web_Mo_SuccessRate", "Web_Mo_SuccessRate");
+    public static string Web_Mo_TimingBreakdown => S("Web_Mo_TimingBreakdown", "Web_Mo_TimingBreakdown");
+    public static string Web_Mo_TmAlarm => S("Web_Mo_TmAlarm", "Web_Mo_TmAlarm");
+    public static string Web_Mo_TmBatchPlan => S("Web_Mo_TmBatchPlan", "Web_Mo_TmBatchPlan");
+    public static string Web_Mo_TmCountAlarm => S("Web_Mo_TmCountAlarm", "Web_Mo_TmCountAlarm");
+    public static string Web_Mo_TmDefect => S("Web_Mo_TmDefect", "Web_Mo_TmDefect");
+    public static string Web_Mo_TmDword => S("Web_Mo_TmDword", "Web_Mo_TmDword");
+    public static string Web_Mo_TmHistory => S("Web_Mo_TmHistory", "Web_Mo_TmHistory");
+    public static string Web_Mo_Triggered => S("Web_Mo_Triggered", "Web_Mo_Triggered");
+    public static string Web_Mo_Updated => S("Web_Mo_Updated", "Web_Mo_Updated");
+    public static string Web_Msg_EmptyHint => S("Web_Msg_EmptyHint", "Web_Msg_EmptyHint");
+    public static string Web_Msg_NoDevSelected => S("Web_Msg_NoDevSelected", "Web_Msg_NoDevSelected");
+    public static string Web_Msg_NoDeviceData => S("Web_Msg_NoDeviceData", "Web_Msg_NoDeviceData");
+    public static string Web_Msg_SelectHint => S("Web_Msg_SelectHint", "Web_Msg_SelectHint");
+    public static string Web_Msg_WaitingConn => S("Web_Msg_WaitingConn", "Web_Msg_WaitingConn");
+    public static string Web_Nav_AlarmCenter => S("Web_Nav_AlarmCenter", "Web_Nav_AlarmCenter");
+    public static string Web_Nav_Audit => S("Web_Nav_Audit", "Web_Nav_Audit");
+    public static string Web_Nav_Dashboard => S("Web_Nav_Dashboard", "Web_Nav_Dashboard");
+    public static string Web_Nav_Devices => S("Web_Nav_Devices", "Web_Nav_Devices");
+    public static string Web_Nav_History => S("Web_Nav_History", "Web_Nav_History");
+    public static string Web_Nav_Line => S("Web_Nav_Line", "Web_Nav_Line");
+    public static string Web_Nav_Monitoring => S("Web_Nav_Monitoring", "Web_Nav_Monitoring");
+    public static string Web_Nav_Recipes => S("Web_Nav_Recipes", "Web_Nav_Recipes");
+    public static string Web_Nav_Review => S("Web_Nav_Review", "Web_Nav_Review");
+    public static string Web_Nav_Settings => S("Web_Nav_Settings", "Web_Nav_Settings");
+    public static string Web_Nav_WorkOrders => S("Web_Nav_WorkOrders", "Web_Nav_WorkOrders");
+    public static string Web_NoDefectData => S("Web_NoDefectData", "Web_NoDefectData");
+    public static string Web_NotFound => S("Web_NotFound", "Web_NotFound");
+    public static string Web_NotFoundHint => S("Web_NotFoundHint", "Web_NotFoundHint");
+    public static string Web_Pl_Cancel => S("Web_Pl_Cancel", "Web_Pl_Cancel");
+    public static string Web_Pl_ResetAll => S("Web_Pl_ResetAll", "Web_Pl_ResetAll");
+    public static string Web_Pl_ResetAllCarouselBlocked => S("Web_Pl_ResetAllCarouselBlocked", "Web_Pl_ResetAllCarouselBlocked");
+    public static string Web_Pl_ResetAllConfirm => S("Web_Pl_ResetAllConfirm", "Web_Pl_ResetAllConfirm");
+    public static string Web_Pl_ResetAllFail => S("Web_Pl_ResetAllFail", "Web_Pl_ResetAllFail");
+    public static string Web_Pl_ResetAllHint => S("Web_Pl_ResetAllHint", "Web_Pl_ResetAllHint");
+    public static string Web_Pl_ResetAllOk => S("Web_Pl_ResetAllOk", "Web_Pl_ResetAllOk");
+    public static string Web_Pl_ResetAllTypeHint => S("Web_Pl_ResetAllTypeHint", "Web_Pl_ResetAllTypeHint");
+    public static string Web_Pl_ResetAllTypeToken => S("Web_Pl_ResetAllTypeToken", "Web_Pl_ResetAllTypeToken");
+    public static string Web_Rc_ItemCount => S("Web_Rc_ItemCount", "Web_Rc_ItemCount");
+    public static string Web_Rc_None => S("Web_Rc_None", "Web_Rc_None");
+    public static string Web_Rc_Title => S("Web_Rc_Title", "Web_Rc_Title");
+    public static string Web_Recipe => S("Web_Recipe", "Web_Recipe");
+    public static string Web_RecipeInfo => S("Web_RecipeInfo", "Web_RecipeInfo");
+    public static string Web_Rv_AlarmCol => S("Web_Rv_AlarmCol", "Web_Rv_AlarmCol");
+    public static string Web_Rv_AlarmCount => S("Web_Rv_AlarmCount", "Web_Rv_AlarmCount");
+    public static string Web_Rv_AlarmCountConclusion => S("Web_Rv_AlarmCountConclusion", "Web_Rv_AlarmCountConclusion");
+    public static string Web_Rv_AlarmRank => S("Web_Rv_AlarmRank", "Web_Rv_AlarmRank");
+    public static string Web_Rv_BaselineOee => S("Web_Rv_BaselineOee", "Web_Rv_BaselineOee");
+    public static string Web_Rv_BaselineOutput => S("Web_Rv_BaselineOutput", "Web_Rv_BaselineOutput");
+    public static string Web_Rv_BaselineQuality => S("Web_Rv_BaselineQuality", "Web_Rv_BaselineQuality");
+    public static string Web_Rv_BestShiftConclusion => S("Web_Rv_BestShiftConclusion", "Web_Rv_BestShiftConclusion");
+    public static string Web_Rv_Comparison => S("Web_Rv_Comparison", "Web_Rv_Comparison");
+    public static string Web_Rv_ComparisonHint => S("Web_Rv_ComparisonHint", "Web_Rv_ComparisonHint");
+    public static string Web_Rv_Conclusions => S("Web_Rv_Conclusions", "Web_Rv_Conclusions");
+    public static string Web_Rv_ConclusionsHint => S("Web_Rv_ConclusionsHint", "Web_Rv_ConclusionsHint");
+    public static string Web_Rv_CsvDurationH => S("Web_Rv_CsvDurationH", "Web_Rv_CsvDurationH");
+    public static string Web_Rv_CsvFile => S("Web_Rv_CsvFile", "Web_Rv_CsvFile");
+    public static string Web_Rv_CsvShare => S("Web_Rv_CsvShare", "Web_Rv_CsvShare");
+    public static string Web_Rv_CurrentOutput => S("Web_Rv_CurrentOutput", "Web_Rv_CurrentOutput");
+    public static string Web_Rv_CurrentShift => S("Web_Rv_CurrentShift", "Web_Rv_CurrentShift");
+    public static string Web_Rv_Daily => S("Web_Rv_Daily", "Web_Rv_Daily");
+    public static string Web_Rv_DailyCsvFile => S("Web_Rv_DailyCsvFile", "Web_Rv_DailyCsvFile");
+    public static string Web_Rv_DefectEmpty => S("Web_Rv_DefectEmpty", "Web_Rv_DefectEmpty");
+    public static string Web_Rv_DefectHour => S("Web_Rv_DefectHour", "Web_Rv_DefectHour");
+    public static string Web_Rv_DefectName => S("Web_Rv_DefectName", "Web_Rv_DefectName");
+    public static string Web_Rv_Defects => S("Web_Rv_Defects", "Web_Rv_Defects");
+    public static string Web_Rv_DowntimeConclusion => S("Web_Rv_DowntimeConclusion", "Web_Rv_DowntimeConclusion");
+    public static string Web_Rv_Export => S("Web_Rv_Export", "Web_Rv_Export");
+    public static string Web_Rv_ExportPdf => S("Web_Rv_ExportPdf", "Web_Rv_ExportPdf");
+    public static string Web_Rv_FleetHint => S("Web_Rv_FleetHint", "Web_Rv_FleetHint");
+    public static string Web_Rv_Health => S("Web_Rv_Health", "Web_Rv_Health");
+    public static string Web_Rv_HealthAlarmSpike => S("Web_Rv_HealthAlarmSpike", "Web_Rv_HealthAlarmSpike");
+    public static string Web_Rv_HealthDefectSpike => S("Web_Rv_HealthDefectSpike", "Web_Rv_HealthDefectSpike");
+    public static string Web_Rv_HealthLowOutput => S("Web_Rv_HealthLowOutput", "Web_Rv_HealthLowOutput");
+    public static string Web_Rv_HealthNoOutput => S("Web_Rv_HealthNoOutput", "Web_Rv_HealthNoOutput");
+    public static string Web_Rv_HintBody => S("Web_Rv_HintBody", "Web_Rv_HintBody");
+    public static string Web_Rv_HintTitle => S("Web_Rv_HintTitle", "Web_Rv_HintTitle");
+    public static string Web_Rv_LongestDowntime => S("Web_Rv_LongestDowntime", "Web_Rv_LongestDowntime");
+    public static string Web_Rv_Met => S("Web_Rv_Met", "Web_Rv_Met");
+    public static string Web_Rv_NoConclusion => S("Web_Rv_NoConclusion", "Web_Rv_NoConclusion");
+    public static string Web_Rv_NoIssues => S("Web_Rv_NoIssues", "Web_Rv_NoIssues");
+    public static string Web_Rv_NotMet => S("Web_Rv_NotMet", "Web_Rv_NotMet");
+    public static string Web_Rv_OeeConclusion => S("Web_Rv_OeeConclusion", "Web_Rv_OeeConclusion");
+    public static string Web_Rv_OpenDevice => S("Web_Rv_OpenDevice", "Web_Rv_OpenDevice");
+    public static string Web_Rv_OutputAchievement => S("Web_Rv_OutputAchievement", "Web_Rv_OutputAchievement");
+    public static string Web_Rv_PdfFailed => S("Web_Rv_PdfFailed", "Web_Rv_PdfFailed");
+    public static string Web_Rv_PdfFile => S("Web_Rv_PdfFile", "Web_Rv_PdfFile");
+    public static string Web_Rv_PeakHour => S("Web_Rv_PeakHour", "Web_Rv_PeakHour");
+    public static string Web_Rv_PeakValleyOk => S("Web_Rv_PeakValleyOk", "Web_Rv_PeakValleyOk");
+    public static string Web_Rv_Print => S("Web_Rv_Print", "Web_Rv_Print");
+    public static string Web_Rv_PrintFailed => S("Web_Rv_PrintFailed", "Web_Rv_PrintFailed");
+    public static string Web_Rv_Product => S("Web_Rv_Product", "Web_Rv_Product");
+    public static string Web_Rv_QualityConclusion => S("Web_Rv_QualityConclusion", "Web_Rv_QualityConclusion");
+    public static string Web_Rv_Recipe => S("Web_Rv_Recipe", "Web_Rv_Recipe");
+    public static string Web_Rv_RecipeHint => S("Web_Rv_RecipeHint", "Web_Rv_RecipeHint");
+    public static string Web_Rv_ShiftDetails => S("Web_Rv_ShiftDetails", "Web_Rv_ShiftDetails");
+    public static string Web_Rv_Takeaway => S("Web_Rv_Takeaway", "Web_Rv_Takeaway");
+    public static string Web_Rv_Timeline => S("Web_Rv_Timeline", "Web_Rv_Timeline");
+    public static string Web_Rv_TimelineHint => S("Web_Rv_TimelineHint", "Web_Rv_TimelineHint");
+    public static string Web_Rv_TopDefectConclusion => S("Web_Rv_TopDefectConclusion", "Web_Rv_TopDefectConclusion");
+    public static string Web_Rv_Trend => S("Web_Rv_Trend", "Web_Rv_Trend");
+    public static string Web_Rv_ValleyHour => S("Web_Rv_ValleyHour", "Web_Rv_ValleyHour");
+    public static string Web_Rv_WorkOrder => S("Web_Rv_WorkOrder", "Web_Rv_WorkOrder");
+    public static string Web_Rv_WorkOrderHint => S("Web_Rv_WorkOrderHint", "Web_Rv_WorkOrderHint");
+    public static string Web_SkipToContent => S("Web_SkipToContent", "Web_SkipToContent");
+    public static string Web_St_Acquisition => S("Web_St_Acquisition", "Web_St_Acquisition");
+    public static string Web_St_AddrZero => S("Web_St_AddrZero", "Web_St_AddrZero");
+    public static string Web_St_BatchGapSlots => S("Web_St_BatchGapSlots", "Web_St_BatchGapSlots");
+    public static string Web_St_BatchInt32 => S("Web_St_BatchInt32", "Web_St_BatchInt32");
+    public static string Web_St_BatchMaxLen => S("Web_St_BatchMaxLen", "Web_St_BatchMaxLen");
+    public static string Web_St_DataFormat => S("Web_St_DataFormat", "Web_St_DataFormat");
+    public static string Web_St_HistoryScans => S("Web_St_HistoryScans", "Web_St_HistoryScans");
+    public static string Web_St_NoShifts => S("Web_St_NoShifts", "Web_St_NoShifts");
+    public static string Web_St_Plc => S("Web_St_Plc", "Web_St_Plc");
+    public static string Web_St_PlcBrand => S("Web_St_PlcBrand", "Web_St_PlcBrand");
+    public static string Web_St_PlcIp => S("Web_St_PlcIp", "Web_St_PlcIp");
+    public static string Web_St_PlcPort => S("Web_St_PlcPort", "Web_St_PlcPort");
+    public static string Web_St_PlcTimeout => S("Web_St_PlcTimeout", "Web_St_PlcTimeout");
+    public static string Web_St_PollingMs => S("Web_St_PollingMs", "Web_St_PollingMs");
+    public static string Web_St_RackSlot => S("Web_St_RackSlot", "Web_St_RackSlot");
+    public static string Web_St_ReadSplits => S("Web_St_ReadSplits", "Web_St_ReadSplits");
+    public static string Web_St_Shifts => S("Web_St_Shifts", "Web_St_Shifts");
+    public static string Web_St_SiemensModel => S("Web_St_SiemensModel", "Web_St_SiemensModel");
+    public static string Web_St_Title => S("Web_St_Title", "Web_St_Title");
+    public static string Web_St_UnitId => S("Web_St_UnitId", "Web_St_UnitId");
+    public static string Web_Tab_Alarm => S("Web_Tab_Alarm", "Web_Tab_Alarm");
+    public static string Web_Tab_Oee => S("Web_Tab_Oee", "Web_Tab_Oee");
+    public static string Web_Tab_Production => S("Web_Tab_Production", "Web_Tab_Production");
+    public static string Web_Tab_Status => S("Web_Tab_Status", "Web_Tab_Status");
+    public static string Web_Unit_PerHour => S("Web_Unit_PerHour", "Web_Unit_PerHour");
+    public static string Web_Val_DynAddr => S("Web_Val_DynAddr", "Web_Val_DynAddr");
+    public static string Web_Val_No => S("Web_Val_No", "Web_Val_No");
+    public static string Web_Val_NoAlarms => S("Web_Val_NoAlarms", "Web_Val_NoAlarms");
+    public static string Web_Val_NoData => S("Web_Val_NoData", "Web_Val_NoData");
+    public static string Web_Val_NoWorkOrder => S("Web_Val_NoWorkOrder", "Web_Val_NoWorkOrder");
+    public static string Web_Val_WaitData => S("Web_Val_WaitData", "Web_Val_WaitData");
+    public static string Web_Val_Yes => S("Web_Val_Yes", "Web_Val_Yes");
+    public static string Web_Wo_Aborted => S("Web_Wo_Aborted", "Web_Wo_Aborted");
+    public static string Web_Wo_Achievement => S("Web_Wo_Achievement", "Web_Wo_Achievement");
+    public static string Web_Wo_Completed => S("Web_Wo_Completed", "Web_Wo_Completed");
+    public static string Web_Wo_Detail => S("Web_Wo_Detail", "Web_Wo_Detail");
+    public static string Web_Wo_DoneNg => S("Web_Wo_DoneNg", "Web_Wo_DoneNg");
+    public static string Web_Wo_DoneOk => S("Web_Wo_DoneOk", "Web_Wo_DoneOk");
+    public static string Web_Wo_List => S("Web_Wo_List", "Web_Wo_List");
+    public static string Web_Wo_None => S("Web_Wo_None", "Web_Wo_None");
+    public static string Web_Wo_OrderNo => S("Web_Wo_OrderNo", "Web_Wo_OrderNo");
+    public static string Web_Wo_Pending => S("Web_Wo_Pending", "Web_Wo_Pending");
+    public static string Web_Wo_PlanEnd => S("Web_Wo_PlanEnd", "Web_Wo_PlanEnd");
+    public static string Web_Wo_PlanQty => S("Web_Wo_PlanQty", "Web_Wo_PlanQty");
+    public static string Web_Wo_PlanStart => S("Web_Wo_PlanStart", "Web_Wo_PlanStart");
+    public static string Web_Wo_Product => S("Web_Wo_Product", "Web_Wo_Product");
+    public static string Web_Wo_Progress => S("Web_Wo_Progress", "Web_Wo_Progress");
+    public static string Web_Wo_ProgressPending => S("Web_Wo_ProgressPending", "Web_Wo_ProgressPending");
+    public static string Web_Wo_Remark => S("Web_Wo_Remark", "Web_Wo_Remark");
+    public static string Web_Wo_Running => S("Web_Wo_Running", "Web_Wo_Running");
+    public static string Web_Wo_ScheduleChip => S("Web_Wo_ScheduleChip", "Web_Wo_ScheduleChip");
+    public static string Web_Wo_SnTitle => S("Web_Wo_SnTitle", "Web_Wo_SnTitle");
+    public static string Web_Wo_Status => S("Web_Wo_Status", "Web_Wo_Status");
+    public static string Web_Wo_Title => S("Web_Wo_Title", "Web_Wo_Title");
+    public static string Wo_AddTitle => S("Wo_AddTitle", "Wo_AddTitle");
+    public static string Wo_ContinueCopy => S("Wo_ContinueCopy", "Wo_ContinueCopy");
+    public static string Wo_ContinueCopyHint => S("Wo_ContinueCopyHint", "Wo_ContinueCopyHint");
+    public static string Wo_ContinueCreate => S("Wo_ContinueCreate", "Wo_ContinueCreate");
+    public static string Wo_ContinueCreateHint => S("Wo_ContinueCreateHint", "Wo_ContinueCreateHint");
+    public static string Wo_ContinueItemFormat => S("Wo_ContinueItemFormat", "Wo_ContinueItemFormat");
+    public static string Wo_ContinueLater => S("Wo_ContinueLater", "Wo_ContinueLater");
+    public static string Wo_ContinueMessage => S("Wo_ContinueMessage", "Wo_ContinueMessage");
+    public static string Wo_ContinueNoPending => S("Wo_ContinueNoPending", "Wo_ContinueNoPending");
+    public static string Wo_ContinuePendingList => S("Wo_ContinuePendingList", "Wo_ContinuePendingList");
+    public static string Wo_ContinueSelect => S("Wo_ContinueSelect", "Wo_ContinueSelect");
+    public static string Wo_ContinueSelectHint => S("Wo_ContinueSelectHint", "Wo_ContinueSelectHint");
+    public static string Wo_ContinueTitle => S("Wo_ContinueTitle", "Wo_ContinueTitle");
+    public static string Wo_CreatedAt => S("Wo_CreatedAt", "Wo_CreatedAt");
+    public static string Wo_Device => S("Wo_Device", "Wo_Device");
+    public static string Wo_Eta => S("Wo_Eta", "Wo_Eta");
+    public static string Wo_LastStatusChange => S("Wo_LastStatusChange", "Wo_LastStatusChange");
+    public static string Wo_MoldType => S("Wo_MoldType", "Wo_MoldType");
+    public static string Wo_OkNg => S("Wo_OkNg", "Wo_OkNg");
+    public static string Wo_Progress => S("Wo_Progress", "Wo_Progress");
+    public static string Wo_Remaining => S("Wo_Remaining", "Wo_Remaining");
+}
 }

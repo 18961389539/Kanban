@@ -28,7 +28,7 @@ public class WorkOrderScheduleTests
         var kind = WorkOrderSchedule.Classify(
             WorkOrderStatus.Running, Start, End, achievementRate: 0.3, now);
         Assert.Equal(WorkOrderScheduleKind.Behind, kind);
-        Assert.Equal("M094", WorkOrderSchedule.StatusKey(kind));
+        Assert.Equal("Msg_BehindSchedule", WorkOrderSchedule.StatusKey(kind));
     }
 
     [Fact]
@@ -47,6 +47,6 @@ public class WorkOrderScheduleTests
         var kind = WorkOrderSchedule.Classify(
             WorkOrderStatus.Completed, Start, End, achievementRate: 1.0, End);
         Assert.Equal(WorkOrderScheduleKind.CompletedMet, kind);
-        Assert.Equal("M092", WorkOrderSchedule.StatusKey(kind));
+        Assert.Equal("Msg_TargetMet", WorkOrderSchedule.StatusKey(kind));
     }
 }

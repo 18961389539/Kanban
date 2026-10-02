@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Resources;
 
 namespace Kanban.Collector.Core.Localization;
 
@@ -12,11 +11,7 @@ namespace Kanban.Collector.Core.Localization;
 /// </summary>
 public static class ValidationMessages
 {
-    private static readonly ResourceManager s_rm = new(
-        "Kanban.Collector.Core.Resources.Messages",
-        typeof(ValidationMessages).Assembly);
-
-    // ─── 默认中文模板（与 Messages.resx 中性资源一致，向后兼容）───
+    // ─── 默认中文模板（目录缺失时的回退，向后兼容）───
     public const string DefaultPlcIpEmpty = "PLC IP 地址为空";
     public const string DefaultPlcIpInvalid = "PLC IP 地址 '{0}' 不是合法的 IPv4 地址";
     public const string DefaultPlcPortOutOfRange = "PLC 端口 {0} 不在合法范围 (1-65535)";
@@ -146,40 +141,40 @@ public static class ValidationMessages
             return;
         }
 
-        s_plcIpEmpty = s_rm.GetString("PlcIpEmpty", culture) ?? DefaultPlcIpEmpty;
-        s_plcIpInvalid = s_rm.GetString("PlcIpInvalid", culture) ?? DefaultPlcIpInvalid;
-        s_plcPortOutOfRange = s_rm.GetString("PlcPortOutOfRange", culture) ?? DefaultPlcPortOutOfRange;
-        s_plcBrandInvalid = s_rm.GetString("PlcBrandInvalid", culture) ?? DefaultPlcBrandInvalid;
-        s_plcTimeoutOutOfRange = s_rm.GetString("PlcTimeoutOutOfRange", culture) ?? DefaultPlcTimeoutOutOfRange;
-        s_connectionProfileEmpty = s_rm.GetString("ConnectionProfileEmpty", culture) ?? DefaultConnectionProfileEmpty;
-        s_connectionProfileIdEmpty = s_rm.GetString("ConnectionProfileIdEmpty", culture) ?? DefaultConnectionProfileIdEmpty;
-        s_connectionProfileIdDuplicate = s_rm.GetString("ConnectionProfileIdDuplicate", culture) ?? DefaultConnectionProfileIdDuplicate;
-        s_connectionProfileNameEmpty = s_rm.GetString("ConnectionProfileNameEmpty", culture) ?? DefaultConnectionProfileNameEmpty;
-        s_connectionProfileConfigMissing = s_rm.GetString("ConnectionProfileConfigMissing", culture) ?? DefaultConnectionProfileConfigMissing;
-        s_connectionProfileIdRequired = s_rm.GetString("ConnectionProfileIdRequired", culture) ?? DefaultConnectionProfileIdRequired;
-        s_connectionProfileEntryNull = s_rm.GetString("ConnectionProfileEntryNull", culture) ?? DefaultConnectionProfileEntryNull;
-        s_deviceConnectionProfileMissing = s_rm.GetString("DeviceConnectionProfileMissing", culture) ?? DefaultDeviceConnectionProfileMissing;
-        s_connectionProfileAdapterAmbiguous = s_rm.GetString("ConnectionProfileAdapterAmbiguous", culture) ?? DefaultConnectionProfileAdapterAmbiguous;
-        s_connectionProfileAdapterNotFound = s_rm.GetString("ConnectionProfileAdapterNotFound", culture) ?? DefaultConnectionProfileAdapterNotFound;
-        s_dataSourceProtocolKeyEmpty = s_rm.GetString("DataSourceProtocolKeyEmpty", culture) ?? DefaultDataSourceProtocolKeyEmpty;
-        s_modbusUnitIdOutOfRange = s_rm.GetString("ModbusUnitIdOutOfRange", culture) ?? DefaultModbusUnitIdOutOfRange;
-        s_modbusRegisterFunctionInvalid = s_rm.GetString("ModbusRegisterFunctionInvalid", culture) ?? DefaultModbusRegisterFunctionInvalid;
-        s_modbusBitFunctionInvalid = s_rm.GetString("ModbusBitFunctionInvalid", culture) ?? DefaultModbusBitFunctionInvalid;
-        s_modbusDataFormatInvalid = s_rm.GetString("ModbusDataFormatInvalid", culture) ?? DefaultModbusDataFormatInvalid;
-        s_siemensDataFormatInvalid = s_rm.GetString("SiemensDataFormatInvalid", culture) ?? DefaultSiemensDataFormatInvalid;
-        s_siemensModelUnsupported = s_rm.GetString("SiemensModelUnsupported", culture) ?? DefaultSiemensModelUnsupported;
-        s_siemensRackOutOfRange = s_rm.GetString("SiemensRackOutOfRange", culture) ?? DefaultSiemensRackOutOfRange;
-        s_siemensSlotOutOfRange = s_rm.GetString("SiemensSlotOutOfRange", culture) ?? DefaultSiemensSlotOutOfRange;
-        s_siemensBatchInt32LimitOutOfRange = s_rm.GetString("SiemensBatchInt32LimitOutOfRange", culture) ?? DefaultSiemensBatchInt32LimitOutOfRange;
-        s_modbusBatchInt32LimitOutOfRange = s_rm.GetString("ModbusBatchInt32LimitOutOfRange", culture) ?? DefaultModbusBatchInt32LimitOutOfRange;
-        s_pollingIntervalInvalid = s_rm.GetString("PollingIntervalInvalid", culture) ?? DefaultPollingIntervalInvalid;
-        s_historyWriteIntervalInvalid = s_rm.GetString("HistoryWriteIntervalInvalid", culture) ?? DefaultHistoryWriteIntervalInvalid;
-        s_dashboardRefreshIntervalInvalid = s_rm.GetString("DashboardRefreshIntervalInvalid", culture) ?? DefaultDashboardRefreshIntervalInvalid;
-        s_plcBatchReadMaxLengthInvalid = s_rm.GetString("PlcBatchReadMaxLengthInvalid", culture) ?? DefaultPlcBatchReadMaxLengthInvalid;
-        s_plcBatchReadMaxGapSlotsInvalid = s_rm.GetString("PlcBatchReadMaxGapSlotsInvalid", culture) ?? DefaultPlcBatchReadMaxGapSlotsInvalid;
-        s_noShiftsConfigured = s_rm.GetString("NoShiftsConfigured", culture) ?? DefaultNoShiftsConfigured;
-        s_shiftNameEmpty = s_rm.GetString("ShiftNameEmpty", culture) ?? DefaultShiftNameEmpty;
-        s_shiftStartEndEqual = s_rm.GetString("ShiftStartEndEqual", culture) ?? DefaultShiftStartEndEqual;
+        s_plcIpEmpty = CoreText.Get("PlcIpEmpty", culture, DefaultPlcIpEmpty);
+        s_plcIpInvalid = CoreText.Get("PlcIpInvalid", culture, DefaultPlcIpInvalid);
+        s_plcPortOutOfRange = CoreText.Get("PlcPortOutOfRange", culture, DefaultPlcPortOutOfRange);
+        s_plcBrandInvalid = CoreText.Get("PlcBrandInvalid", culture, DefaultPlcBrandInvalid);
+        s_plcTimeoutOutOfRange = CoreText.Get("PlcTimeoutOutOfRange", culture, DefaultPlcTimeoutOutOfRange);
+        s_connectionProfileEmpty = CoreText.Get("ConnectionProfileEmpty", culture, DefaultConnectionProfileEmpty);
+        s_connectionProfileIdEmpty = CoreText.Get("ConnectionProfileIdEmpty", culture, DefaultConnectionProfileIdEmpty);
+        s_connectionProfileIdDuplicate = CoreText.Get("ConnectionProfileIdDuplicate", culture, DefaultConnectionProfileIdDuplicate);
+        s_connectionProfileNameEmpty = CoreText.Get("ConnectionProfileNameEmpty", culture, DefaultConnectionProfileNameEmpty);
+        s_connectionProfileConfigMissing = CoreText.Get("ConnectionProfileConfigMissing", culture, DefaultConnectionProfileConfigMissing);
+        s_connectionProfileIdRequired = CoreText.Get("ConnectionProfileIdRequired", culture, DefaultConnectionProfileIdRequired);
+        s_connectionProfileEntryNull = CoreText.Get("ConnectionProfileEntryNull", culture, DefaultConnectionProfileEntryNull);
+        s_deviceConnectionProfileMissing = CoreText.Get("DeviceConnectionProfileMissing", culture, DefaultDeviceConnectionProfileMissing);
+        s_connectionProfileAdapterAmbiguous = CoreText.Get("ConnectionProfileAdapterAmbiguous", culture, DefaultConnectionProfileAdapterAmbiguous);
+        s_connectionProfileAdapterNotFound = CoreText.Get("ConnectionProfileAdapterNotFound", culture, DefaultConnectionProfileAdapterNotFound);
+        s_dataSourceProtocolKeyEmpty = CoreText.Get("DataSourceProtocolKeyEmpty", culture, DefaultDataSourceProtocolKeyEmpty);
+        s_modbusUnitIdOutOfRange = CoreText.Get("ModbusUnitIdOutOfRange", culture, DefaultModbusUnitIdOutOfRange);
+        s_modbusRegisterFunctionInvalid = CoreText.Get("ModbusRegisterFunctionInvalid", culture, DefaultModbusRegisterFunctionInvalid);
+        s_modbusBitFunctionInvalid = CoreText.Get("ModbusBitFunctionInvalid", culture, DefaultModbusBitFunctionInvalid);
+        s_modbusDataFormatInvalid = CoreText.Get("ModbusDataFormatInvalid", culture, DefaultModbusDataFormatInvalid);
+        s_siemensDataFormatInvalid = CoreText.Get("SiemensDataFormatInvalid", culture, DefaultSiemensDataFormatInvalid);
+        s_siemensModelUnsupported = CoreText.Get("SiemensModelUnsupported", culture, DefaultSiemensModelUnsupported);
+        s_siemensRackOutOfRange = CoreText.Get("SiemensRackOutOfRange", culture, DefaultSiemensRackOutOfRange);
+        s_siemensSlotOutOfRange = CoreText.Get("SiemensSlotOutOfRange", culture, DefaultSiemensSlotOutOfRange);
+        s_siemensBatchInt32LimitOutOfRange = CoreText.Get("SiemensBatchInt32LimitOutOfRange", culture, DefaultSiemensBatchInt32LimitOutOfRange);
+        s_modbusBatchInt32LimitOutOfRange = CoreText.Get("ModbusBatchInt32LimitOutOfRange", culture, DefaultModbusBatchInt32LimitOutOfRange);
+        s_pollingIntervalInvalid = CoreText.Get("PollingIntervalInvalid", culture, DefaultPollingIntervalInvalid);
+        s_historyWriteIntervalInvalid = CoreText.Get("HistoryWriteIntervalInvalid", culture, DefaultHistoryWriteIntervalInvalid);
+        s_dashboardRefreshIntervalInvalid = CoreText.Get("DashboardRefreshIntervalInvalid", culture, DefaultDashboardRefreshIntervalInvalid);
+        s_plcBatchReadMaxLengthInvalid = CoreText.Get("PlcBatchReadMaxLengthInvalid", culture, DefaultPlcBatchReadMaxLengthInvalid);
+        s_plcBatchReadMaxGapSlotsInvalid = CoreText.Get("PlcBatchReadMaxGapSlotsInvalid", culture, DefaultPlcBatchReadMaxGapSlotsInvalid);
+        s_noShiftsConfigured = CoreText.Get("NoShiftsConfigured", culture, DefaultNoShiftsConfigured);
+        s_shiftNameEmpty = CoreText.Get("ShiftNameEmpty", culture, DefaultShiftNameEmpty);
+        s_shiftStartEndEqual = CoreText.Get("ShiftStartEndEqual", culture, DefaultShiftStartEndEqual);
         ApplyExternalOverrides(culture);
     }
 

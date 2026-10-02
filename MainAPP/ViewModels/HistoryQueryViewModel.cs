@@ -126,12 +126,12 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     public string QuerySummaryText => SelectedTabIndex == SnTabIndex
         ? string.Empty
         : !HasQueried
-            ? Strings.M096
+            ? Strings.Msg_Queried
             : HasQueryError
-                ? Strings.M097
+                ? Strings.Msg_QueryFailed
                 : TotalCount == 0
-                    ? Strings.M098
-                    : string.Format(Strings.F069, TotalCount, CurrentPage, TotalPages);
+                    ? Strings.Msg_NoDataFound
+                    : string.Format(Strings.Prompt_TotalsUseAllRowsPage, TotalCount, CurrentPage, TotalPages);
 
     [ObservableProperty]
     private string _queryValidationMessage = string.Empty;
@@ -356,7 +356,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             .OrderBy(n => n)
             .ToList();
         ShiftFilterItems.Clear();
-        ShiftFilterItems.Add(new FilterOption(null, Strings.M099));
+        ShiftFilterItems.Add(new FilterOption(null, Strings.Msg_AllShifts));
         foreach (var n in names)
             ShiftFilterItems.Add(new FilterOption(n, n));
     }
@@ -752,7 +752,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             return;
         if (FromDate > ToDate)
         {
-            QueryValidationMessage = Strings.M101;
+            QueryValidationMessage = Strings.Msg_StartCannotEnd;
             return;
         }
         _snapshots[SelectedTabIndex].CurrentPage = 1;
@@ -866,7 +866,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             if (requestVersion != _queryVersion) return;
-            var message = string.Format(Strings.F077, ex.Message);
+            var message = string.Format(Strings.Prompt_HistoryQueryFailed, ex.Message);
             var snap = _snapshots[request.TabIndex];
             snap.HasQueried = true;
             snap.Signature = FilterSignature(request);
@@ -905,7 +905,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             2 => CreateAlarmResult(request),
             3 => CreateOeeResult(request),
             4 => CreateSnResult(),
-            _ => throw new InvalidOperationException(string.Format(Strings.F144, request.TabIndex)),
+            _ => throw new InvalidOperationException(string.Format(Strings.Prompt_UnknownQueryTab, request.TabIndex)),
         };
     }
 
@@ -1019,7 +1019,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             var from = FromDate; var to = ToDate; var deviceId = SelectedDeviceId;
 
             var exportChoice = _dialog.Show(
-                Strings.M382, Strings.M381, System.Windows.MessageBoxButton.YesNoCancel,
+                Strings.Msg_ExportAllFilteredResultsYesExports, Strings.Msg_ExportScope, System.Windows.MessageBoxButton.YesNoCancel,
                 System.Windows.MessageBoxImage.Question);
             if (exportChoice == System.Windows.MessageBoxResult.Cancel)
                 return;
@@ -1031,18 +1031,18 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
                 {
                     return tabIndex switch
                     {
-                        0 => (string.Format(Strings.F327, from, to), ProductionQuery.BuildCsvAll(from, to)),
-                        1 => (string.Format(Strings.F328, from, to), StatusQuery.BuildCsvAll()),
-                        2 => (string.Format(Strings.F329, from, to), AlarmQuery.BuildCsvAll()),
+                        0 => (string.Format(Strings.Prompt_OutputCsv, from, to), ProductionQuery.BuildCsvAll(from, to)),
+                        1 => (string.Format(Strings.Prompt_StateDurationCsv, from, to), StatusQuery.BuildCsvAll()),
+                        2 => (string.Format(Strings.Prompt_AlarmCsv, from, to), AlarmQuery.BuildCsvAll()),
                         3 => ($"OEE_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", OeeQuery.BuildCsv(deviceId)),
                         _ => (null, null)
                     };
                 }
                 return tabIndex switch
                 {
-                    0 => (string.Format(Strings.F327, from, to), ProductionQuery.BuildCsv(from, to)),
-                    1 => (string.Format(Strings.F328, from, to), StatusQuery.BuildCsv()),
-                    2 => (string.Format(Strings.F329, from, to), AlarmQuery.BuildCsv()),
+                    0 => (string.Format(Strings.Prompt_OutputCsv, from, to), ProductionQuery.BuildCsv(from, to)),
+                    1 => (string.Format(Strings.Prompt_StateDurationCsv, from, to), StatusQuery.BuildCsv()),
+                    2 => (string.Format(Strings.Prompt_AlarmCsv, from, to), AlarmQuery.BuildCsv()),
                     3 => ($"OEE_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", OeeQuery.BuildCsv(deviceId)),
                     _ => (null, null)
                 };
@@ -1050,7 +1050,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
 
             if (fileName == null || string.IsNullOrEmpty(csv))
             {
-                _dialog.NotifyInfo(Strings.M011);
+                _dialog.NotifyInfo(Strings.Msg_NoDataCurrentTabExport);
                 Log.Debug("导出取消：Tab={TabIndex}，无数据", tabIndex);
                 return;
             }
@@ -1063,7 +1063,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             }
             else
             {
-                csv += "\n# " + string.Format(Strings.M384, TotalCount);
+                csv += "\n# " + string.Format(Strings.Msg_AllFilteredResultsRows, TotalCount);
             }
 
             // 异步执行 CSV 生成与文件写入，避免大表（10万行+）阻塞 UI 线程
@@ -1089,7 +1089,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             Log.Error(ex, "导出失败");
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
         }
         finally
         {

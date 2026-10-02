@@ -42,11 +42,11 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
 
     /// <summary>状态筛选下拉选项（全部 / 运行 / 报警 / 待机 / 离线）。</summary>
     public IReadOnlyList<StatusFilterOption> StatusFilterOptions { get; } = [
-        new() { Value = DeviceStatusFilter.All, Label = Strings.M040 },
+        new() { Value = DeviceStatusFilter.All, Label = Strings.Msg_All },
         new() { Value = DeviceStatusFilter.Running, Label = Strings.Status_Running },
         new() { Value = DeviceStatusFilter.Alarm, Label = Strings.Status_Alarm },
         new() { Value = DeviceStatusFilter.Paused, Label = Strings.Status_Paused },
-        new() { Value = DeviceStatusFilter.Offline, Label = Strings.M165 },
+        new() { Value = DeviceStatusFilter.Offline, Label = Strings.Msg_OfflineDisconnected },
     ];
 
     /// <summary>设备列表摘要：总数及各运行状态数量。</summary>
@@ -72,7 +72,7 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
                 }
             }
 
-            return string.Format(Strings.F023, _deviceRepository.Devices.Count, running, alarm, paused, initial);
+            return string.Format(Strings.Prompt_UnitsRunningAlarmPausedOffline, _deviceRepository.Devices.Count, running, alarm, paused, initial);
         }
     }
 

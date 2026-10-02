@@ -80,7 +80,7 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
         if (!CanEditSelected()) return;
         if (SelectedDevice == null) return;
         // 缺陷名在所属设备内唯一
-        var baseName = string.Format(Strings.F188, SelectedDevice.Defects.Count + 1);
+        var baseName = string.Format(Strings.Prompt_Defect, SelectedDevice.Defects.Count + 1);
         var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.Defects.Select(d => d.Name));
         var defect = new Defect { DeviceId = SelectedDevice.Id, Name = newName };
         SelectedDevice.Defects.Add(defect);
@@ -93,8 +93,8 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
         if (!CanEditSelected()) return;
         if (defect == null) return;
         var confirm = _dialog.Show(
-            string.Format(Strings.F502, defect.Name),
-            Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            string.Format(Strings.Prompt_DeleteDefectActionCannotUndone, defect.Name),
+            Strings.Msg_ConfirmDelete, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
 
         if (SelectedDefect == defect) SelectedDefect = null;
@@ -120,11 +120,11 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
             if (string.IsNullOrEmpty(path)) return;
 
             var count = await Task.Run(() => _defectCsvIO.ExportDefectsToPath(device, path)).ConfigureAwait(true);
-            _dialog.NotifySuccess(string.Format(Strings.F293, count, Path.GetFileName(path)));
+            _dialog.NotifySuccess(string.Format(Strings.Prompt_ExportedDefects, count, Path.GetFileName(path)));
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
         }
         finally
         {
@@ -160,20 +160,20 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
 
             if (result.Imported.Count == 0)
             {
-                _dialog.NotifyError(string.Format(Strings.F296, string.Join("\n  · ", result.Errors)));
+                _dialog.NotifyError(string.Format(Strings.Prompt_NoDefectsImported, string.Join("\n  · ", result.Errors)));
                 return;
             }
 
             // 阶段 3：UI 线程二次确认
             var existingCount = device.Defects.Count;
             var msg = result.HasErrors
-                ? string.Format(Strings.F001, result.Imported.Count + result.Errors.Count, result.Errors.Count) +
-                  string.Format(Strings.F295, result.Imported.Count, existingCount) +
-                  Strings.F228
-                : string.Format(Strings.F294, result.Imported.Count, existingCount) +
-                  Strings.F228;
+                ? string.Format(Strings.Prompt_CSVHasRowsTotalRowsFailed, result.Imported.Count + result.Errors.Count, result.Errors.Count) +
+                  string.Format(Strings.Prompt_ValidDefectsImportedCurrentDeviceExisting, result.Imported.Count, existingCount) +
+                  Strings.Prompt_ChooseImportModeYesReplaceClear
+                : string.Format(Strings.Prompt_DefectsImportedCurrentDeviceExisting, result.Imported.Count, existingCount) +
+                  Strings.Prompt_ChooseImportModeYesReplaceClear;
 
-            var choice = _dialog.Show(msg, Strings.M120, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+            var choice = _dialog.Show(msg, Strings.Msg_ConfirmImportAlarms, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
             if (choice == MessageBoxResult.Cancel) return;
 
             var replace = choice == MessageBoxResult.Yes;
@@ -186,13 +186,13 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
             if (result.HasErrors)
             {
                 _dialog.NotifyWarning(
-                    string.Format(Strings.F297, result.Imported.Count, result.Errors.Count) +
-                    string.Format(Strings.F086, string.Join("\n  · ", result.Errors.Take(5))) +
-                    (result.Errors.Count > 5 ? string.Format(Strings.F020, result.Errors.Count) : ""));
+                    string.Format(Strings.Prompt_ImportedDefectsRowsSkipped, result.Imported.Count, result.Errors.Count) +
+                    string.Format(Strings.Prompt_FailedDetails, string.Join("\n  · ", result.Errors.Take(5))) +
+                    (result.Errors.Count > 5 ? string.Format(Strings.Prompt_Total, result.Errors.Count) : ""));
             }
             else
             {
-                _dialog.NotifySuccess(string.Format(Strings.F298, result.Imported.Count));
+                _dialog.NotifySuccess(string.Format(Strings.Prompt_ImportedDefectsClickSavePersist, result.Imported.Count));
             }
         }
         finally

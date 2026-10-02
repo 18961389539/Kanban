@@ -153,7 +153,7 @@ public partial class LoginViewModel : ObservableObject
         ErrorMessage = string.Empty;
         if (SelectedUser is null)
         {
-            ErrorMessage = Strings.M319;
+            ErrorMessage = Strings.Msg_InvalidUsernamePasswordAccountDisabled;
             return;
         }
 
@@ -175,7 +175,7 @@ public partial class LoginViewModel : ObservableObject
         if (user is null)
         {
             AuditLog.Record("Auth.Login", "User", SelectedUser.Username, succeeded: false, detail: Strings.M_LoginFailed);
-            ErrorMessage = Strings.M319; // 密码错误（账号锁定已在 2026-09 移除）
+            ErrorMessage = Strings.Msg_InvalidUsernamePasswordAccountDisabled; // 密码错误（账号锁定已在 2026-09 移除）
             return;
         }
 

@@ -12,7 +12,7 @@
     xmlns:sys="clr-namespace:System;assembly=System.Runtime"
     mc:Ignorable="d"
     d:DesignHeight="600"
-    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources">
+    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.Resources>
         <!--  报警级别枚举值（ComboBox 数据源），仅本 Tab 使用  -->
         <ObjectDataProvider
@@ -42,9 +42,9 @@
             <Button
                 Margin="0,0,0,10"
                 HorizontalAlignment="Stretch"
-                AutomationProperties.Name="{x:Static resources:Strings.K053}"
+                AutomationProperties.Name="{x:Static resources:Strings.Lbl_AddAlarm}"
                 Command="{Binding DataContext.AddAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                Content="{x:Static resources:Strings.K053}"
+                Content="{x:Static resources:Strings.Lbl_AddAlarm}"
                 DockPanel.Dock="Top"
                 Style="{StaticResource IconButtonDefault}"
                 Tag="{x:Static mi:MaterialIconKind.Plus}" />
@@ -75,26 +75,26 @@
                     Grid.Column="0"
                     Height="40"
                     Padding="10,0"
-                    AutomationProperties.Name="{x:Static resources:Strings.K167}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ExportAlarmCSV}"
                     Command="{Binding DataContext.ExportAlarmsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="{x:Static resources:Strings.K653}"
+                    Content="{x:Static resources:Strings.Lbl_Export2}"
                     Style="{StaticResource IconButtonDefault}"
                     Tag="{x:Static mi:MaterialIconKind.FileExportOutline}"
-                    ToolTip="{x:Static resources:Strings.K168}" />
+                    ToolTip="{x:Static resources:Strings.Lbl_ExportAllAlarmsCurrentDeviceCSV}" />
                 <Button
                     Grid.Column="2"
                     Height="40"
                     Padding="10,0"
-                    AutomationProperties.Name="{x:Static resources:Strings.K169}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ImportAlarmCSV}"
                     Command="{Binding DataContext.ImportAlarmsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="{x:Static resources:Strings.K654}"
+                    Content="{x:Static resources:Strings.Lbl_Import}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.FileImportOutline}"
-                    ToolTip="{x:Static resources:Strings.K170}" />
+                    ToolTip="{x:Static resources:Strings.Lbl_ImportAlarmsCSVAppendReplaceCurrent}" />
             </Grid>
             <Grid>
                 <ListBox
-                    AutomationProperties.Name="{x:Static resources:Strings.K171}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_AlarmList}"
                 ItemContainerStyle="{StaticResource CardListItemStyle}"
                 ItemsSource="{Binding Alarms}"
                 SelectedItem="{Binding DataContext.SelectedAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
@@ -132,7 +132,7 @@
             </ListBox>
                 <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
                            Foreground="{StaticResource ThirdlyTextBrush}"
-                           Text="{x:Static resources:Strings.K374}">
+                           Text="{x:Static resources:Strings.Lbl_NoAlarmRecords}">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed" />
@@ -160,16 +160,16 @@
                 IsEnabled="{Binding DataContext.CanManageDevices, RelativeSource={RelativeSource AncestorType=UserControl}}">
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K018}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_AlarmName}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="{x:Static resources:Strings.K018}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_AlarmName}"
                     Style="{StaticResource TextBoxExtend}"
                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K172}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_PLCAddressEGM100}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="{x:Static resources:Strings.K173}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_AlarmPLCAddress}"
                     Style="{StaticResource TextBoxExtend}">
                     <hc:TextBox.Text>
                         <Binding Path="PlcAddress" UpdateSourceTrigger="PropertyChanged">
@@ -181,19 +181,19 @@
                 </hc:TextBox>
                 <hc:ComboBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K054}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_AlarmLevel}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="{x:Static resources:Strings.K054}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_AlarmLevel}"
                     ItemsSource="{Binding Source={StaticResource AlarmLevelValues}}"
                     SelectedItem="{Binding Level, UpdateSourceTrigger=PropertyChanged}"
                     Style="{StaticResource ComboBoxExtend}" />
                 <hc:TextBox
                     Height="80"
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K030}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_AlarmDescription}"
                     hc:InfoElement.TitlePlacement="Top"
                     AcceptsReturn="True"
-                    AutomationProperties.Name="{x:Static resources:Strings.K030}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_AlarmDescription}"
                     Style="{StaticResource TextBoxExtend}"
                     Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
                     TextWrapping="Wrap"
@@ -228,10 +228,10 @@
                     Text="{Binding NamePt, UpdateSourceTrigger=PropertyChanged}" />
                 <Button
                     HorizontalAlignment="Right"
-                    AutomationProperties.Name="{x:Static resources:Strings.K055}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_DeleteAlarm}"
                     Command="{Binding DataContext.RemoveAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding}"
-                    Content="{x:Static resources:Strings.K055}"
+                    Content="{x:Static resources:Strings.Lbl_DeleteAlarm}"
                     Style="{StaticResource IconButtonDanger}"
                     Tag="{x:Static mi:MaterialIconKind.Delete}" />
             </StackPanel>

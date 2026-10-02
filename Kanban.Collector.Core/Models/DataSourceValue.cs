@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.ComponentModel;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
@@ -11,23 +11,48 @@ namespace Kanban.Collector.Core.Models;
 /// </summary>
 public partial class DataSourceEnumValue : ObservableObject
 {
-    [ObservableProperty]
     private int _value;
 
-    [ObservableProperty]
+    public int Value
+    {
+        get => _value;
+    set => SetProperty(ref _value, value);
+    }
+
     private string _displayName = string.Empty;
 
-    /// <summary>显示名（英文，多语言显示用；为空回退 <see cref="DisplayName"/>）。</summary>
-    [ObservableProperty]
+    public string DisplayName
+    {
+        get => _displayName;
+    set => SetProperty(ref _displayName, value);
+    }
+
     private string? _displayNameEn;
 
-    /// <summary>显示名（日文，多语言显示用；为空回退 <see cref="DisplayName"/>）。</summary>
-    [ObservableProperty]
+    /// <summary>显示名（英文，多语言显示用；为空回退 <see cref="DisplayName"/>）。</summary>
+    public string? DisplayNameEn
+    {
+        get => _displayNameEn;
+    set => SetProperty(ref _displayNameEn, value);
+    }
+
     private string? _displayNameJa;
 
-    /// <summary>显示名（葡萄牙文，多语言显示用；为空回退 <see cref="DisplayName"/>）。</summary>
-    [ObservableProperty]
+    /// <summary>显示名（日文，多语言显示用；为空回退 <see cref="DisplayName"/>）。</summary>
+    public string? DisplayNameJa
+    {
+        get => _displayNameJa;
+    set => SetProperty(ref _displayNameJa, value);
+    }
+
     private string? _displayNamePt;
+
+    /// <summary>显示名（葡萄牙文，多语言显示用；为空回退 <see cref="DisplayName"/>）。</summary>
+    public string? DisplayNamePt
+    {
+        get => _displayNamePt;
+    set => SetProperty(ref _displayNamePt, value);
+    }
 }
 
 /// <summary>
@@ -38,153 +63,290 @@ public partial class DataSourceEnumValue : ObservableObject
 /// </summary>
 public partial class DataSourceValue : ObservableObject
 {
-    /// <summary>唯一标识</summary>
-    [ObservableProperty]
     private string _id = Guid.NewGuid().ToString("N");
 
-    /// <summary>值项名称（如 温度 / 湿度）</summary>
-    [ObservableProperty]
+    /// <summary>唯一标识</summary>
+    public string Id
+    {
+        get => _id;
+    set => SetProperty(ref _id, value);
+    }
+
     private string _name = string.Empty;
 
-    /// <summary>值项名称（英文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
-    [ObservableProperty]
+    /// <summary>值项名称（如 温度 / 湿度）</summary>
+    public string Name
+    {
+        get => _name;
+    set => SetProperty(ref _name, value);
+    }
+
     private string? _nameEn;
 
-    /// <summary>值项名称（日文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
-    [ObservableProperty]
+    /// <summary>值项名称（英文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    public string? NameEn
+    {
+        get => _nameEn;
+    set => SetProperty(ref _nameEn, value);
+    }
+
     private string? _nameJa;
 
-    /// <summary>值项名称（葡萄牙文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
-    [ObservableProperty]
+    /// <summary>值项名称（日文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    public string? NameJa
+    {
+        get => _nameJa;
+    set => SetProperty(ref _nameJa, value);
+    }
+
     private string? _namePt;
 
-    /// <summary>采集数据类型；缺省 Int32 兼容旧配置。</summary>
-    [ObservableProperty]
+    /// <summary>值项名称（葡萄牙文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    public string? NamePt
+    {
+        get => _namePt;
+    set => SetProperty(ref _namePt, value);
+    }
+
     private DataSourceValueType _dataType = DataSourceValueType.Int32;
 
-    /// <summary>字符串值项最大字符数。</summary>
-    [ObservableProperty]
+    /// <summary>采集数据类型；缺省 Int32 兼容旧配置。</summary>
+    public DataSourceValueType DataType
+    {
+        get => _dataType;
+    set => SetProperty(ref _dataType, value);
+    }
+
     private int _stringLength = 32;
 
-    /// <summary>Float32 下限。</summary>
-    [ObservableProperty]
+    /// <summary>字符串值项最大字符数。</summary>
+    public int StringLength
+    {
+        get => _stringLength;
+    set => SetProperty(ref _stringLength, value);
+    }
+
     private float _floatLimitMin;
 
-    /// <summary>Float32 上限。</summary>
-    [ObservableProperty]
+    /// <summary>Float32 下限。</summary>
+    public float FloatLimitMin
+    {
+        get => _floatLimitMin;
+    set => SetProperty(ref _floatLimitMin, value);
+    }
+
     private float _floatLimitMax;
 
-    /// <summary>采集地址（D 字地址，如 D300）。源触发（或无触发=每轮）时读取此地址。</summary>
-    [ObservableProperty]
+    /// <summary>Float32 上限。</summary>
+    public float FloatLimitMax
+    {
+        get => _floatLimitMax;
+    set => SetProperty(ref _floatLimitMax, value);
+    }
+
     private string _plcAddress = string.Empty;
 
-    /// <summary>单位（如 ℃、kWh，仅用于 UI 展示与快照记录）</summary>
-    [ObservableProperty]
+    /// <summary>采集地址（D 字地址，如 D300）。源触发（或无触发=每轮）时读取此地址。</summary>
+    public string PlcAddress
+    {
+        get => _plcAddress;
+    set => SetProperty(ref _plcAddress, value);
+    }
+
     private string _unit = string.Empty;
 
-    /// <summary>是否启用（停用后采集循环与快照跳过此值项，告警状态一并清理）</summary>
-    [ObservableProperty]
+    /// <summary>单位（如 ℃、kWh，仅用于 UI 展示与快照记录）</summary>
+    public string Unit
+    {
+        get => _unit;
+    set => SetProperty(ref _unit, value);
+    }
+
     private bool _enabled = true;
 
+    /// <summary>是否启用（停用后采集循环与快照跳过此值项，告警状态一并清理）</summary>
+    public bool Enabled
+    {
+        get => _enabled;
+    set => SetProperty(ref _enabled, value);
+    }
+
     // ──────────── 判定配置（值项级，各自独立） ────────────
+
+    private int _limitMin;
 
     /// <summary>
     /// 数值型下限（<see cref="LimitMin"/>）与上限（<see cref="LimitMax"/>）。
     /// 两者都配置且 LimitMax &gt; LimitMin 时按数值型判定：越出区间（含滞回）触发越限告警。
     /// </summary>
-    [ObservableProperty]
-    private int _limitMin;
+    public int LimitMin
+    {
+        get => _limitMin;
+    set => SetProperty(ref _limitMin, value);
+    }
 
-    [ObservableProperty]
     private int _limitMax;
 
-    /// <summary>滞回：越限后需回落「限值 ∓ 滞回」以内才恢复，防止边界抖动反复报警。</summary>
-    [ObservableProperty]
+    public int LimitMax
+    {
+        get => _limitMax;
+    set => SetProperty(ref _limitMax, value);
+    }
+
     private int _hysteresis;
 
-    /// <summary>延时确认（秒）：越限持续超过该时长才确认报警，防瞬时尖峰误报。默认 5s。</summary>
-    [ObservableProperty]
+    /// <summary>滞回：越限后需回落「限值 ∓ 滞回」以内才恢复，防止边界抖动反复报警。</summary>
+    public int Hysteresis
+    {
+        get => _hysteresis;
+    set => SetProperty(ref _hysteresis, value);
+    }
+
     private int _confirmSeconds = 5;
 
-    /// <summary>Int32/枚举预期值。</summary>
-    [ObservableProperty]
+    /// <summary>延时确认（秒）：越限持续超过该时长才确认报警，防瞬时尖峰误报。默认 5s。</summary>
+    public int ConfirmSeconds
+    {
+        get => _confirmSeconds;
+    set => SetProperty(ref _confirmSeconds, value);
+    }
+
     private int? _expectedValue;
 
-    /// <summary>Float32 预期值。</summary>
-    [ObservableProperty]
+    /// <summary>Int32/枚举预期值。</summary>
+    public int? ExpectedValue
+    {
+        get => _expectedValue;
+    set => SetProperty(ref _expectedValue, value);
+    }
+
     private float? _floatExpectedValue;
 
-    /// <summary>Bool 预期值。</summary>
-    [ObservableProperty]
+    /// <summary>Float32 预期值。</summary>
+    public float? FloatExpectedValue
+    {
+        get => _floatExpectedValue;
+    set => SetProperty(ref _floatExpectedValue, value);
+    }
+
     private bool? _boolExpectedValue;
 
-    /// <summary>String 预期值。</summary>
-    [ObservableProperty]
+    /// <summary>Bool 预期值。</summary>
+    public bool? BoolExpectedValue
+    {
+        get => _boolExpectedValue;
+    set => SetProperty(ref _boolExpectedValue, value);
+    }
+
     private string? _stringExpectedValue;
+
+    /// <summary>String 预期值。</summary>
+    public string? StringExpectedValue
+    {
+        get => _stringExpectedValue;
+    set => SetProperty(ref _stringExpectedValue, value);
+    }
+
+    private ObservableCollection<DataSourceEnumValue> _enumValues = new();
 
     /// <summary>
     /// 枚举取值映射（可空，仅展示归一化/预期值参照）。
     /// </summary>
-    [ObservableProperty]
-    private ObservableCollection<DataSourceEnumValue> _enumValues = new();
+    public ObservableCollection<DataSourceEnumValue> EnumValues
+    {
+        get => _enumValues;
+    set => SetProperty(ref _enumValues, value);
+    }
 
     // ──────────── 运行时状态（不持久化） ────────────
+
+    private int _currentValue;
 
     /// <summary>
     /// PLC 当前值（运行时从 PLC 读取，不持久化；快照写入时取此值）。
     /// 使用 [property: ...] 语法确保特性应用到源生成器生成的属性而非字段。
     /// </summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsTriggered))]
-    [NotifyPropertyChangedFor(nameof(CurrentDisplayText))]
-    [property: JsonIgnore]
-    [property: NotMapped]
-    private int _currentValue;
+    [JsonIgnore]
+    [NotMapped]
+    public int CurrentValue
+    {
+        get => _currentValue;
+    set => SetProperty(ref _currentValue, value, [nameof(IsTriggered), nameof(CurrentDisplayText)]);
+    }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsTriggered))]
-    [NotifyPropertyChangedFor(nameof(CurrentDisplayText))]
-    [property: JsonIgnore]
-    [property: NotMapped]
     private float _currentFloatValue;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsTriggered))]
-    [NotifyPropertyChangedFor(nameof(CurrentDisplayText))]
-    [property: JsonIgnore]
-    [property: NotMapped]
+    [JsonIgnore]
+    [NotMapped]
+    public float CurrentFloatValue
+    {
+        get => _currentFloatValue;
+    set => SetProperty(ref _currentFloatValue, value, [nameof(IsTriggered), nameof(CurrentDisplayText)]);
+    }
+
     private bool _currentBoolValue;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsTriggered))]
-    [NotifyPropertyChangedFor(nameof(CurrentDisplayText))]
-    [property: JsonIgnore]
-    [property: NotMapped]
+    [JsonIgnore]
+    [NotMapped]
+    public bool CurrentBoolValue
+    {
+        get => _currentBoolValue;
+    set => SetProperty(ref _currentBoolValue, value, [nameof(IsTriggered), nameof(CurrentDisplayText)]);
+    }
+
     private string _currentStringValue = string.Empty;
 
-    /// <summary>是否已有成功采样值（运行时状态，不持久化）。</summary>
-    [ObservableProperty]
-    [property: JsonIgnore]
-    [property: NotMapped]
+    [JsonIgnore]
+    [NotMapped]
+    public string CurrentStringValue
+    {
+        get => _currentStringValue;
+    set => SetProperty(ref _currentStringValue, value, [nameof(IsTriggered), nameof(CurrentDisplayText)]);
+    }
+
     private bool _isValid;
 
-    /// <summary>是否至少尝试过一次读取（运行时状态，不持久化）。</summary>
-    [ObservableProperty]
-    [property: JsonIgnore]
-    [property: NotMapped]
+    /// <summary>是否已有成功采样值（运行时状态，不持久化）。</summary>
+    [JsonIgnore]
+    [NotMapped]
+    public bool IsValid
+    {
+        get => _isValid;
+    set => SetProperty(ref _isValid, value);
+    }
+
     private bool _hasReadAttempt;
 
-    /// <summary>最后一次成功采样时间（运行时状态，不持久化）。</summary>
-    [ObservableProperty]
-    [property: JsonIgnore]
-    [property: NotMapped]
+    /// <summary>是否至少尝试过一次读取（运行时状态，不持久化）。</summary>
+    [JsonIgnore]
+    [NotMapped]
+    public bool HasReadAttempt
+    {
+        get => _hasReadAttempt;
+    set => SetProperty(ref _hasReadAttempt, value);
+    }
+
     private DateTime? _lastUpdatedAt;
 
-    /// <summary>最后一次读取尝试时间（运行时状态，不持久化；失败采样也会更新）。</summary>
-    [ObservableProperty]
-    [property: JsonIgnore]
-    [property: NotMapped]
+    /// <summary>最后一次成功采样时间（运行时状态，不持久化）。</summary>
+    [JsonIgnore]
+    [NotMapped]
+    public DateTime? LastUpdatedAt
+    {
+        get => _lastUpdatedAt;
+    set => SetProperty(ref _lastUpdatedAt, value);
+    }
+
     private DateTime? _lastReadAttemptAt;
+
+    /// <summary>最后一次读取尝试时间（运行时状态，不持久化；失败采样也会更新）。</summary>
+    [JsonIgnore]
+    [NotMapped]
+    public DateTime? LastReadAttemptAt
+    {
+        get => _lastReadAttemptAt;
+    set => SetProperty(ref _lastReadAttemptAt, value);
+    }
 
     // ──────────── 派生判定属性（计算属性，不持久化） ────────────
 

@@ -9,7 +9,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:sys="clr-namespace:System;assembly=System.Runtime"
-    xmlns:resources="clr-namespace:MainAPP.Resources"
+    xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization"
     mc:Ignorable="d"
     d:DesignHeight="720"
     d:DesignWidth="1100">
@@ -51,20 +51,20 @@
                 Text="{x:Static resources:Strings.Dsm_SourceSectionTitle}" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button
-                    AutomationProperties.Name="{x:Static resources:Strings.M360}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Msg_CannotDisableDemoteLastAdministratorAccount}"
                     Command="{Binding DataContext.ExportDataSourcesCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="{x:Static resources:Strings.K653}"
+                    Content="{x:Static resources:Strings.Lbl_Export2}"
                     Style="{StaticResource IconButtonDefault}"
                     Tag="{x:Static mi:MaterialIconKind.FileExportOutline}"
-                    ToolTip="{x:Static resources:Strings.M360}" />
+                    ToolTip="{x:Static resources:Strings.Msg_CannotDisableDemoteLastAdministratorAccount}" />
                 <Button
                     Margin="8,0,0,0"
-                    AutomationProperties.Name="{x:Static resources:Strings.M361}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Msg_CannotChangeOwnRoleDisableYourself}"
                     Command="{Binding DataContext.ImportDataSourcesCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="{x:Static resources:Strings.K654}"
+                    Content="{x:Static resources:Strings.Lbl_Import}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.FileImportOutline}"
-                    ToolTip="{x:Static resources:Strings.M361}" />
+                    ToolTip="{x:Static resources:Strings.Msg_CannotChangeOwnRoleDisableYourself}" />
                 <Button
                     Margin="8,0,0,0"
                     Command="{Binding DataContext.AddSourceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"

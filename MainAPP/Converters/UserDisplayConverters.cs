@@ -34,9 +34,9 @@ public sealed class UserRoleToTextConverter : IValueConverter
         return value is UserRole role
             ? role switch
             {
-                UserRole.Admin => Strings.M334,
-                UserRole.Engineer => Strings.M333,
-                _ => Strings.M332,
+                UserRole.Admin => Strings.Msg_Administrator,
+                UserRole.Engineer => Strings.Msg_Engineer,
+                _ => Strings.Msg_OperatorText,
             }
             : string.Empty;
     }
@@ -51,7 +51,7 @@ public sealed class UserStatusToTextConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not User user) return string.Empty;
-        return user.IsActive ? Strings.M331 : Strings.M378;
+        return user.IsActive ? Strings.Msg_Active : Strings.Msg_Disabled;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -87,11 +87,11 @@ public sealed class UserRiskToTextConverter : IValueConverter
             && (PasswordHasher.Verify(UserStore.DefaultAdminPassword, user.PasswordHash)
                 || PasswordHasher.Verify(UserStore.DefaultEngineerPassword, user.PasswordHash)))
         {
-            parts.Add(Strings.M373);
+            parts.Add(Strings.Msg_DefaultPassword);
         }
-        if (string.IsNullOrEmpty(user.PasswordHash)) parts.Add(Strings.M374);
+        if (string.IsNullOrEmpty(user.PasswordHash)) parts.Add(Strings.Msg_PasswordlessAccount);
         if (user.LastLoginAt is null && DateTime.Now - user.CreatedAt > NeverLoginThreshold)
-            parts.Add(Strings.M375);
+            parts.Add(Strings.Msg_NeverLogged);
         return parts.Count == 0 ? string.Empty : string.Join("、", parts);
     }
 

@@ -586,7 +586,7 @@ public sealed class RemoteHistoryQueryService :
                 current = current with { Page = page + 1 };
             }
 
-            throw new InvalidOperationException(MainAPP.Resources.Strings.F325);
+            throw new InvalidOperationException(MainAPP.Resources.Strings.Prompt_QueryExceedsResultLimit100000);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -684,7 +684,7 @@ public sealed class RemoteHistoryQueryService :
         if (pages.Count == HistoryQueryLimits.MaxFetchAllPages && last.Total > totalReceived)
         {
             logger.LogWarning("历史查询翻页达上限 {MaxPages} 页仍未收齐 QueryType={QueryType} Total={Total} 已收={Received}", HistoryQueryLimits.MaxFetchAllPages, firstRequest.QueryType, last.Total, totalReceived);
-            throw new InvalidOperationException(MainAPP.Resources.Strings.F325);
+            throw new InvalidOperationException(MainAPP.Resources.Strings.Prompt_QueryExceedsResultLimit100000);
         }
         return Merge(pages);
     }

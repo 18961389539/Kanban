@@ -8,7 +8,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     mc:Ignorable="d"
     d:DesignHeight="400"
-    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources">
+    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <!--
         主页仪表板卡片 3：实时故障（卡片式列表 + 级别筛选 + 静音按钮）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
@@ -26,7 +26,7 @@
                 <!--  左：标题 + 报警计数徽章（High 级别时红色）  -->
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="BellAlert" />
-                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K329}" />
+                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.Lbl_RealTimeFaults}" />
                     <Border Margin="10,0,0,0" Padding="8,3" CornerRadius="11"
                             VerticalAlignment="Center"
                             ToolTip="{Binding ActiveAlarmCountTooltip}">
@@ -66,10 +66,10 @@
                 <!--  2026-09-18 UI 精修：30×30 纯图标按钮补上文字标签，点击区域扩到带文字的宽按钮  -->
                 <Button DockPanel.Dock="Right" Height="30" Padding="10,0" Margin="8,0,0,0"
                         VerticalAlignment="Center"
-                        AutomationProperties.Name="{x:Static resources:Strings.K330}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_MuteNewAlarms}"
                         Command="{Binding ToggleAlarmMuteCommand}"
                         Style="{StaticResource ButtonDefault}"
-                        ToolTip="{x:Static resources:Strings.K331}">
+                        ToolTip="{x:Static resources:Strings.Lbl_ToggleSoundFlashingNewAlarmsSame}">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <materialIcons:MaterialIcon Width="16" Height="16" VerticalAlignment="Center">
                             <materialIcons:MaterialIcon.Style>
@@ -95,14 +95,14 @@
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="8,0"
                             VerticalAlignment="Center">
                     <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" Margin="0,0,6,0"
-                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K332}" />
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_Level}" />
                     <!--  High：红色，对应 Danger
                           2026-09-18 UI 精修：chip 28×24→34×26 并加 SecondaryRegionBrush 底（未选中也可见），
                           选中态由「满色块 + 白字」改为 15% 语义色底 + 同色文字 + 同色描边，与全站药丸一致。  -->
                     <ToggleButton Width="34" Height="26" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
-                                  AutomationProperties.Name="{x:Static resources:Strings.K086}"
+                                  AutomationProperties.Name="{x:Static resources:Strings.Lbl_FilterHighLevelAlarms}"
                                   IsChecked="{Binding ShowHighAlarms, Mode=TwoWay}"
-                                  ToolTip="{x:Static resources:Strings.K086}">
+                                  ToolTip="{x:Static resources:Strings.Lbl_FilterHighLevelAlarms}">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
                                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
@@ -134,9 +134,9 @@
                     </ToggleButton>
                     <!--  Medium：黄色，对应 Warning  -->
                     <ToggleButton Width="34" Height="26" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
-                                  AutomationProperties.Name="{x:Static resources:Strings.K087}"
+                                  AutomationProperties.Name="{x:Static resources:Strings.Lbl_FilterMediumLevelAlarms}"
                                   IsChecked="{Binding ShowMediumAlarms, Mode=TwoWay}"
-                                  ToolTip="{x:Static resources:Strings.K087}">
+                                  ToolTip="{x:Static resources:Strings.Lbl_FilterMediumLevelAlarms}">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
                                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
@@ -168,9 +168,9 @@
                     </ToggleButton>
                     <!--  Low：主色蓝紫，对应 Primary  -->
                     <ToggleButton Width="34" Height="26" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
-                                  AutomationProperties.Name="{x:Static resources:Strings.K088}"
+                                  AutomationProperties.Name="{x:Static resources:Strings.Lbl_FilterLowLevelAlarms}"
                                   IsChecked="{Binding ShowLowAlarms, Mode=TwoWay}"
-                                  ToolTip="{x:Static resources:Strings.K088}">
+                                  ToolTip="{x:Static resources:Strings.Lbl_FilterLowLevelAlarms}">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
                                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
@@ -212,7 +212,7 @@
                     <ItemsControl ItemsSource="{Binding FilteredActiveAlarms}"
                                   VirtualizingStackPanel.IsVirtualizing="True"
                                   VirtualizingStackPanel.VirtualizationMode="Recycling"
-                                  AutomationProperties.Name="{x:Static resources:Strings.K333}">
+                                  AutomationProperties.Name="{x:Static resources:Strings.Lbl_RealTimeFaultList}">
                         <!-- ItemsControl 默认 ItemsPanel 是 StackPanel（非虚拟化），
                              VirtualizingStackPanel.IsVirtualizing 附加属性仅在 Panel 为 VirtualizingStackPanel 时生效。
                              必须显式设置 ItemsPanel 为 VirtualizingStackPanel 才能真正启用虚拟化，

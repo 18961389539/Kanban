@@ -13,7 +13,7 @@
     d:DesignHeight="900"
     d:DesignWidth="1400"
     PreviewKeyDown="OnPreviewKeyDown"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshAllCommand}" />
     </UserControl.InputBindings>
@@ -173,7 +173,7 @@
                         Style="{StaticResource PageTitleIcon}" Kind="BellAlert" />
                     <TextBlock
                         Style="{StaticResource PageTitleText}"
-                        Margin="10,0,0,0" Text="{x:Static resources:Strings.K122}" />
+                        Margin="10,0,0,0" Text="{x:Static resources:Strings.Lbl_AlarmCenter}" />
                     <controls:PageHelpButton Margin="8,0,0,0" PageKey="alarm-center" />
                     <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
                         <TextBlock
@@ -200,21 +200,21 @@
 
                 <WrapPanel Grid.Column="1" Margin="16,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                     <StackPanel Margin="0,0,12,0">
-                        <TextBlock Style="{StaticResource FilterGroupLabel}" Text="{x:Static resources:Strings.K002}" />
+                        <TextBlock Style="{StaticResource FilterGroupLabel}" Text="{x:Static resources:Strings.Lbl_Device}" />
                         <ComboBox Width="150" VerticalContentAlignment="Center"
                                   Style="{StaticResource ComboBoxExtend}"
                                   Height="{Binding ActualHeight, ElementName=AlarmSearchBox}"
                                   ItemsSource="{Binding DeviceFilterItems}" DisplayMemberPath="Name"
                                   SelectedValue="{Binding DeviceFilterValue}" SelectedValuePath="Id"
-                                  ToolTip="{x:Static resources:Strings.K024}" />
+                                  ToolTip="{x:Static resources:Strings.Lbl_DeviceFilter}" />
                     </StackPanel>
                     <StackPanel Width="200" Margin="0,0,12,0">
                         <TextBlock Style="{StaticResource FilterGroupLabel}" Text="{x:Static resources:Strings.Ac_GroupSearch}" />
                         <hc:TextBox x:Name="AlarmSearchBox" VerticalContentAlignment="Center"
                                     Style="{StaticResource TextBoxExtend}"
-                                    hc:InfoElement.Placeholder="{x:Static resources:Strings.K124}"
+                                    hc:InfoElement.Placeholder="{x:Static resources:Strings.Lbl_SearchDeviceAlarmName}"
                                     Text="{Binding AlarmSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                    ToolTip="{x:Static resources:Strings.K124}" />
+                                    ToolTip="{x:Static resources:Strings.Lbl_SearchDeviceAlarmName}" />
                     </StackPanel>
                     <StackPanel Margin="0,0,12,0">
                         <TextBlock Style="{StaticResource FilterGroupLabel}" Text="{x:Static resources:Strings.Ac_GroupRange}" />
@@ -223,34 +223,34 @@
                                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                             <StackPanel Orientation="Horizontal">
                                 <RadioButton GroupName="TimeRange"
-                                    AutomationProperties.Name="{x:Static resources:Strings.K042}"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_Last1h}"
                                     IsChecked="{Binding IsHour1}"
                                     Style="{StaticResource TimeRangeSegment}"
-                                    Content="{x:Static resources:Strings.K042}" />
+                                    Content="{x:Static resources:Strings.Lbl_Last1h}" />
                                 <RadioButton GroupName="TimeRange"
-                                    AutomationProperties.Name="{x:Static resources:Strings.K043}"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_Last4h}"
                                     IsChecked="{Binding IsHours4}"
                                     Style="{StaticResource TimeRangeSegment}"
-                                    Content="{x:Static resources:Strings.K043}" />
+                                    Content="{x:Static resources:Strings.Lbl_Last4h}" />
                                 <RadioButton GroupName="TimeRange"
-                                    AutomationProperties.Name="{x:Static resources:Strings.K025}"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_Last24h}"
                                     IsChecked="{Binding IsHours24}"
                                     Style="{StaticResource TimeRangeSegment}"
-                                    Content="{x:Static resources:Strings.K025}" />
+                                    Content="{x:Static resources:Strings.Lbl_Last24h}" />
                                 <RadioButton GroupName="TimeRange"
-                                    AutomationProperties.Name="{x:Static resources:Strings.K078}"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_Shift2}"
                                     IsChecked="{Binding IsCurrentShift}"
                                     Style="{StaticResource TimeRangeSegmentLast}"
-                                    Content="{x:Static resources:Strings.K078}" />
+                                    Content="{x:Static resources:Strings.Lbl_Shift2}" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
                         <Button Width="32" Height="32" Padding="0" Margin="0,0,8,0"
-                                AutomationProperties.Name="{x:Static resources:Strings.K330}"
+                                AutomationProperties.Name="{x:Static resources:Strings.Lbl_MuteNewAlarms}"
                                 Command="{Binding ToggleAlarmMuteCommand}"
                                 Style="{StaticResource ButtonDefault}"
-                                ToolTip="{x:Static resources:Strings.K331}">
+                                ToolTip="{x:Static resources:Strings.Lbl_ToggleSoundFlashingNewAlarmsSame}">
                             <materialIcons:MaterialIcon Width="16" Height="16" VerticalAlignment="Center">
                                 <materialIcons:MaterialIcon.Style>
                                     <Style TargetType="materialIcons:MaterialIcon">
@@ -270,15 +270,15 @@
                                 Command="{Binding RefreshAllCommand}"
                                 Style="{StaticResource IconButtonPrimary}"
                                 Tag="{x:Static mi:MaterialIconKind.Refresh}"
-                                Content="{x:Static resources:Strings.K015}"
-                                ToolTip="{x:Static resources:Strings.K044}" />
+                                Content="{x:Static resources:Strings.Lbl_Refresh}"
+                                ToolTip="{x:Static resources:Strings.Lbl_RefreshF5}" />
                     </StackPanel>
                 </WrapPanel>
             </Grid>
             <TextBlock Grid.Row="1" Margin="0,8,0,0"
                        FontSize="{DynamicResource FontSizeCaption}"
                        Foreground="{StaticResource ThirdlyTextBrush}"
-                       Text="{x:Static resources:Strings.K717}"
+                       Text="{x:Static resources:Strings.Lbl_EventStreamTopListFollowSelected}"
                        TextWrapping="Wrap" />
         </Grid>
 
@@ -298,14 +298,14 @@
                 <!-- 活跃报警数 -->
                 <Border Style="{StaticResource KpiCell}" ToolTip="{Binding ActiveCountTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K125}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_ActiveAlarms}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding ActiveCount}" />
                     </StackPanel>
                 </Border>
                 <!-- 今日触发 -->
                 <Border Style="{StaticResource KpiCell}" ToolTip="{Binding TodayTriggerKpiToolTip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K126}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_TriggeredToday}" />
                         <TextBlock Style="{StaticResource StatsKpiValue}" Text="{Binding TodayTriggerCountDisplay}" />
                         <TextBlock FontSize="{DynamicResource FontSizeHint}" FontWeight="Medium"
                                    Text="{Binding TodayTriggerCompareText}"
@@ -326,7 +326,7 @@
                 <!-- 今日恢复 -->
                 <Border Style="{StaticResource KpiCell}" ToolTip="{Binding TodayRecoverKpiToolTip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K127}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_RecoveredToday}" />
                         <TextBlock Style="{StaticResource StatsKpiValue}" Text="{Binding TodayRecoverCountDisplay}" />
                         <TextBlock FontSize="{DynamicResource FontSizeHint}" FontWeight="Medium"
                                    Text="{Binding TodayRecoverCompareText}"
@@ -347,7 +347,7 @@
                 <!-- 最长持续 -->
                 <Border Style="{StaticResource KpiCell}" ToolTip="{Binding LongestDurationTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K128}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_EarliestAlarmOngoing}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding LongestDurationText}" />
                         <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}"
                                    Text="{Binding LongestAlarmText}" TextTrimming="CharacterEllipsis"
@@ -357,7 +357,7 @@
                 <!-- 影响设备数 -->
                 <Border Style="{StaticResource KpiCell}" ToolTip="{Binding AffectedDeviceTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K129}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Lbl_AffectedDevice}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding AffectedDeviceCount}" />
                     </StackPanel>
                 </Border>
@@ -421,7 +421,7 @@
                         <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
                             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
-                                <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K045}" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.Lbl_ActiveAlarmsLive}" />
                                 <!--  活跃计数徽章：>0 用红色语义药丸；0 条改中性药丸
                                       （原 0 条为「灰块白字」，对比度约 2.5:1 且与"无待处理"语义打架）  -->
                                 <Border Margin="8,0,0,0" Padding="8,1" CornerRadius="10" BorderThickness="1">
@@ -471,11 +471,11 @@
                             <!-- 级别筛选 chips -->
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <ToggleButton Style="{StaticResource LevelFilterChip}"
-                                    IsChecked="{Binding ShowHighAlarms}" Content="{x:Static resources:Strings.K131}" />
+                                    IsChecked="{Binding ShowHighAlarms}" Content="{x:Static resources:Strings.Lbl_High}" />
                                 <ToggleButton Style="{StaticResource LevelFilterChip}"
-                                    IsChecked="{Binding ShowMediumAlarms}" Content="{x:Static resources:Strings.K132}" />
+                                    IsChecked="{Binding ShowMediumAlarms}" Content="{x:Static resources:Strings.Lbl_Medium}" />
                                 <ToggleButton Style="{StaticResource LevelFilterChip}"
-                                    IsChecked="{Binding ShowLowAlarms}" Content="{x:Static resources:Strings.K133}" />
+                                    IsChecked="{Binding ShowLowAlarms}" Content="{x:Static resources:Strings.Lbl_Low}" />
                             </StackPanel>
                         </DockPanel>
 
@@ -484,7 +484,7 @@
                             <ListBox ItemsSource="{Binding ActiveAlarms}"
                                      ItemContainerStyle="{StaticResource AlarmVirtualListItem}"
                                      Style="{StaticResource AlarmVirtualList}"
-                                     AutomationProperties.Name="{x:Static resources:Strings.K134}">
+                                     AutomationProperties.Name="{x:Static resources:Strings.Lbl_ActiveAlarmList}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                                     <Border Margin="16,0,16,8" Padding="12,10" CornerRadius="6"
@@ -555,12 +555,12 @@
                                                                        ToolTip="{Binding DeviceName}" />
                                                         </Grid>
                                                         <StackPanel Orientation="Horizontal" Margin="24,6,0,0">
-                                                            <Button Content="{x:Static resources:Strings.K026}" Padding="6,2" Margin="0,0,6,0"
+                                                            <Button Content="{x:Static resources:Strings.Lbl_Copy}" Padding="6,2" Margin="0,0,6,0"
                                                                 Command="{Binding DataContext.CopyAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                CommandParameter="{Binding}" ToolTip="{x:Static resources:Strings.K135}" />
-                                                            <Button Content="{x:Static resources:Strings.K137}" Padding="6,2"
+                                                                CommandParameter="{Binding}" ToolTip="{x:Static resources:Strings.Lbl_CopyAlarmInfo}" />
+                                                            <Button Content="{x:Static resources:Strings.Lbl_ViewAlarmHistory}" Padding="6,2"
                                                                 Command="{Binding DataContext.ViewAlarmHistoryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                CommandParameter="{Binding}" ToolTip="{x:Static resources:Strings.K136}" />
+                                                                CommandParameter="{Binding}" ToolTip="{x:Static resources:Strings.Lbl_History}" />
                                                         </StackPanel>
                                                     </StackPanel>
                                                     <!-- 右侧持续时间 -->
@@ -608,7 +608,7 @@
                         <DockPanel>
                         <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
                             <Border Style="{StaticResource ChartCardTitleBar}" />
-                            <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K046}" />
+                            <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.Lbl_RecentEventStream}" />
                             <!-- P0-3 修复：事件流总数 + 截断提示（超 500 条合并项时告知还有更多） -->
                             <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontSize="12" FontWeight="Medium"
                                        Foreground="{StaticResource ThirdlyTextBrush}"
@@ -632,7 +632,7 @@
                             <ListBox ItemsSource="{Binding RecentEvents}"
                                      ItemContainerStyle="{StaticResource AlarmVirtualListItem}"
                                      Style="{StaticResource AlarmVirtualList}"
-                                     AutomationProperties.Name="{x:Static resources:Strings.K046}">
+                                     AutomationProperties.Name="{x:Static resources:Strings.Lbl_RecentEventStream}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                             <Border Margin="16,0,16,6" Padding="10,8" CornerRadius="4"
@@ -714,17 +714,17 @@
                                         BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                                     <StackPanel Orientation="Horizontal">
                                         <RadioButton GroupName="TopSort" Style="{StaticResource TimeRangeSegment}"
-                                                     AutomationProperties.Name="{x:Static resources:Strings.K723}"
+                                                     AutomationProperties.Name="{x:Static resources:Strings.Lbl_Triggers}"
                                                      IsChecked="{Binding IsTopSortByCount}"
-                                                     Content="{x:Static resources:Strings.K723}" />
+                                                     Content="{x:Static resources:Strings.Lbl_Triggers}" />
                                         <RadioButton GroupName="TopSort" Style="{StaticResource TimeRangeSegmentLast}"
-                                                     AutomationProperties.Name="{x:Static resources:Strings.K724}"
+                                                     AutomationProperties.Name="{x:Static resources:Strings.Lbl_Duration}"
                                                      IsChecked="{Binding IsTopSortByDuration}"
-                                                     Content="{x:Static resources:Strings.K724}" />
+                                                     Content="{x:Static resources:Strings.Lbl_Duration}" />
                                     </StackPanel>
                                 </Border>
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
-                                <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K138}" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.Lbl_TriggerCountTop10}" />
                                 <!-- P0-3 修复：Top 排行截断提示（超 10 个聚类组时告知还有更多） -->
                                 <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" FontWeight="Medium"
                                            Foreground="{StaticResource WarningBrush}"
@@ -745,7 +745,7 @@
                             <ListBox ItemsSource="{Binding TopAlarms}"
                                      ItemContainerStyle="{StaticResource AlarmVirtualListItem}"
                                      Style="{StaticResource AlarmVirtualList}"
-                                     AutomationProperties.Name="{x:Static resources:Strings.K139}">
+                                     AutomationProperties.Name="{x:Static resources:Strings.Lbl_AlarmRankingList}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                             <Grid Margin="16,0,16,4" VerticalAlignment="Center">

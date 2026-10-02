@@ -91,12 +91,12 @@ public class DefectCsvIOService(
         try
         {
             var count = ExportDefectsToPath(device, path);
-            _dialog.NotifySuccess(string.Format(Strings.F293, count, Path.GetFileName(path)));
+            _dialog.NotifySuccess(string.Format(Strings.Prompt_ExportedDefects, count, Path.GetFileName(path)));
             return true;
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
             return false;
         }
     }
@@ -109,7 +109,7 @@ public class DefectCsvIOService(
             Strings.Csv_Defect_FileName,
             device.Name,
             System.DateTime.Now);
-        return _dialog.ShowSaveFileDialog(Strings.M311, defaultFileName, Strings.M310);
+        return _dialog.ShowSaveFileDialog(Strings.Msg_ExportDefectsConfiguration, defaultFileName, Strings.Msg_CSVFilesCsvAllFiles);
     }
 
     /// <summary>将缺陷写入指定路径；只执行数据转换和文件 IO，可在线程池执行。</summary>
@@ -137,7 +137,7 @@ public class DefectCsvIOService(
 
     /// <summary>仅弹出文件选择对话框，返回用户选择的路径（UI 线程调用）。</summary>
     public string? PickImportPath()
-        => _dialog.ShowOpenFileDialog(Strings.M312, Strings.M310);
+        => _dialog.ShowOpenFileDialog(Strings.Msg_ImportDefectsConfiguration, Strings.Msg_CSVFilesCsvAllFiles);
 
     /// <summary>
     /// 读取并校验指定路径的 CSV 文件，返回校验通过的缺陷列表与失败行错误。
@@ -155,7 +155,7 @@ public class DefectCsvIOService(
 
             if (records.Count == 0)
             {
-                result.Errors.Add(Strings.F303);
+                result.Errors.Add(Strings.Prompt_NoDefectDataCSVFile);
                 return result;
             }
 
@@ -166,12 +166,12 @@ public class DefectCsvIOService(
 
                 if (string.IsNullOrWhiteSpace(rec.Name))
                 {
-                    result.Errors.Add(string.Format(Strings.F299, rowNum));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowDefectNameEmpty, rowNum));
                     continue;
                 }
                 if (string.IsNullOrWhiteSpace(rec.PlcAddress))
                 {
-                    result.Errors.Add(string.Format(Strings.F183, rowNum));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowPLCAddressEmpty, rowNum));
                     continue;
                 }
 
@@ -179,24 +179,24 @@ public class DefectCsvIOService(
                 var parseResult = CurrentCodec.Parse(rec.PlcAddress.Trim());
                 if (!parseResult.IsValid)
                 {
-                    result.Errors.Add(string.Format(Strings.F182, rowNum, rec.PlcAddress, parseResult.ErrorMessage));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowPLCAddressInvalid, rowNum, rec.PlcAddress, parseResult.ErrorMessage));
                     continue;
                 }
                 if (parseResult.Type != PlcAddressType.DWord)
                 {
-                    result.Errors.Add(string.Format(Strings.F302, rowNum, rec.PlcAddress, parseResult.Type));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowPLCAddressShouldDWordType, rowNum, rec.PlcAddress, parseResult.Type));
                     continue;
                 }
 
                 if (!CsvLocalization.TryParseDefectSeverity(rec.Severity, out var severity))
                 {
-                    result.Errors.Add(string.Format(Strings.F300, rowNum, rec.Severity));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowDefectSeverityInvalidExpectedMinor, rowNum, rec.Severity));
                     continue;
                 }
 
                 if (!CsvLocalization.TryParseDefectCategory(rec.Category, out var category))
                 {
-                    result.Errors.Add(string.Format(Strings.F301, rowNum, rec.Category));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowDefectCategoryInvalidExpectedAppearance, rowNum, rec.Category));
                     continue;
                 }
 
@@ -214,7 +214,7 @@ public class DefectCsvIOService(
         }
         catch (Exception ex)
         {
-            result.Errors.Add(string.Format(Strings.F134, ex.Message));
+            result.Errors.Add(string.Format(Strings.Prompt_FileReadParseFailed, ex.Message));
         }
 
         return result;

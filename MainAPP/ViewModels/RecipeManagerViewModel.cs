@@ -252,10 +252,10 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
         var types = counts.Keys.OrderBy(t => string.IsNullOrEmpty(t) ? 0 : 1)
             .ThenBy(t => t, StringComparer.CurrentCulture).ToList();
         MachineTypeFilters.Clear();
-        MachineTypeFilters.Add(new MachineTypeFilterOption(AllMachineTypesFilter, Strings.K004, AvailableRecipes.Count) { IsSelected = SelectedMachineFilter == AllMachineTypesFilter });
+        MachineTypeFilters.Add(new MachineTypeFilterOption(AllMachineTypesFilter, Strings.Lbl_All, AvailableRecipes.Count) { IsSelected = SelectedMachineFilter == AllMachineTypesFilter });
         if (counts.TryGetValue("", out var generalCount))
         {
-            MachineTypeFilters.Add(new MachineTypeFilterOption("", Strings.K698, generalCount) { IsSelected = SelectedMachineFilter == "" });
+            MachineTypeFilters.Add(new MachineTypeFilterOption("", Strings.Lbl_General, generalCount) { IsSelected = SelectedMachineFilter == "" });
         }
         foreach (var t in types)
         {
@@ -314,7 +314,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
         {
             var keepEditing = _dialog.Show(
                 Strings.Recipe_SwitchDiscardConfirm,
-                Strings.M036, MessageBoxButton.YesNo, MessageBoxImage.Question);
+                Strings.Msg_Tip, MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (keepEditing != MessageBoxResult.Yes)
             {
                 _skipSelectionGuard = true;
@@ -416,7 +416,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
     {
         if (EditItems.Count == 0)
         {
-            _dialog.NotifyWarning(Strings.K681);
+            _dialog.NotifyWarning(Strings.Lbl_CannotSaveRecipeHasNoParameters);
             return;
         }
 
@@ -436,7 +436,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
         var errors = RecipeValidator.Validate(recipe, _recipeStore.Recipes);
         if (errors.Count > 0)
         {
-            _dialog.NotifyWarning(string.Format(Strings.K682, string.Join("；", errors)));
+            _dialog.NotifyWarning(string.Format(Strings.Lbl_RecipeValidationFailed, string.Join("；", errors)));
             return;
         }
 
@@ -446,7 +446,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
             await _recipeStore.CommitUpsertAsync(recipe);
             AuditLog.Record(isNew ? "Recipe.Add" : "Recipe.Update", "Recipe", recipe.Id, detail: recipe.Name);
             _logger.LogInformation("配方已保存：{Name}（{MachineType}）", recipe.Name, recipe.MachineType);
-            _dialog.NotifySuccess(string.Format(Strings.K688, recipe.Name));
+            _dialog.NotifySuccess(string.Format(Strings.Lbl_RecipeSaved, recipe.Name));
             _skipSelectionGuard = true;
             RefreshRecipes();
             SelectedRecipe = AvailableRecipes.FirstOrDefault(r => r.Id == recipe.Id);
@@ -473,8 +473,8 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
     private async Task DeleteRecipeAsync()
     {
         if (SelectedRecipe is null) return;
-        var confirm = _dialog.Show(string.Format(Strings.K677, SelectedRecipe.Name),
-            Strings.K664, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        var confirm = _dialog.Show(string.Format(Strings.Lbl_DeleteRecipe2, SelectedRecipe.Name),
+            Strings.Lbl_DeleteRecipe, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
 
         var id = SelectedRecipe.Id;
@@ -503,7 +503,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
     {
         if (SelectedTargetDevice is null)
         {
-            _dialog.NotifyWarning(Strings.K687);
+            _dialog.NotifyWarning(Strings.Lbl_SelectDeviceFirst);
             return;
         }
         if (SelectedRecipe is null) return;
@@ -526,13 +526,13 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
             && !string.Equals(SelectedRecipe.MachineType, SelectedTargetDevice.MachineType, StringComparison.OrdinalIgnoreCase))
         {
             var mismatchConfirm = _dialog.Show(
-                string.Format(Strings.K702, SelectedRecipe.MachineType, SelectedTargetDevice.MachineType),
-                Strings.K661, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                string.Format(Strings.Lbl_RecipeMachineTypeDoesMatchDevice, SelectedRecipe.MachineType, SelectedTargetDevice.MachineType),
+                Strings.Lbl_ApplyDevice, MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (mismatchConfirm != MessageBoxResult.Yes) return;
         }
 
-        var confirm = _dialog.Show(string.Format(Strings.K685, SelectedRecipe.Name, SelectedTargetDevice.Name),
-            Strings.K661, MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var confirm = _dialog.Show(string.Format(Strings.Lbl_ApplyRecipeDevice, SelectedRecipe.Name, SelectedTargetDevice.Name),
+            Strings.Lbl_ApplyDevice, MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes) return;
 
         // 稳定引用：下发期间捕获选中对象，避免用户切换选择导致结果/审计写错对象
@@ -540,7 +540,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
         var recipe = SelectedRecipe!;
 
         IsApplying = true;
-        ApplyStatus = Strings.K686;
+        ApplyStatus = Strings.Lbl_ApplyingRecipe;
         ApplyStatusKind = ApplyStatusKind.None;
         ApplyItemResults.Clear();
         _seenApplyIndexes.Clear();
@@ -570,9 +570,9 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
 
             if (result.Success)
             {
-                ApplyStatus = Strings.K675;
+                ApplyStatus = Strings.Lbl_RecipeAppliedSuccessfully;
                 ApplyStatusKind = ApplyStatusKind.Success;
-                _dialog.NotifySuccess(string.Format(Strings.K675));
+                _dialog.NotifySuccess(string.Format(Strings.Lbl_RecipeAppliedSuccessfully));
                 _logger.LogInformation("配方下发成功：{Recipe} -> {Device}", recipe.Name, device.Name);
             }
             else if (_applyCts.IsCancellationRequested)
@@ -584,11 +584,11 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
             }
             else
             {
-                ApplyStatus = string.Format(Strings.K676, result.Message);
+                ApplyStatus = string.Format(Strings.Lbl_ApplyFailed, result.Message);
                 ApplyStatusKind = ApplyStatusKind.Error;
                 if (_runtimeMode.IsRemote && ApplyItemResults.Count == 0)
                     ApplyItemResults.Add(new RecipeItemResultDto("-", false, result.Message));
-                _dialog.NotifyError(string.Format(Strings.K676, result.Message));
+                _dialog.NotifyError(string.Format(Strings.Lbl_ApplyFailed, result.Message));
                 _logger.LogWarning("配方下发失败：{Message}（{Recipe} -> {Device}）",
                     result.Message, recipe.Name, device.Name);
             }
@@ -596,16 +596,16 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
         catch (OperationCanceledException)
         {
             // Remote 超时（或 Local 用户取消）：统一显示终止原因，不弹错误框
-            var timeoutMsg = _runtimeMode.IsRemote ? Strings.K703 : Strings.K686;
+            var timeoutMsg = _runtimeMode.IsRemote ? Strings.Lbl_ApplyTimedOut90sWaitingAborted : Strings.Lbl_ApplyingRecipe;
             ApplyStatus = timeoutMsg;
             ApplyStatusKind = ApplyStatusKind.Error;
             _logger.LogWarning("配方下发超时/取消：{Recipe} -> {Device}", recipe.Name, device.Name);
         }
         catch (Exception ex)
         {
-            ApplyStatus = string.Format(Strings.K676, ex.Message);
+            ApplyStatus = string.Format(Strings.Lbl_ApplyFailed, ex.Message);
             ApplyStatusKind = ApplyStatusKind.Error;
-            _dialog.NotifyError(string.Format(Strings.K676, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Lbl_ApplyFailed, ex.Message));
             _logger.LogError(ex, "配方下发异常");
         }
         finally
@@ -664,7 +664,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
         _skipSelectionGuard = false;
         _previousSelectedRecipe = null;
         _editingRecipe = null;
-        EditName = clone.Name + Strings.K692;
+        EditName = clone.Name + Strings.Lbl_Copy2;
         EditMachineType = clone.MachineType;
         EditRemark = clone.Remark;
         EditItems.Clear();

@@ -68,30 +68,30 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
 
         using var document = new PdfDocument();
         var canvas = new PdfCanvas(document);
-        canvas.Title(Strings.M239);
-        canvas.Text(Strings.M239, 18, true);
-        canvas.Text(string.Format(Strings.F187, data.From, data.To), 9);
-        canvas.Text(string.Format(Strings.F122, data.ShiftName), 9);
+        canvas.Title(Strings.Msg_ProductionReviewReport);
+        canvas.Text(Strings.Msg_ProductionReviewReport, 18, true);
+        canvas.Text(string.Format(Strings.Prompt_Range, data.From, data.To), 9);
+        canvas.Text(string.Format(Strings.Prompt_CurrentShift, data.ShiftName), 9);
         canvas.Space(8);
 
-        canvas.Section(Strings.M254);
-        canvas.TableHeader(Strings.M265, Strings.M266);
-        canvas.Row(Strings.M241, data.TotalOk.ToString("N0", CultureInfo.InvariantCulture));
-        canvas.Row(Strings.M242, data.TotalNg.ToString("N0", CultureInfo.InvariantCulture));
-        canvas.Row(Strings.M238, data.QualityRate.ToString("P1", CultureInfo.InvariantCulture));
+        canvas.Section(Strings.Msg_CoreMetrics);
+        canvas.TableHeader(Strings.Msg_Metric, Strings.Msg_Value);
+        canvas.Row(Strings.Msg_TotalOK, data.TotalOk.ToString("N0", CultureInfo.InvariantCulture));
+        canvas.Row(Strings.Msg_TotalNG, data.TotalNg.ToString("N0", CultureInfo.InvariantCulture));
+        canvas.Row(Strings.Msg_QualityRate, data.QualityRate.ToString("P1", CultureInfo.InvariantCulture));
         canvas.Row("OEE", data.Oee.ToString("P1", CultureInfo.InvariantCulture));
-        canvas.Row(Strings.M244, $"{data.RunTimeHours:F2}h");
-        canvas.Row(Strings.M245, $"{data.PausedTimeHours:F2}h");
-        canvas.Row(Strings.M246, $"{data.AlarmDurationHours:F2}h");
-        canvas.Row(Strings.M247, data.AlarmCount.ToString(CultureInfo.InvariantCulture));
-        canvas.Row(Strings.M267, data.TargetOutput.ToString("N0", CultureInfo.InvariantCulture));
-        canvas.Row(Strings.M268, data.OutputAchievementRate.ToString("P1", CultureInfo.InvariantCulture));
+        canvas.Row(Strings.Msg_RunTime, $"{data.RunTimeHours:F2}h");
+        canvas.Row(Strings.Msg_IdleTime, $"{data.PausedTimeHours:F2}h");
+        canvas.Row(Strings.Msg_AlarmTime, $"{data.AlarmDurationHours:F2}h");
+        canvas.Row(Strings.Msg_AlarmCount2, data.AlarmCount.ToString(CultureInfo.InvariantCulture));
+        canvas.Row(Strings.Msg_TargetOutput, data.TargetOutput.ToString("N0", CultureInfo.InvariantCulture));
+        canvas.Row(Strings.Msg_TargetAchievementRate, data.OutputAchievementRate.ToString("P1", CultureInfo.InvariantCulture));
 
-        canvas.Section(Strings.M255);
+        canvas.Section(Strings.Msg_ProductionTrend);
         canvas.Chart(data.TrendChart, 520, 220);
 
-        canvas.Section(Strings.M248);
-        canvas.TableHeader(Strings.M205, "OK", "NG", Strings.M238, "OEE", Strings.M247);
+        canvas.Section(Strings.Msg_DeviceDetails);
+        canvas.TableHeader(Strings.Msg_Device, "OK", "NG", Strings.Msg_QualityRate, "OEE", Strings.Msg_AlarmCount2);
         foreach (var device in data.Devices)
         {
             canvas.Row(
@@ -104,26 +104,26 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
         }
 
         canvas.NewPage();
-        canvas.Text(Strings.M239, 16, true);
-        canvas.Section(Strings.M256);
+        canvas.Text(Strings.Msg_ProductionReviewReport, 16, true);
+        canvas.Section(Strings.Msg_OEELossBreakdown);
         canvas.Chart(data.OeeWaterfallChart, 520, 210);
-        canvas.Row(Strings.M237, data.AvailabilityLossText);
-        canvas.Row(Strings.M236, data.PerformanceLossText);
-        canvas.Row(Strings.M238, data.QualityLossText);
-        canvas.Section(Strings.M257);
-        canvas.Row(data.ComparisonLabel, string.Format(Strings.F062, data.BaselineTotalOutput, data.BaselineQualityRate, data.BaselineOee));
-        canvas.Row(Strings.M260, string.Format(Strings.F060, FormatSigned(data.OutputDelta), FormatSignedPercentage(data.QualityRateDelta), FormatSignedPercentage(data.OeeDelta)));
-        canvas.Section(Strings.M258);
-        canvas.Row(Strings.K397, $"{data.TotalDowntimeHours:F2}h");
-        canvas.Row(Strings.K398, $"{data.AverageAlarmDurationMinutes:F1}min");
+        canvas.Row(Strings.Msg_Availability, data.AvailabilityLossText);
+        canvas.Row(Strings.Msg_Performance, data.PerformanceLossText);
+        canvas.Row(Strings.Msg_QualityRate, data.QualityLossText);
+        canvas.Section(Strings.Msg_PeriodComparison);
+        canvas.Row(data.ComparisonLabel, string.Format(Strings.Prompt_OutputQualityRateOEE2, data.BaselineTotalOutput, data.BaselineQualityRate, data.BaselineOee));
+        canvas.Row(Strings.Msg_CurrentChange, string.Format(Strings.Prompt_OutputQualityRateOEE, FormatSigned(data.OutputDelta), FormatSignedPercentage(data.QualityRateDelta), FormatSignedPercentage(data.OeeDelta)));
+        canvas.Section(Strings.Msg_DowntimeAnalysis2);
+        canvas.Row(Strings.Lbl_TotalDowntime, $"{data.TotalDowntimeHours:F2}h");
+        canvas.Row(Strings.Lbl_AverageAlarmDuration, $"{data.AverageAlarmDurationMinutes:F1}min");
         canvas.Row("MTBF", $"{data.MtbfHours:F2}h");
-        canvas.Section(Strings.M259);
+        canvas.Section(Strings.Msg_ProductionHeatmap);
         canvas.Chart(data.ProductionHeatmapChart, 520, 230);
 
         canvas.NewPage();
-        canvas.Text(Strings.M239, 16, true);
-        canvas.Section(Strings.M250);
-        canvas.TableHeader(Strings.K022, "OK", "NG", Strings.K023, Strings.M238, Strings.M247);
+        canvas.Text(Strings.Msg_ProductionReviewReport, 16, true);
+        canvas.Section(Strings.Msg_ShiftComparison);
+        canvas.TableHeader(Strings.Lbl_Shift, "OK", "NG", Strings.Lbl_TotalOutput, Strings.Msg_QualityRate, Strings.Msg_AlarmCount2);
         foreach (var shift in data.Shifts)
         {
             canvas.Row(
@@ -135,8 +135,8 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
                 shift.AlarmCount.ToString(CultureInfo.InvariantCulture));
         }
 
-        canvas.Section(Strings.M252);
-        canvas.TableHeader(Strings.K018, Strings.M205, Strings.K299, Strings.M264);
+        canvas.Section(Strings.Msg_TopAlarms);
+        canvas.TableHeader(Strings.Lbl_AlarmName, Strings.Msg_Device, Strings.Lbl_TriggeredCount, Strings.Msg_TotalDuration);
         foreach (var alarm in data.TopAlarms)
         {
             canvas.Row(
@@ -146,8 +146,8 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
                 $"{alarm.TotalDurationHours:F2}h");
         }
 
-            canvas.Section(Strings.M269);
-            canvas.TableHeader(Strings.M270, Strings.M205, Strings.M216, Strings.M271);
+            canvas.Section(Strings.Msg_DefectPareto);
+            canvas.TableHeader(Strings.Msg_Product, Strings.Msg_Device, Strings.Msg_Count2, Strings.Msg_CumulativeRatio);
             foreach (var defect in data.Defects ?? Array.Empty<DefectParetoSummary>())
             {
                 canvas.Row(defect.DefectName, defect.DeviceName,
@@ -188,7 +188,7 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
             var fileName = faceName == "msyh-bold" ? "Dengb.ttf" : "Deng.ttf";
             var path = Path.Combine(fontDirectory, fileName);
             if (!File.Exists(path))
-                throw new FileNotFoundException(Strings.M002, path);
+                throw new FileNotFoundException(Strings.Msg_MicrosoftYaHeiFontFoundCannotGenerate, path);
             return File.ReadAllBytes(path);
         }
     }
@@ -261,7 +261,7 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
             EnsureSpace(height + 20);
             if (model == null)
             {
-                Text(Strings.M272, 9);
+                Text(Strings.Msg_NoChartData, 9);
                 return;
             }
 

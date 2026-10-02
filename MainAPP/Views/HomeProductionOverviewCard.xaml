@@ -8,7 +8,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     mc:Ignorable="d"
     d:DesignHeight="400"
-    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources">
+    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <!--
         主页仪表板卡片 2：当前生产进度状态（工单标识 + 2×2 KPI）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
@@ -25,7 +25,7 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Margin="0,0,0,16" Orientation="Horizontal">
                 <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="TrendingUp" />
-                <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K323}" />
+                <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.Lbl_CurrentProductionProgress}" />
             </StackPanel>
 
             <Grid Grid.Row="1" Visibility="{Binding HasCurrentWorkOrder, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -70,7 +70,7 @@
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" VerticalAlignment="Center"
-                                           Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K326}" />
+                                           Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_OrderTarget}" />
                                 <controls:KpiScopeChip Kind="WorkOrder" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
@@ -79,7 +79,7 @@
                                            Text="{Binding WorkOrderTargetQuantity, StringFormat={}{0:N0}}" />
                                 <TextBlock Margin="6,0,0,0" VerticalAlignment="Bottom"
                                            FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                           Text="{x:Static resources:Strings.K014}" />
+                                           Text="{x:Static resources:Strings.Lbl_Pcs}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -98,7 +98,7 @@
                                            Text="{Binding ShiftOkProductionDisplay}" />
                                 <TextBlock Margin="6,0,0,0" VerticalAlignment="Bottom"
                                            FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                           Text="{x:Static resources:Strings.K014}" />
+                                           Text="{x:Static resources:Strings.Lbl_Pcs}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -117,7 +117,7 @@
                                            Text="{Binding WorkOrderOkProductionDisplay}" />
                                 <TextBlock Margin="6,0,0,0" VerticalAlignment="Bottom"
                                            FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                           Text="{x:Static resources:Strings.K014}" />
+                                           Text="{x:Static resources:Strings.Lbl_Pcs}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>

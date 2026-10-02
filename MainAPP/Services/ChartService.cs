@@ -127,12 +127,12 @@ public static class ChartService
     public static PlotModel BuildProductionChart(
         IEnumerable<(DateTime Time, int Ok, int Ng)> data)
     {
-        var model = CreateBaseModel(Strings.M189);
+        var model = CreateBaseModel(Strings.Msg_OutputTrend);
         var list = data.ToList();
         if (list.Count == 0) return model;
 
-        model.Axes.Add(CreateLinearAxis(Strings.M190, AxisPosition.Left, "F2"));
-        model.Axes.Add(CreateDateTimeAxis(Strings.K037));
+        model.Axes.Add(CreateLinearAxis(Strings.Msg_OutputPcs, AxisPosition.Left, "F2"));
+        model.Axes.Add(CreateDateTimeAxis(Strings.Lbl_Time));
 
         // 不透明绿/红填充：堆叠面积图要求上下两块颜色清晰分开。
         // OxyPlot AreaSeries 没有 IsStacked，且 ConstantY2 是单常量无法做"逐点 baseline"堆叠，
@@ -145,7 +145,7 @@ public static class ChartService
 
         var okSeries = new AreaSeries
         {
-            Title = Strings.M191,
+            Title = Strings.Msg_OKOutput,
             Color = _runColor,
             Fill = okFill,
             StrokeThickness = 1,
@@ -153,7 +153,7 @@ public static class ChartService
 
         var ngSeries = new AreaSeries
         {
-            Title = Strings.M192,
+            Title = Strings.Msg_NGOutput,
             Color = _alarmColor,
             Fill = ngFill,
             StrokeThickness = 1,
@@ -295,7 +295,7 @@ public static class ChartService
     public static PlotModel BuildStatusChart(
         IEnumerable<(DateTime Date, double RunHours, double AlarmHours, double PauseHours)> data)
     {
-        var model = CreateBaseModel(Strings.M193);
+        var model = CreateBaseModel(Strings.Msg_QualityRateTrend);
         var list = data.ToList();
         if (list.Count == 0) return model;
 
@@ -344,7 +344,7 @@ public static class ChartService
     public static PlotModel BuildStatusBarChart(
         IEnumerable<(DateTime Date, double RunHours, double AlarmHours, double PauseHours)> data)
     {
-        var model = CreateBaseModel(Strings.M194);
+        var model = CreateBaseModel(Strings.Msg_PerformanceTrend);
         var list = data.ToList();
         if (list.Count == 0) return model;
 
@@ -352,7 +352,7 @@ public static class ChartService
         catAxis.Key = "sBarCat";
         model.Axes.Add(catAxis);
 
-        var valAxis = CreateLinearAxis(Strings.M066, AxisPosition.Left, "F2");
+        var valAxis = CreateLinearAxis(Strings.Msg_Hours, AxisPosition.Left, "F2");
         valAxis.Key = "sBarVal";
         model.Axes.Add(valAxis);
 
@@ -397,15 +397,15 @@ public static class ChartService
     public static PlotModel BuildStatusGanttChart(
         IEnumerable<(DateTime Start, DateTime End, int State)> segments)
     {
-        var model = CreateBaseModel(Strings.M195);
+        var model = CreateBaseModel(Strings.Msg_AvailabilityTrend);
         var list = segments.Where(s => s.State >= 1 && s.State <= 3).ToList();
         if (list.Count == 0) return model;
 
-        model.Axes.Add(CreateDateTimeAxis(Strings.K037));
+        model.Axes.Add(CreateDateTimeAxis(Strings.Lbl_Time));
 
         var stateAxis = new LinearAxis
         {
-            Title = Strings.M045,
+            Title = Strings.Msg_Status,
             Position = AxisPosition.Left,
             Minimum = 0.5,
             Maximum = 3.5,
@@ -428,7 +428,7 @@ public static class ChartService
 
         var series = new RectangleBarSeries
         {
-            Title = Strings.M045,
+            Title = Strings.Msg_Status,
         };
 
         foreach (var (start, end, state) in list)
@@ -483,14 +483,14 @@ public static class ChartService
     public static PlotModel BuildAlarmChart(
         IEnumerable<(string AlarmName, int TriggerCount, double AvgDurationMin)> data)
     {
-        var model = CreateBaseModel(Strings.M196);
+        var model = CreateBaseModel(Strings.Msg_DefectDistribution);
         var list = data.ToList();
         if (list.Count == 0) return model;
 
         // CategoryAxis 放在 Y 轴（横向柱状图）
         var catAxis = new CategoryAxis
         {
-            Title = Strings.M197,
+            Title = Strings.Msg_ShiftOutputComparison,
             Position = AxisPosition.Left,
             TicklineColor = _gridColor,
             MajorGridlineStyle = LineStyle.None,
@@ -501,13 +501,13 @@ public static class ChartService
         };
         catAxis.Key = "alarmCat";
         model.Axes.Add(catAxis);
-        var alarmValAxis = CreateLinearAxis(Strings.M198, AxisPosition.Bottom, "F2");
+        var alarmValAxis = CreateLinearAxis(Strings.Msg_Count, AxisPosition.Bottom, "F2");
         alarmValAxis.Key = "alarmVal";
         model.Axes.Add(alarmValAxis);
 
         var countSeries = new BarSeries
         {
-            Title = Strings.M199,
+            Title = Strings.Msg_AlarmDurationRanking,
             FillColor = _alarmColor,
             StrokeColor = _alarmColor,
             XAxisKey = "alarmVal",
@@ -515,7 +515,7 @@ public static class ChartService
         };
         var durSeries = new BarSeries
         {
-            Title = Strings.M200,
+            Title = Strings.Msg_DowntimeAnalysis,
             FillColor = _pauseColor,
             StrokeColor = _pauseColor,
             XAxisKey = "alarmVal",
@@ -554,7 +554,7 @@ public static class ChartService
         DateTime? now = null,
         int? highlightedWorkOrderId = null)
     {
-        var model = CreateBaseModel(Strings.K901);
+        var model = CreateBaseModel(Strings.Lbl_WorkOrderSchedule);
         var current = now ?? DateTime.Now;
         var list = workOrders
             .Where(w => w.PlannedEnd > w.PlannedStart)
@@ -581,14 +581,14 @@ public static class ChartService
         if ((max - min).TotalHours < 1)
             max = min.AddHours(1);
 
-        var dateAxis = CreateDateTimeAxis(Strings.K902);
+        var dateAxis = CreateDateTimeAxis(Strings.Lbl_PlannedTime2);
         dateAxis.Minimum = DateTimeAxis.ToDouble(min);
         dateAxis.Maximum = DateTimeAxis.ToDouble(max);
         model.Axes.Add(dateAxis);
 
         var deviceAxis = new CategoryAxis
         {
-            Title = Strings.K903,
+            Title = Strings.Lbl_Device2,
             Position = AxisPosition.Left,
             TicklineColor = _gridColor,
             MajorGridlineStyle = LineStyle.None,
@@ -613,7 +613,7 @@ public static class ChartService
 
         var series = new RectangleBarSeries
         {
-            Title = Strings.K904,
+            Title = Strings.Lbl_WorkOrders,
             // 默认轴映射：第 0 个 X 轴 = 时间（Bottom），第 0 个 Y 轴 = 设备序号（Left）
             // RectangleBarItem(x0, y0, x1, y1)：x 走时间轴、y 走设备轴。
         };
@@ -678,7 +678,7 @@ public static class ChartService
             Color = OxyColor.FromRgb(0xF8, 0x71, 0x71),
             LineStyle = LineStyle.Dash,
             StrokeThickness = 1,
-            Text = Strings.K905,
+            Text = Strings.Lbl_Now,
             TextPosition = new DataPoint(DateTimeAxis.ToDouble(current), -0.5),
             TextVerticalAlignment = OxyPlot.VerticalAlignment.Top,
             TextHorizontalAlignment = OxyPlot.HorizontalAlignment.Center,
@@ -700,13 +700,13 @@ public static class ChartService
     /// </summary>
     public static PlotModel BuildOeeChart(double quality, double performance, double availability, double oee, double target = KpiThresholds.OeeGood)
     {
-        var model = CreateBaseModel(Strings.M201);
+        var model = CreateBaseModel(Strings.Msg_OEEMetrics);
 
-        var categoryAxis = CreateCategoryAxis("", new[] { Strings.M046, Strings.M047, Strings.M048, "OEE" });
+        var categoryAxis = CreateCategoryAxis("", new[] { Strings.Msg_CQualityRate, Strings.Msg_BPerformanceRate, Strings.Msg_TimeAvailability, "OEE" });
         categoryAxis.Key = "xCategory";
         model.Axes.Add(categoryAxis);
 
-        var valAxis = CreateLinearAxis(Strings.M202, AxisPosition.Left, "P2");
+        var valAxis = CreateLinearAxis(Strings.Msg_Percentage, AxisPosition.Left, "P2");
         valAxis.Key = "xValue";
         valAxis.Minimum = 0;
         valAxis.Maximum = 1;
@@ -714,7 +714,7 @@ public static class ChartService
 
         var series = new BarSeries
         {
-            Title = Strings.M203,
+            Title = Strings.Msg_Time,
             XAxisKey = "xValue",
             YAxisKey = "xCategory",
         };
@@ -727,7 +727,7 @@ public static class ChartService
         // 目标线（横向虚线，LineSeries 默认 X→X轴 Y→Y轴）
         var targetSeries = new LineSeries
         {
-            Title = string.Format(Strings.F171, target),
+            Title = string.Format(Strings.Prompt_Target2, target),
             Color = _alarmColor,
             StrokeThickness = 2,
             LineStyle = LineStyle.Dash,
@@ -748,11 +748,11 @@ public static class ChartService
     public static PlotModel BuildOeeTrendChart(
         IEnumerable<(DateTime ShiftTime, double Oee, string ShiftName)> data, double target = 0.85)
     {
-        var model = CreateBaseModel(Strings.M204);
+        var model = CreateBaseModel(Strings.Msg_DurationMin);
         var list = data.OrderBy(d => d.ShiftTime).ToList();
         if (list.Count == 0) return model;
 
-        model.Axes.Add(CreateDateTimeAxis(Strings.M205, "MM-dd HH:mm"));
+        model.Axes.Add(CreateDateTimeAxis(Strings.Msg_Device, "MM-dd HH:mm"));
         var yAxis = CreateLinearAxis("OEE", AxisPosition.Left, "P2");
         yAxis.Minimum = 0;
         yAxis.Maximum = 1;
@@ -793,7 +793,7 @@ public static class ChartService
         // 目标线
         var targetLine = new LineSeries
         {
-            Title = string.Format(Strings.F170, target),
+            Title = string.Format(Strings.Prompt_Target, target),
             Color = _alarmColor,
             StrokeThickness = 1.5,
             LineStyle = LineStyle.Dash,
@@ -811,7 +811,7 @@ public static class ChartService
     public static PlotModel BuildOeeShiftBarChart(
         IEnumerable<(string ShiftName, double Oee)> data)
     {
-        var model = CreateBaseModel(Strings.M206);
+        var model = CreateBaseModel(Strings.Msg_Output);
         var list = data.GroupBy(d => d.ShiftName)
             .Select(g => (ShiftName: g.Key, Oee: g.Average(d => d.Oee)))
             .OrderBy(d => d.ShiftName)
@@ -907,7 +907,7 @@ public static class ChartService
         {
             Position = AxisPosition.Left,
             IsAxisVisible = false,
-            ItemsSource = new[] { Strings.M045 },
+            ItemsSource = new[] { Strings.Msg_Status },
         };
         var valueAxis = new LinearAxis
         {
@@ -1020,7 +1020,7 @@ public static class ChartService
         if (total <= 0)
         {
             // 无数据占位：单个灰色扇区
-            series.Slices.Add(new PieSlice(Strings.M072, 1) { Fill = _idleColor });
+            series.Slices.Add(new PieSlice(Strings.Msg_NoData, 1) { Fill = _idleColor });
         }
         else
         {
@@ -1071,7 +1071,7 @@ public static class ChartService
 
         var series = new LineSeries
         {
-            Title = Strings.K084,
+            Title = Strings.Lbl_CQualityRate,
             Color = _runColor,
             StrokeThickness = 2.2,
             MarkerType = points.Count <= 24 ? MarkerType.Circle : MarkerType.None,
@@ -1184,7 +1184,7 @@ public static class ChartService
         {
             var okSeries = new RectangleBarSeries
             {
-                Title = Strings.M191,
+                Title = Strings.Msg_OKOutput,
                 FillColor = _okFill,
                 StrokeColor = OxyColors.Transparent,
                 TrackerFormatString = "{7}",
@@ -1204,7 +1204,7 @@ public static class ChartService
                 okSeries.Items.Add(new RectangleBarItem(x0, 0, x1, ok)
                 {
                     Color = _okFill,
-                    Title = $"{hour:HH:mm}\n{Strings.M191}: {ok:N0}",
+                    Title = $"{hour:HH:mm}\n{Strings.Msg_OKOutput}: {ok:N0}",
                 });
             }
             if (okSeries.Items.Count > 0)
@@ -1220,7 +1220,7 @@ public static class ChartService
         {
             var series = new LineSeries
             {
-                Title = Strings.K001,
+                Title = Strings.Lbl_QualityRate,
                 Color = _primaryColor,
                 StrokeThickness = 2.2,
                 MarkerType = segment.Count <= 24 ? MarkerType.Circle : MarkerType.None,
@@ -1265,7 +1265,7 @@ public static class ChartService
             var last = sampled[^1];
             var current = new ScatterSeries
             {
-                Title = Strings.K001,
+                Title = Strings.Lbl_QualityRate,
                 MarkerType = MarkerType.Circle,
                 MarkerSize = 4,
                 MarkerFill = _primaryColor,
@@ -1328,7 +1328,7 @@ public static class ChartService
 
         var okSeries = new BarSeries
         {
-            Title = Strings.M191,
+            Title = Strings.Msg_OKOutput,
             FillColor = _runColor,
             StrokeThickness = 0,
             XAxisKey = "hourVal",
@@ -1361,7 +1361,7 @@ public static class ChartService
         var model = CreateBaseModel();
 
         var catAxis = CreateCategoryAxisCustom("defectCat", list.Select(d => d.Name));
-        // X 轴无标题（缺陷名自解释；复盘页帕累托同口径）。⚠ 曾误设 Strings.M209（"报警次数"）——错配文案
+        // X 轴无标题（缺陷名自解释；复盘页帕累托同口径）。⚠ 曾误设 Strings.Msg_AlarmCount（"报警次数"）——错配文案
         catAxis.Angle = -30;
         model.Axes.Add(catAxis);
 
@@ -1374,7 +1374,7 @@ public static class ChartService
         // 右次轴：累计占比（0-100，与左轴数量独立刻度）
         var pctAxis = new LinearAxis
         {
-            Title = Strings.M271, // 累计占比（曾误用 M211"停机时长(分钟)"）
+            Title = Strings.Msg_CumulativeRatio, // 累计占比（曾误用 M211"停机时长(分钟)"）
             Position = AxisPosition.Right,
             Key = "defectPct",
             Minimum = 0,
@@ -1411,7 +1411,7 @@ public static class ChartService
         // 帕累托曲线：累计占比，X 用类别索引，Y 用百分比绑定右次轴
         var cumSeries = new LineSeries
         {
-            Title = Strings.M271, // 累计占比（曾误用 M211"停机时长(分钟)"）
+            Title = Strings.Msg_CumulativeRatio, // 累计占比（曾误用 M211"停机时长(分钟)"）
             Color = ChartPalette.Pause,
             StrokeThickness = 2,
             MarkerType = MarkerType.Circle,
@@ -1485,7 +1485,7 @@ public static class ChartService
 
         var pctAxis = new LinearAxis
         {
-            Title = Strings.M271,
+            Title = Strings.Msg_CumulativeRatio,
             Position = AxisPosition.Right,
             Key = "defectPct",
             Minimum = 0,
@@ -1518,7 +1518,7 @@ public static class ChartService
 
         var cumSeries = new LineSeries
         {
-            Title = Strings.M271,
+            Title = Strings.Msg_CumulativeRatio,
             Color = ChartPalette.Ok,
             StrokeThickness = 2,
             MarkerType = MarkerType.Circle,
@@ -1705,15 +1705,15 @@ public static class ChartService
     public static PlotModel BuildHourlyProductionBarChart(
         DateTime[] buckets, int[] okCounts, int[] ngCounts, int targetCycle = 0)
     {
-        var model = CreateBaseModel(Strings.M067);
+        var model = CreateBaseModel(Strings.Msg_HourlyOutput);
 
         var catLabels = buckets.Select(b => b.ToString("HH:mm")).ToList();
-        var catAxis = CreateCategoryAxis(Strings.K037, catLabels);
+        var catAxis = CreateCategoryAxis(Strings.Lbl_Time, catLabels);
         catAxis.Key = "hourCat";
         catAxis.Angle = -45;
         model.Axes.Add(catAxis);
 
-        var valAxis = CreateLinearAxis(Strings.M190, AxisPosition.Left, "F0");
+        var valAxis = CreateLinearAxis(Strings.Msg_OutputPcs, AxisPosition.Left, "F0");
         valAxis.Key = "hourVal";
         model.Axes.Add(valAxis);
 
@@ -1764,7 +1764,7 @@ public static class ChartService
                 Color = _secondaryColor,
                 LineStyle = LineStyle.Dash,
                 StrokeThickness = 2,
-                Text = string.Format(Strings.F172, targetCycle),
+                Text = string.Format(Strings.Prompt_TargetPcsH, targetCycle),
                 TextOrientation = AnnotationTextOrientation.Horizontal,
                 TextVerticalAlignment = VerticalAlignment.Top,
             });

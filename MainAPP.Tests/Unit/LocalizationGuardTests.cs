@@ -1,36 +1,31 @@
+using Kanban.Localization;
 using Kanban.Collector.Core.Localization;
 using Xunit;
 using System.Globalization;
 using System.IO;
-using System.Resources;
 using System.Text.RegularExpressions;
 
 namespace MainAPP.Tests.Unit;
 
 /// <summary>
 /// 多语言资源一致性守卫：CI 自动阻止 key 缺失、漏翻译、重复 key 合入。
-/// 涵盖：WPF 配置语言 Strings.resx、Strings.cs 强类型类、WEB L.cs 字典、
-/// Core ConnectionStatusMessages、以及非中文资源的中文残留检测。
+/// 涵盖：Localization.csv、生成的 LocalizationCatalog、屏端 L.T 调用，以及非中文资源的中文残留检测。
 /// </summary>
 [Trait("Category", "Unit")]
 [Trait("Speed", "Fast")]
 [Trait("Requires", "None")]
 public sealed class LocalizationGuardTests
 {
-    private static readonly ResourceManager Res = new("MainAPP.Resources.Strings", typeof(MainAPP.Resources.Strings).Assembly);
-
-    // ─── 辅助：解析 resx 为 {key: value} 字典 ───
-    private static Dictionary<string, string> ParseResx(string path)
+    private static string RepoPath(params string[] parts)
     {
-        var xml = File.ReadAllText(path);
-        var dict = new Dictionary<string, string>();
-        foreach (Match m in Regex.Matches(xml, @"<data name=""(\w+)""[^>]*>\s*<value>([^<]*)</value>", RegexOptions.Singleline))
-            dict[m.Groups[1].Value] = m.Groups[2].Value;
-        return dict;
+        var path = AppDomain.CurrentDomain.BaseDirectory;
+        foreach (var part in parts)
+            path = Path.Combine(path, part);
+        return path;
     }
 
-    private static string ResxPath(string fileName) =>
-        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../../MainAPP/Resources", fileName);
+    private static string CatalogPath() =>
+        RepoPath("..", "..", "..", "..", "Kanban.Localization", "LocalizationCatalog.cs");
 
     private static IReadOnlyList<string> ConfiguredLanguages()
     {
@@ -44,78 +39,44 @@ public sealed class LocalizationGuardTests
             .ToArray();
     }
 
-    private static string ResxFileName(string language)
-        => language switch
-        {
-            "zh-CN" => "Strings.resx",
-            "en-US" => "Strings.en.resx",
-            "ja-JP" => "Strings.ja.resx",
-            "pt-BR" => "Strings.pt-BR.resx",
-            _ => $"Strings.{language}.resx",
-        };
-
-    // ─── 测试 1：Strings.cs 所有 key 在配置语言 resx 中都存在 ───
-    [Fact]
-    public void All_StringsCs_Keys_Exist_In_All_Configured_Resx()
+    private static HashSet<string> WpfAccessorKeys()
     {
-        var csPath = ResxPath("Strings.cs");
-        var csText = File.ReadAllText(csPath);
-        var csKeys = Regex.Matches(csText, @"public static string \w+ => S\(""(\w+)"",")
+        var csText = File.ReadAllText(CatalogPath());
+        return Regex.Matches(csText, @"public static string \w+ => S\(""(\w+)""")
             .Select(m => m.Groups[1].Value)
             .ToHashSet();
-
-        foreach (var language in ConfiguredLanguages())
-        {
-            var resx = ParseResx(ResxPath(ResxFileName(language)));
-            var missing = csKeys.Where(key => !resx.ContainsKey(key)).ToList();
-            Assert.Empty(missing);
-        }
     }
 
-    // ─── 测试 2：配置语言 resx 中所有 key 都在 Strings.cs 中定义（防僵尸 key）───
     [Fact]
-    public void All_Configured_Resx_Keys_Defined_In_StringsCs()
+    public void WpfAccessors_Match_Catalog_Keys()
     {
-        var csText = File.ReadAllText(ResxPath("Strings.cs"));
-        var csKeys = Regex.Matches(csText, @"public static string \w+ => S\(""(\w+)""")
-            .Select(m => m.Groups[1].Value)
-            .ToHashSet();
-
-        // resx 系统 key (resmimetype/reader/writer/version) 是 VS 自动生成的，跳过
-        var systemKeys = new HashSet<string> { "resmimetype", "reader", "writer", "version" };
-
-        foreach (var language in ConfiguredLanguages())
-        {
-            var resx = ParseResx(ResxPath(ResxFileName(language)));
-            var extra = resx.Keys.Where(k => !csKeys.Contains(k) && !systemKeys.Contains(k)).ToList();
-            Assert.True(extra.Count == 0,
-                $"{language} resx has {extra.Count} keys NOT in Strings.cs: {string.Join(", ", extra)}");
-        }
+        var accessors = WpfAccessorKeys();
+        var catalogKeys = LocalizationCatalog.Keys("Wpf").ToHashSet();
+        Assert.Empty(accessors.Except(catalogKeys));
+        Assert.Empty(catalogKeys.Except(accessors));
     }
 
-    // ─── 测试 3：非中文资源不应出现中文残留（ja 的日文汉字属正常，单独跳过）。───
     [Fact]
-    public void NonCjk_Resx_Contain_No_Cjk_Characters()
+    public void NonCjk_Catalog_Values_Contain_No_Cjk_Characters()
     {
         foreach (var language in ConfiguredLanguages().Where(language =>
             !language.StartsWith("zh", StringComparison.OrdinalIgnoreCase)
             && !language.StartsWith("ja", StringComparison.OrdinalIgnoreCase)))
         {
-            var resx = ParseResx(ResxPath(ResxFileName(language)));
-            var leaks = resx
-                .Where(kv => Regex.IsMatch(kv.Value, @"[\u4e00-\u9fff]"))
-                .Select(kv => $"{kv.Key}: {kv.Value[..Math.Min(40, kv.Value.Length)]}")
+            var leaks = LocalizationCatalog.Keys("Wpf")
+                .Select(key => (key, value: LocalizationCatalog.Get("Wpf", key, language) ?? ""))
+                .Where(pair => Regex.IsMatch(pair.value, @"[\u4e00-\u9fff]"))
+                .Select(pair => $"{pair.key}: {pair.value[..Math.Min(40, pair.value.Length)]}")
                 .ToList();
             Assert.True(leaks.Count == 0,
-                $"{language} resx has {leaks.Count} CJK remnants: {string.Join(", ", leaks.Take(10))}");
+                $"{language} catalog has {leaks.Count} CJK remnants: {string.Join(", ", leaks.Take(10))}");
         }
     }
 
-    // ─── 测试 4：Strings.cs 无重复 key ───
     [Fact]
     public void StringsCs_Has_No_Duplicate_Keys()
     {
-        var csText = File.ReadAllText(ResxPath("Strings.cs"));
+        var csText = File.ReadAllText(CatalogPath());
         var allKeys = Regex.Matches(csText, @"public static string \w+ => S\(""(\w+)"",")
             .Select(m => m.Groups[1].Value);
 
@@ -128,22 +89,22 @@ public sealed class LocalizationGuardTests
     [Fact]
     public void All_Keys_Have_Consistent_Placeholder_Count_Across_Languages()
     {
-        var resources = ConfiguredLanguages()
-            .ToDictionary(language => language, language => ParseResx(ResxPath(ResxFileName(language))));
-        var baselineLanguage = ConfiguredLanguages().First();
-        var baseline = resources[baselineLanguage];
+        var languages = ConfiguredLanguages().ToArray();
+        var baselineLanguage = languages[0];
+        int CountPlaceholders(string s) => Regex.Matches(s, @"\{\d+").Count;
 
-        var fKeys = baseline.Keys.Where(k => k.StartsWith("F")).ToList();
-        Assert.True(fKeys.Count >= 40, $"Expected >=40 F-keys, found {fKeys.Count}");
-
-        foreach (var key in baseline.Keys)
+        foreach (var resource in new[] { "Wpf", "Core" })
         {
-            int CountPlaceholders(string s) => Regex.Matches(s, @"\{\d+").Count;
-            var baselineCount = CountPlaceholders(baseline[key]);
-            foreach (var (language, values) in resources)
+            foreach (var key in LocalizationCatalog.Keys(resource))
             {
-                Assert.True(values.TryGetValue(key, out var value), $"{language} is missing key '{key}'");
-                Assert.Equal(baselineCount, CountPlaceholders(value));
+                var baseline = LocalizationCatalog.Get(resource, key, baselineLanguage) ?? "";
+                var baselineCount = CountPlaceholders(baseline);
+                foreach (var language in languages)
+                {
+                    var value = LocalizationCatalog.Get(resource, key, language);
+                    Assert.False(value is null, $"{language} is missing {resource}/{key}");
+                    Assert.Equal(baselineCount, CountPlaceholders(value!));
+                }
             }
         }
     }
@@ -159,28 +120,22 @@ public sealed class LocalizationGuardTests
             Assert.Skip("Kanban.Web/Localization.cs 不存在（当前 runner 未带 WEB 目录）");
         }
 
-        var webText = File.ReadAllText(webPath);
-        // 匹配生成格式：["key"] = new[] { ... }
-        var webKeys = Regex.Matches(webText, @"\[""(\w+)""\]\s*=\s*new\[\]")
-            .Select(m => m.Groups[1].Value)
+        var webRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../../Kanban.Web");
+        var webKeys = Directory.EnumerateFiles(webRoot, "*.*", SearchOption.AllDirectories)
+            .Where(path => path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith(".razor", StringComparison.OrdinalIgnoreCase))
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")
+                && !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+            .SelectMany(path => Regex.Matches(File.ReadAllText(path), @"L\.T\(\s*""(\w+)""")
+                .Select(match => match.Groups[1].Value))
             .ToHashSet();
-
-        var csText = File.ReadAllText(ResxPath("Strings.cs"));
-        var wpfKeys = Regex.Matches(csText, @"public static string \w+ => S\(""(\w+)""")
-            .Select(m => m.Groups[1].Value)
-            .ToHashSet();
-
-        // 无特殊映射：Web key 命名与 WPF resx 完全一致（Web_ 前缀 key 去前缀 或 同名共享 key）。
-        // 统一生成器的 Web 共享键白名单已保证一致性，此处仅防漂移。
+        var wpfKeys = WpfAccessorKeys();
 
         var missing = new List<string>();
         foreach (var wk in webKeys)
         {
-            // 1. Web_ 前缀
             if (wpfKeys.Contains($"Web_{wk}")) continue;
-            // 2. 直接匹配
             if (wpfKeys.Contains(wk)) continue;
-            // 3. 未找到
             missing.Add($"{wk} (no WPF counterpart)");
         }
 
@@ -232,8 +187,8 @@ public sealed class LocalizationGuardTests
     {
         foreach (var language in ConfiguredLanguages())
         {
-            var value = Res.GetString("Status_Running", CultureInfo.GetCultureInfo(language));
-            Assert.False(string.IsNullOrWhiteSpace(value), $"ResourceManager 未加载语言 {language}");
+            var value = LocalizationCatalog.Get("Wpf", "Status_Running", language);
+            Assert.False(string.IsNullOrWhiteSpace(value), $"目录未加载语言 {language}");
         }
     }
 
@@ -391,18 +346,15 @@ public sealed class LocalizationGuardTests
     [Fact]
     public void Core_Messages_ResourceName_Follows_Assembly_Convention()
     {
-        var assembly = typeof(Kanban.Collector.Core.Localization.ValidationMessages).Assembly;
-        var rm = new ResourceManager("Kanban.Collector.Core.Resources.Messages", assembly);
-
-        // 属性名 == resx key 名（ValidationMessages 的约定）；断言每个配置语言可解析
         var properties = typeof(Kanban.Collector.Core.Localization.ValidationMessages)
             .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
         Assert.True(properties.Length >= 20, $"ValidationMessages 属性数异常: {properties.Length}");
 
-        foreach (var p in properties)
+        foreach (var property in properties)
         {
             foreach (var language in ConfiguredLanguages())
-                Assert.NotNull(rm.GetString(p.Name, CultureInfo.GetCultureInfo(language)));
+                Assert.False(string.IsNullOrWhiteSpace(LocalizationCatalog.Get("Core", property.Name, language)),
+                    $"Core 目录缺少 {language}/{property.Name}");
         }
     }
 

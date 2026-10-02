@@ -84,7 +84,7 @@ public partial class DeviceAlarmManagerViewModel : DeviceChildManagerViewModel
         if (!CanEditSelected()) return;
         if (SelectedDevice == null) return;
         // 报警名在所属设备内唯一
-        var baseName = string.Format(Strings.F127, SelectedDevice.Alarms.Count + 1);
+        var baseName = string.Format(Strings.Prompt_Alarm, SelectedDevice.Alarms.Count + 1);
         var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.Alarms.Select(a => a.Name));
         // 设置 DeviceId 使 OnPlcAddressChanged 能生成确定性 Id（DeviceId_PlcAddress），
         // 删除后重新添加同地址报警可续接历史数据
@@ -99,8 +99,8 @@ public partial class DeviceAlarmManagerViewModel : DeviceChildManagerViewModel
         if (!CanEditSelected()) return;
         if (alarm == null) return;
         var confirm = _dialog.Show(
-            string.Format(Strings.F501, alarm.Name),
-            Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            string.Format(Strings.Prompt_DeleteAlarmActionCannotUndone, alarm.Name),
+            Strings.Msg_ConfirmDelete, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
 
         if (SelectedAlarm == alarm) SelectedAlarm = null;
@@ -129,11 +129,11 @@ public partial class DeviceAlarmManagerViewModel : DeviceChildManagerViewModel
             if (string.IsNullOrEmpty(path)) return;
 
             var count = await Task.Run(() => _alarmCsvIO.ExportAlarmsToPath(device, path)).ConfigureAwait(true);
-            _dialog.NotifySuccess(string.Format(Strings.F107, count, Path.GetFileName(path)));
+            _dialog.NotifySuccess(string.Format(Strings.Prompt_ExportedAlarms, count, Path.GetFileName(path)));
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
         }
         finally
         {
@@ -169,20 +169,20 @@ public partial class DeviceAlarmManagerViewModel : DeviceChildManagerViewModel
 
             if (result.Imported.Count == 0)
             {
-                _dialog.NotifyError(string.Format(Strings.F143, string.Join("\n  · ", result.Errors)));
+                _dialog.NotifyError(string.Format(Strings.Prompt_NoAlarmsImported, string.Join("\n  · ", result.Errors)));
                 return;
             }
 
             // 阶段 3：UI 线程二次确认（让用户选择追加或替换）
             var existingCount = device.Alarms.Count;
             var msg = result.HasErrors
-                ? string.Format(Strings.F001, result.Imported.Count + result.Errors.Count, result.Errors.Count) +
-                  string.Format(Strings.F141, result.Imported.Count, existingCount) +
-                  Strings.F228
-                : string.Format(Strings.F091, result.Imported.Count, existingCount) +
-                  Strings.F228;
+                ? string.Format(Strings.Prompt_CSVHasRowsTotalRowsFailed, result.Imported.Count + result.Errors.Count, result.Errors.Count) +
+                  string.Format(Strings.Prompt_AlarmsImportedCurrentDeviceExisting2, result.Imported.Count, existingCount) +
+                  Strings.Prompt_ChooseImportModeYesReplaceClear
+                : string.Format(Strings.Prompt_AlarmsImportedCurrentDeviceExisting, result.Imported.Count, existingCount) +
+                  Strings.Prompt_ChooseImportModeYesReplaceClear;
 
-            var choice = _dialog.Show(msg, Strings.M120, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+            var choice = _dialog.Show(msg, Strings.Msg_ConfirmImportAlarms, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
             if (choice == MessageBoxResult.Cancel) return;
 
             var replace = choice == MessageBoxResult.Yes;
@@ -195,13 +195,13 @@ public partial class DeviceAlarmManagerViewModel : DeviceChildManagerViewModel
             if (result.HasErrors)
             {
                 _dialog.NotifyWarning(
-                    string.Format(Strings.F102, result.Imported.Count, result.Errors.Count) +
-                    string.Format(Strings.F086, string.Join("\n  · ", result.Errors.Take(5))) +
-                    (result.Errors.Count > 5 ? string.Format(Strings.F020, result.Errors.Count) : ""));
+                    string.Format(Strings.Prompt_AlarmsImportedRowsSkipped, result.Imported.Count, result.Errors.Count) +
+                    string.Format(Strings.Prompt_FailedDetails, string.Join("\n  · ", result.Errors.Take(5))) +
+                    (result.Errors.Count > 5 ? string.Format(Strings.Prompt_Total, result.Errors.Count) : ""));
             }
             else
             {
-                _dialog.NotifySuccess(string.Format(Strings.F103, result.Imported.Count));
+                _dialog.NotifySuccess(string.Format(Strings.Prompt_AlarmsImportedClickSavePersist, result.Imported.Count));
             }
         }
         finally

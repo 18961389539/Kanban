@@ -18,7 +18,7 @@ namespace MainAPP.Services;
 public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog, ILogger<RecipeJsonIOService> logger)
 {
     // 文件对话框过滤器（本地化资源：JSON 文件|*.json|所有文件|*.*）
-    private static string RecipeFileFilter => Strings.K695;
+    private static string RecipeFileFilter => Strings.Lbl_JSONFilesJsonAllFiles;
 
     private readonly IRecipeStore _recipeStore = recipeStore;
     private readonly IDialogService _dialog = dialog;
@@ -35,26 +35,26 @@ public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog
     {
         if (_recipeStore.Recipes.Count == 0)
         {
-            _dialog.NotifyWarning(Strings.K693);
+            _dialog.NotifyWarning(Strings.Lbl_NoRecipesExport);
             return false;
         }
-        var path = _dialog.ShowSaveFileDialog(Strings.K690, "recipes.json", RecipeFileFilter);
+        var path = _dialog.ShowSaveFileDialog(Strings.Lbl_ExportRecipes, "recipes.json", RecipeFileFilter);
         if (string.IsNullOrEmpty(path)) return false;
         try
         {
             // 与 RecipeManagerViewModel.RefreshRecipes 同模式：UI 线程直接读绑定集合
             var snapshot = _recipeStore.Recipes.ToList();
             var json = JsonSerializer.Serialize(snapshot, JsonOptions);
-            AppSettings.WriteFileAtomically(path, json);
+            AtomicFileWriter.Write(path, json);
             AuditLog.Record("Recipe.Export", "Recipe", Path.GetFileName(path), detail: string.Format(Strings.Audit_Detail_RecipeExport, snapshot.Count));
-            _dialog.NotifySuccess(string.Format(Strings.F319, snapshot.Count));
+            _dialog.NotifySuccess(string.Format(Strings.Prompt_ExportedRecipes, snapshot.Count));
             _logger.LogInformation("配方已导出：{Count} 条 → {Path}", snapshot.Count, path);
             return true;
         }
         catch (Exception ex)
         {
             AuditLog.Record("Recipe.Export", "Recipe", Path.GetFileName(path), succeeded: false, detail: ex.Message);
-            _dialog.NotifyError(string.Format(Strings.F320, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed2, ex.Message));
             _logger.LogError(ex, "配方导出失败");
             return false;
         }
@@ -63,7 +63,7 @@ public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog
     /// <summary>从用户选择的 JSON 文件导入配方（合并 by Id）。返回成功导入条数；取消/失败/全部被跳过 = 0。</summary>
     public async Task<int> ImportRecipesAsync()
     {
-        var path = _dialog.ShowOpenFileDialog(Strings.K691, RecipeFileFilter);
+        var path = _dialog.ShowOpenFileDialog(Strings.Lbl_ImportRecipes, RecipeFileFilter);
         if (string.IsNullOrEmpty(path)) return 0;
 
         List<Recipe> imported;
@@ -75,14 +75,14 @@ public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog
         catch (Exception ex)
         {
             AuditLog.Record("Recipe.Import", "Recipe", Path.GetFileName(path), succeeded: false, detail: ex.Message);
-            _dialog.NotifyError(string.Format(Strings.F321, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ImportFailed, ex.Message));
             _logger.LogError(ex, "配方导入文件解析失败：{Path}", path);
             return 0;
         }
 
         if (imported.Count == 0)
         {
-            _dialog.NotifyWarning(Strings.K693);
+            _dialog.NotifyWarning(Strings.Lbl_NoRecipesExport);
             return 0;
         }
 
@@ -127,12 +127,12 @@ public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog
 
         if (valid.Count == 0)
         {
-            _dialog.NotifyWarning(string.Format(Strings.F322, imported.Count));
+            _dialog.NotifyWarning(string.Format(Strings.Prompt_AllRecipesFileFailedValidationInvalid, imported.Count));
             return 0;
         }
 
-        var confirm = _dialog.Show(string.Format(Strings.F317, valid.Count, skipped),
-            Strings.K691, MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var confirm = _dialog.Show(string.Format(Strings.Prompt_RecipesImportedSkippedFailingValidationContinue, valid.Count, skipped),
+            Strings.Lbl_ImportRecipes, MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes) return 0;
 
         // 批量合并：保留本地全部配方，按 Id 覆盖/追加导入项；一次 ReplaceAll 触发一次集合刷新，避免逐条 Upsert O(n²)
@@ -159,7 +159,7 @@ public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog
             throw;
         }
         _logger.LogInformation("配方导入完成：{Imported} 条（跳过 {Skipped} 条），来源 {Path}", valid.Count, skipped, path);
-        _dialog.NotifySuccess(string.Format(Strings.F318, valid.Count, skipped));
+        _dialog.NotifySuccess(string.Format(Strings.Prompt_ImportedRecipesSkipped, valid.Count, skipped));
         return valid.Count;
     }
 }

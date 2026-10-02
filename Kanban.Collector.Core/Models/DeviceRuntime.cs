@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.ComponentModel;
 using Kanban.Collector.Core.Services;
 using OfflineCauseKind = Kanban.Contracts.Enums.OfflineCause;
 
@@ -28,52 +28,91 @@ public partial class DeviceRuntime : ObservableObject
 
     // ──────────── PLC 原始值 ────────────
 
-    [ObservableProperty]
     private int _okProduction;
 
-    [ObservableProperty]
+    public int OkProduction
+    {
+        get => _okProduction;
+    set => SetProperty(ref _okProduction, value);
+    }
+
     private int _ngProduction;
 
-    [ObservableProperty]
+    public int NgProduction
+    {
+        get => _ngProduction;
+    set => SetProperty(ref _ngProduction, value);
+    }
+
     private int _statusWord;
+
+    public int StatusWord
+    {
+        get => _statusWord;
+    set => SetProperty(ref _statusWord, value);
+    }
+
+    private OfflineCauseKind _offlineCause;
 
     /// <summary>
     /// 当前离线原因。StatusWord 非 0 时为 <see cref="OfflineCauseKind.None"/>。
     /// </summary>
-    [ObservableProperty]
-    private OfflineCauseKind _offlineCause;
+    public OfflineCauseKind OfflineCause
+    {
+        get => _offlineCause;
+    set => SetProperty(ref _offlineCause, value);
+    }
 
     // ──────────── 会话累计值 ────────────
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(QualityRate))]
-    [NotifyPropertyChangedFor(nameof(PerformanceRate))]
-    [NotifyPropertyChangedFor(nameof(Oee))]
     private int _totalOkProduction;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(QualityRate))]
-    [NotifyPropertyChangedFor(nameof(PerformanceRate))]
-    [NotifyPropertyChangedFor(nameof(Oee))]
+    public int TotalOkProduction
+    {
+        get => _totalOkProduction;
+    set => SetProperty(ref _totalOkProduction, value, [nameof(QualityRate), nameof(PerformanceRate), nameof(Oee)]);
+    }
+
     private int _totalNgProduction;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(AvailabilityRate))]
-    [NotifyPropertyChangedFor(nameof(PerformanceRate))]
-    [NotifyPropertyChangedFor(nameof(Oee))]
+    public int TotalNgProduction
+    {
+        get => _totalNgProduction;
+    set => SetProperty(ref _totalNgProduction, value, [nameof(QualityRate), nameof(PerformanceRate), nameof(Oee)]);
+    }
+
     private double _runTime;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(AvailabilityRate))]
-    [NotifyPropertyChangedFor(nameof(Oee))]
+    public double RunTime
+    {
+        get => _runTime;
+    set => SetProperty(ref _runTime, value, [nameof(AvailabilityRate), nameof(PerformanceRate), nameof(Oee)]);
+    }
+
     private double _alarmTime;
 
-    [ObservableProperty]
+    public double AlarmTime
+    {
+        get => _alarmTime;
+    set => SetProperty(ref _alarmTime, value, [nameof(AvailabilityRate), nameof(Oee)]);
+    }
+
     private double _pausedTime;
 
-    /// <summary>离线累计时长（秒）。不计入 OEE 可用率/性能率，仅作统计展示。</summary>
-    [ObservableProperty]
+    public double PausedTime
+    {
+        get => _pausedTime;
+    set => SetProperty(ref _pausedTime, value);
+    }
+
     private double _offlineTime;
+
+    /// <summary>离线累计时长（秒）。不计入 OEE 可用率/性能率，仅作统计展示。</summary>
+    public double OfflineTime
+    {
+        get => _offlineTime;
+    set => SetProperty(ref _offlineTime, value);
+    }
 
     // ──────────── OEE 计算属性 ────────────
     // 单源约定：OEE 公式只在 OeeCalculator 实现一处（含内存注释引用 memory/project_memory.md）。

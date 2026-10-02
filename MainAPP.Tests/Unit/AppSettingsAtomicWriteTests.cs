@@ -5,7 +5,7 @@ using System.IO;
 namespace MainAPP.Tests.Unit;
 
 /// <summary>
-/// WriteFileAtomically 备份失败容错回归测试。
+/// AtomicFileWriter 备份失败容错回归测试。
 /// 背景：登录时 users.json 的 .bak 备份目标被占用/只读/安全软件短暂锁定，
 /// File.Copy 抛 UnauthorizedAccessException（与 IOException 平级、非其子类），
 /// 旧实现只 catch IOException，异常冒泡到 UI 线程导致 MainAPP 进程崩溃退出（Event ID 1026）。
@@ -35,7 +35,7 @@ public class AppSettingsAtomicWriteTests
         File.SetAttributes(bak, FileAttributes.ReadOnly);
         try
         {
-            AppSettings.WriteFileAtomically(target, "v2");
+            AtomicFileWriter.Write(target, "v2");
         }
         finally
         {
@@ -57,7 +57,7 @@ public class AppSettingsAtomicWriteTests
 
         using (new FileStream(bak, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
         {
-            AppSettings.WriteFileAtomically(target, "v2");
+            AtomicFileWriter.Write(target, "v2");
         }
 
         Assert.Equal("v2", File.ReadAllText(target));

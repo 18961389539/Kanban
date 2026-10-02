@@ -15,7 +15,7 @@
     Loaded="OnLoaded"
     PreviewKeyDown="OnPreviewKeyDown"
     IsVisibleChanged="OnIsVisibleChanged"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.Resources>
         <!--  ObjectDataProvider（AlarmLevelValues/DefectSeverityValues/DefectCategoryValues）
               已移至各 Tab 子 UserControl 的本地 Resources，避免重复定义。  -->
@@ -57,7 +57,7 @@
                     <TextBlock
                         Margin="8,0,0,0"
                         Style="{StaticResource SectionTitleText}"
-                        Text="{x:Static resources:Strings.K064}" />
+                        Text="{x:Static resources:Strings.Lbl_DeviceList}" />
                     <controls:PageHelpButton Margin="8,0,0,0" PageKey="device-manager" />
                     <TextBlock
                         Margin="6,0,0,0"
@@ -71,11 +71,11 @@
                         Margin="8,0,0,0"
                         Padding="10,5"
                         VerticalAlignment="Center"
-                        AutomationProperties.Name="{x:Static resources:Strings.K726}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_Validate}"
                         Command="{Binding ValidateAllDevicesCommand}"
-                        Content="{x:Static resources:Strings.K726}"
+                        Content="{x:Static resources:Strings.Lbl_Validate}"
                         Style="{StaticResource ButtonDefault}"
-                        ToolTip="{x:Static resources:Strings.K726}"
+                        ToolTip="{x:Static resources:Strings.Lbl_Validate}"
                         ToolTipService.ShowOnDisabled="True" />
                     <!--  导出所选设备 JSON（单机备份）  -->
                     <Button
@@ -83,11 +83,11 @@
                         Margin="8,0,0,0"
                         Padding="6"
                         VerticalAlignment="Center"
-                        AutomationProperties.Name="{x:Static resources:Strings.K728}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_ExportSelectedDevice}"
                         Command="{Binding ExportDeviceCommand}"
                         Style="{StaticResource ButtonDefault}"
                         Tag="{x:Static mi:MaterialIconKind.ExportVariant}"
-                        ToolTip="{x:Static resources:Strings.K728}"
+                        ToolTip="{x:Static resources:Strings.Lbl_ExportSelectedDevice}"
                         ToolTipService.ShowOnDisabled="True" />
                     <!--  导入设备配置 JSON  -->
                     <Button
@@ -95,11 +95,11 @@
                         Margin="8,0,0,0"
                         Padding="6"
                         VerticalAlignment="Center"
-                        AutomationProperties.Name="{x:Static resources:Strings.K729}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_ImportDeviceConfig2}"
                         Command="{Binding ImportDeviceCommand}"
                         Style="{StaticResource ButtonDefault}"
                         Tag="{x:Static mi:MaterialIconKind.Import}"
-                        ToolTip="{x:Static resources:Strings.K729}"
+                        ToolTip="{x:Static resources:Strings.Lbl_ImportDeviceConfig2}"
                         ToolTipService.ShowOnDisabled="True" />
                     <TextBlock
                         DockPanel.Dock="Right"
@@ -108,7 +108,7 @@
                         FontSize="{DynamicResource FontSizeHint}"
                         FontWeight="Bold"
                         Foreground="{StaticResource WarningBrush}"
-                        Text="{x:Static resources:Strings.K222}"
+                        Text="{x:Static resources:Strings.Lbl_Unsaved}"
                         Visibility="{Binding IsDirty, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <materialIcons:MaterialIcon
                         DockPanel.Dock="Right"
@@ -125,7 +125,7 @@
                     x:Name="DeviceSearchBar"
                     Grid.Row="1"
                     Margin="18,0,18,10"
-                    AutomationProperties.Name="{x:Static resources:Strings.K223}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_SearchDevice}"
                     Style="{StaticResource SearchBarExtend}"
                     Text="{Binding DeviceList.SearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -135,9 +135,9 @@
                         <hc:ComboBox
                             DockPanel.Dock="Left"
                             Width="150"
-                            AutomationProperties.Name="{x:Static resources:Strings.K224}"
-                            hc:InfoElement.Placeholder="{x:Static resources:Strings.K225}"
-                            hc:InfoElement.Title="{x:Static resources:Strings.K003}"
+                            AutomationProperties.Name="{x:Static resources:Strings.Lbl_FilterDevicesStatus}"
+                            hc:InfoElement.Placeholder="{x:Static resources:Strings.Lbl_StatusFilter}"
+                            hc:InfoElement.Title="{x:Static resources:Strings.Lbl_Status}"
                             DisplayMemberPath="Label"
                             ItemsSource="{Binding DeviceList.StatusFilterOptions}"
                             SelectedValue="{Binding DeviceList.StatusFilter}"
@@ -164,7 +164,7 @@
                     Grid.Row="3"
                     Margin="18,0,18,8"
                     AllowDrop="True"
-                    AutomationProperties.Name="{x:Static resources:Strings.K064}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_DeviceList}"
                     DragOver="OnListDragOver"
                     Drop="OnListDrop"
                     ItemContainerStyle="{StaticResource CardListItemStyle}"
@@ -236,7 +236,7 @@
                                         Padding="0"
                                         MinWidth="32"
                                         MinHeight="32"
-                                        AutomationProperties.Name="{x:Static resources:Strings.K226}"
+                                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_AddressConflictClickLocate}"
                                         Command="{Binding DataContext.SelectAddressConflictCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"
                                         Background="Transparent"
@@ -284,7 +284,7 @@
                         </Border.Style>
                         <controls:EmptyState
                             IconKind="ServerOutline"
-                            Message="{x:Static resources:Strings.K416}"
+                            Message="{x:Static resources:Strings.Lbl_NoDevices}"
                             Hint="{x:Static resources:Strings.Dsm_NoDevicesHint}" />
                     </Border>
                     <Border Visibility="Collapsed">
@@ -302,7 +302,7 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <controls:EmptyState IconKind="FilterRemoveOutline" Message="{x:Static resources:Strings.K227}" Hint="{x:Static resources:Strings.K228}" />
+                        <controls:EmptyState IconKind="FilterRemoveOutline" Message="{x:Static resources:Strings.Lbl_NoMatchingDevice}" Hint="{x:Static resources:Strings.Lbl_HintAdjustKeywordStatusFilter}" />
                     </Border>
                 </Grid>
 
@@ -313,79 +313,79 @@
                     Orientation="Horizontal">
                     <Button
                         Margin="0,0,6,0"
-                        AutomationProperties.Name="{x:Static resources:Strings.K229}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_AddDevice}"
                         Command="{Binding AddDeviceCommand}"
-                        Content="{x:Static resources:Strings.K033}"
+                        Content="{x:Static resources:Strings.Lbl_Add}"
                         Style="{StaticResource IconButtonPrimary}"
                         Tag="{x:Static mi:MaterialIconKind.Plus}" />
                     <Button
                         Margin="0,0,6,0"
-                        AutomationProperties.Name="{x:Static resources:Strings.K230}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_DeleteSelectedDevice}"
                         Command="{Binding RemoveDeviceCommand}"
                         CommandParameter="{Binding SelectedDevice}"
-                        Content="{x:Static resources:Strings.K034}"
+                        Content="{x:Static resources:Strings.Lbl_Delete}"
                         Style="{StaticResource IconButtonDanger}"
                         Tag="{x:Static mi:MaterialIconKind.Delete}" />
                     <Button
                         Margin="0,0,6,0"
-                        AutomationProperties.Name="{x:Static resources:Strings.K231}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_SaveDeviceConfig}"
                         Command="{Binding SaveCommand}"
-                        Content="{x:Static resources:Strings.K232}"
+                        Content="{x:Static resources:Strings.Lbl_Save}"
                         Style="{StaticResource IconButtonSuccess}"
                         Tag="{x:Static mi:MaterialIconKind.ContentSave}"
-                        ToolTip="{x:Static resources:Strings.K233}" />
+                        ToolTip="{x:Static resources:Strings.Lbl_SaveDeviceConfigCtrlS}" />
                     <!--  更多：复制 / 导入 / 导出 / 恢复 / 虚拟（低频操作收进下拉菜单）  -->
                     <Button
                         x:Name="MoreActionsButton"
-                        AutomationProperties.Name="{x:Static resources:Strings.K234}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_MoreDeviceActions}"
                         Click="OnMoreActionsClick"
-                        Content="{x:Static resources:Strings.K235}"
+                        Content="{x:Static resources:Strings.Lbl_More}"
                         Style="{StaticResource IconButtonDefault}"
                         Tag="{x:Static mi:MaterialIconKind.DotsHorizontal}"
-                        ToolTip="{x:Static resources:Strings.K236}">
+                        ToolTip="{x:Static resources:Strings.Lbl_CopyImportExportRestoreVirtual}">
                         <Button.ContextMenu>
                             <ContextMenu>
                                 <MenuItem
-                                    AutomationProperties.Name="{x:Static resources:Strings.K237}"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_CopySelectedDevice}"
                                     Command="{Binding CopyDeviceCommand}"
                                     CommandParameter="{Binding SelectedDevice}"
-                                    Header="{x:Static resources:Strings.K238}">
+                                    Header="{x:Static resources:Strings.Lbl_CopySelectedDevice2}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="ContentCopy" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <Separator />
                                 <MenuItem
-                                    AutomationProperties.Name="{x:Static resources:Strings.K239}"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ImportDeviceConfig}"
                                     Command="{Binding ImportConfigCommand}"
-                                    Header="{x:Static resources:Strings.K240}">
+                                    Header="{x:Static resources:Strings.Lbl_ImportConfig}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="Import" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem
-                                    AutomationProperties.Name="{x:Static resources:Strings.K241}"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ExportDeviceConfig}"
                                     Command="{Binding ExportConfigCommand}"
-                                    Header="{x:Static resources:Strings.K242}">
+                                    Header="{x:Static resources:Strings.Lbl_ExportConfig}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="Export" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <Separator />
                                 <MenuItem
-                                    AutomationProperties.Name="{x:Static resources:Strings.K243}"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_RestorePreviousConfig}"
                                     Command="{Binding RollbackToBackupCommand}"
-                                    Header="{x:Static resources:Strings.K244}"
-                                    ToolTip="{x:Static resources:Strings.K245}">
+                                    Header="{x:Static resources:Strings.Lbl_RestorePrevious}"
+                                    ToolTip="{x:Static resources:Strings.Lbl_OverwriteLastSavedConfigPasswordRequired}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="History" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem
-                                    AutomationProperties.Name="{x:Static resources:Strings.K065}"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_GenerateVirtualDevices}"
                                     Command="{Binding SeedSampleDevicesCommand}"
-                                    Header="{x:Static resources:Strings.K065}"
-                                    ToolTip="{x:Static resources:Strings.K246}">
+                                    Header="{x:Static resources:Strings.Lbl_GenerateVirtualDevices}"
+                                    ToolTip="{x:Static resources:Strings.Lbl_Generate20VirtualDevicesPreviewPassword}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="ToyBrickPlus" />
                                     </MenuItem.Icon>
@@ -408,7 +408,7 @@
             Cursor="SizeWE"
             ResizeBehavior="PreviousAndNext"
             ResizeDirection="Columns"
-            AutomationProperties.Name="{x:Static resources:Strings.K247}">
+            AutomationProperties.Name="{x:Static resources:Strings.Lbl_AdjustWidthDeviceListDetail}">
             <GridSplitter.Template>
                 <ControlTemplate TargetType="GridSplitter">
                     <Grid Background="Transparent">
@@ -442,7 +442,7 @@
 
                 <!--  详情标题：设备名 + 实时状态徽章（切设备时同步刷新，避免改错设备）  -->
                 <DockPanel Grid.Row="0" Margin="24,18,24,12">
-                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K066}" />
+                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_DeviceDetail}" />
                     <!--  当前编辑设备名（突出显示，区别于"设备详情"固定标题）  -->
                     <StackPanel
                         Margin="12,0,0,0"
@@ -490,9 +490,9 @@
                 <Grid Grid.Row="1">
                     <!--  空状态  -->
                     <controls:EmptyState
-                        Hint="{x:Static resources:Strings.K248}"
+                        Hint="{x:Static resources:Strings.Lbl_SelectDeviceEditParametersPLCAddresses}"
                         IconKind="Harddisk"
-                        Message="{x:Static resources:Strings.K249}">
+                        Message="{x:Static resources:Strings.Lbl_SelectDeviceClickAdd}">
                         <controls:EmptyState.Style>
                             <Style TargetType="controls:EmptyState">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -510,13 +510,13 @@
                         <TabControl
                             Style="{StaticResource KanbanTabControl}"
                             Padding="0"
-                            AutomationProperties.Name="{x:Static resources:Strings.K250}"
+                            AutomationProperties.Name="{x:Static resources:Strings.Lbl_DeviceDetailTabs}"
                             BorderThickness="0"
                             SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}"
                             SelectionChanged="OnTabSelectionChanged">
 
                             <!--  ============ Tab 1：设备参数 ============  -->
-                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K067}">
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.Lbl_DeviceParameters}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon
@@ -527,14 +527,14 @@
                                         <TextBlock
                                             Margin="6,0,0,0"
                                             VerticalAlignment="Center"
-                                            Text="{x:Static resources:Strings.K067}" />
+                                            Text="{x:Static resources:Strings.Lbl_DeviceParameters}" />
                                     </StackPanel>
                                 </TabItem.Header>
                                 <views:DeviceManagerDeviceParamsTab />
                             </TabItem>
 
                             <!--  ============ Tab 2：报警管理 ============  -->
-                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K068}">
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.Lbl_AlarmManagement}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon
@@ -545,14 +545,14 @@
                                         <TextBlock
                                             Margin="6,0,0,0"
                                             VerticalAlignment="Center"
-                                            Text="{x:Static resources:Strings.K068}" />
+                                            Text="{x:Static resources:Strings.Lbl_AlarmManagement}" />
                                     </StackPanel>
                                 </TabItem.Header>
                                 <views:DeviceManagerAlarmsTab DataContext="{Binding AlarmManagerVm}" />
                             </TabItem>
 
                             <!--  ============ Tab 3：缺陷管理 ============  -->
-                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K069}">
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.Lbl_DefectManagement}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon
@@ -563,14 +563,14 @@
                                         <TextBlock
                                             Margin="6,0,0,0"
                                             VerticalAlignment="Center"
-                                            Text="{x:Static resources:Strings.K069}" />
+                                            Text="{x:Static resources:Strings.Lbl_DefectManagement}" />
                                     </StackPanel>
                                 </TabItem.Header>
                                 <views:DeviceManagerDefectsTab DataContext="{Binding DefectManagerVm}" />
                             </TabItem>
 
                             <!--  ============ Tab 4：计数报警 ============  -->
-                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K070}">
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.Lbl_CounterAlarm}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon
@@ -581,7 +581,7 @@
                                         <TextBlock
                                             Margin="6,0,0,0"
                                             VerticalAlignment="Center"
-                                            Text="{x:Static resources:Strings.K070}" />
+                                            Text="{x:Static resources:Strings.Lbl_CounterAlarm}" />
                                     </StackPanel>
                                 </TabItem.Header>
                                 <views:DeviceManagerCounterAlarmsTab DataContext="{Binding CounterAlarmManagerVm}" />
@@ -606,7 +606,7 @@
                             </TabItem>
 
                             <!--  ============ Tab 6：工单 ============  -->
-                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K071}">
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.Lbl_WorkOrder}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon
@@ -617,7 +617,7 @@
                                         <TextBlock
                                             Margin="6,0,0,0"
                                             VerticalAlignment="Center"
-                                            Text="{x:Static resources:Strings.K071}" />
+                                            Text="{x:Static resources:Strings.Lbl_WorkOrder}" />
                                     </StackPanel>
                                 </TabItem.Header>
                                 <views:DeviceManagerWorkOrdersTab DataContext="{Binding WorkOrders}" />
@@ -631,7 +631,7 @@
         <!--  加载中覆盖层：PLC 写入（配方 / 清空计数报警当前值）期间显示  -->
         <Border
             Grid.ColumnSpan="3"
-            AutomationProperties.Name="{x:Static resources:Strings.K251}"
+            AutomationProperties.Name="{x:Static resources:Strings.Lbl_Loading}"
             Style="{StaticResource LoadingOverlay}"
             Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <hc:LoadingCircle

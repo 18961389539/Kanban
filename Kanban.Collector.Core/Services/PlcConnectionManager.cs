@@ -1,6 +1,6 @@
 using System;
 using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.ComponentModel;
 using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Models;
 using Serilog;
@@ -115,17 +115,27 @@ public partial class PlcConnectionManager : ObservableObject, IPlcConnectionMana
             BaseCooldown.TotalSeconds * Math.Pow(2, _consecutiveFailures),
             MaxCooldown.TotalSeconds));
 
+    private bool _isConnected;
+
     /// <summary>
     /// 是否已建立连接
     /// </summary>
-    [ObservableProperty]
-    private bool _isConnected;
+    public bool IsConnected
+    {
+        get => _isConnected;
+    set => SetProperty(ref _isConnected, value);
+    }
+
+    private string _connectionStatus = "未连接";
 
     /// <summary>
     /// 连接状态文本（可绑定到 UI）
     /// </summary>
-    [ObservableProperty]
-    private string _connectionStatus = "未连接";
+    public string ConnectionStatus
+    {
+        get => _connectionStatus;
+    set => SetProperty(ref _connectionStatus, value);
+    }
 
     public PlcConnectionManager(
         IPlcDriver driver,

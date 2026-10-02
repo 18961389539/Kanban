@@ -30,7 +30,7 @@ public partial class ApplicationRuntime : ObservableObject, IApplicationRuntime
     private ApplicationRuntimeState _state = ApplicationRuntimeState.Starting;
 
     [ObservableProperty]
-    private string _statusMessage = Strings.M133;
+    private string _statusMessage = Strings.Msg_Starting;
 
     [ObservableProperty]
     private bool _isDatabaseReady;
@@ -50,6 +50,6 @@ public partial class ApplicationRuntime : ObservableObject, IApplicationRuntime
     public void SetFailure(Exception exception)
     {
         StartupError = exception.Message;
-        SetState(ApplicationRuntimeState.Failed, Strings.M130);
+        SetState(ApplicationRuntimeState.Failed, Strings.Msg_StartupFailed);
     }
 }

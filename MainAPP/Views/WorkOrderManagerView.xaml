@@ -14,7 +14,7 @@
     d:DesignWidth="1100"
     PreviewKeyDown="OnPreviewKeyDown"
     IsVisibleChanged="OnIsVisibleChanged"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.InputBindings>
         <!--  F5：刷新全部可见工单产量（与总览/报警/运行监控等页一致）  -->
         <KeyBinding Key="F5" Command="{Binding RefreshAllProductionCommand}" />
@@ -26,18 +26,18 @@
               code-behind 在 PreviewMouseRightButtonDown 先选中右键行，保证菜单操作的是该行。 -->
         <ContextMenu x:Key="WorkOrderRowContextMenu">
             <MenuItem Command="{Binding PlacementTarget.DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      Header="{x:Static resources:Strings.K072}" />
+                      Header="{x:Static resources:Strings.Lbl_Edit}" />
             <MenuItem Command="{Binding PlacementTarget.DataContext.StartCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      Header="{x:Static resources:Strings.K036}" />
+                      Header="{x:Static resources:Strings.Lbl_Start}" />
             <MenuItem Command="{Binding PlacementTarget.DataContext.CompleteCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      Header="{x:Static resources:Strings.K076}" />
+                      Header="{x:Static resources:Strings.Lbl_Complete}" />
             <MenuItem Command="{Binding PlacementTarget.DataContext.AbortCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      Header="{x:Static resources:Strings.K077}" />
+                      Header="{x:Static resources:Strings.Lbl_Abort}" />
             <Separator />
             <MenuItem Command="{Binding PlacementTarget.DataContext.CopyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      Header="{x:Static resources:Strings.K026}" />
+                      Header="{x:Static resources:Strings.Lbl_Copy}" />
             <MenuItem Command="{Binding PlacementTarget.DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      Header="{x:Static resources:Strings.K034}" />
+                      Header="{x:Static resources:Strings.Lbl_Delete}" />
         </ContextMenu>
     </UserControl.Resources>
 
@@ -64,7 +64,7 @@
                 <!--  标题  -->
                 <DockPanel Grid.Row="0" Margin="18,18,18,10">
                     <materialIcons:MaterialIcon Kind="ClipboardListOutline" Style="{StaticResource SectionTitleIcon}" />
-                    <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K554}" />
+                    <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Lbl_WorkOrderList}" />
                     <controls:PageHelpButton Margin="8,0,0,0" PageKey="work-orders" />
                     <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
                                Foreground="{StaticResource ThirdlyTextBrush}"
@@ -79,13 +79,13 @@
                         <ColumnDefinition Width="160" />
                     </Grid.ColumnDefinitions>
                     <hc:TextBox Grid.Column="0" x:Name="WorkOrderSearchBox"
-                                hc:InfoElement.Placeholder="{x:Static resources:Strings.K555}"
+                                hc:InfoElement.Placeholder="{x:Static resources:Strings.Lbl_SearchOrderProductDevice}"
                                 FontSize="{DynamicResource FontSizeCaption}"
                                 Style="{StaticResource TextBoxExtend}"
                                 Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
                     <hc:ComboBox Grid.Column="2"
                                  FontSize="{DynamicResource FontSizeCaption}"
-                                 hc:InfoElement.Placeholder="{x:Static resources:Strings.K002}"
+                                 hc:InfoElement.Placeholder="{x:Static resources:Strings.Lbl_Device}"
                                  ItemsSource="{Binding DeviceOptions}"
                                  DisplayMemberPath="Name"
                                  SelectedValuePath="Id"
@@ -97,7 +97,7 @@
                 <ScrollViewer Grid.Row="2" Margin="18,0,18,8" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <StackPanel Orientation="Horizontal">
                     <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Null}"
-                                 Content="{x:Static resources:Strings.K004}" Style="{StaticResource TimePresetChip}">
+                                 Content="{x:Static resources:Strings.Lbl_All}" Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
                             <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Null}" />
                         </RadioButton.IsChecked>
@@ -109,7 +109,7 @@
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{x:Static resources:Strings.K010}" />
+                                <TextBlock Text="{x:Static resources:Strings.Lbl_Pending}" />
                                 <TextBlock FontWeight="Bold" Text="{Binding PendingCount}" />
                             </StackPanel>
                         </RadioButton.Content>
@@ -121,7 +121,7 @@
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{x:Static resources:Strings.K011}" />
+                                <TextBlock Text="{x:Static resources:Strings.Lbl_Progress}" />
                                 <TextBlock FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Text="{Binding RunningCount}" />
                             </StackPanel>
                         </RadioButton.Content>
@@ -133,7 +133,7 @@
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{x:Static resources:Strings.K012}" />
+                                <TextBlock Text="{x:Static resources:Strings.Lbl_Completed}" />
                                 <TextBlock FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" Text="{Binding CompletedCount}" />
                             </StackPanel>
                         </RadioButton.Content>
@@ -145,7 +145,7 @@
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{x:Static resources:Strings.K013}" />
+                                <TextBlock Text="{x:Static resources:Strings.Lbl_Aborted}" />
                                 <TextBlock FontWeight="Bold" Foreground="{StaticResource DangerBrush}" Text="{Binding AbortedCount}" />
                             </StackPanel>
                         </RadioButton.Content>
@@ -206,7 +206,7 @@
                                                 </Style>
                                             </Border.Style>
                                             <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold"
-                                                       Foreground="{StaticResource WarningBrush}" Text="{x:Static resources:Strings.K762}" />
+                                                       Foreground="{StaticResource WarningBrush}" Text="{x:Static resources:Strings.Lbl_Conflict}" />
                                         </Border>
                                         <Border Grid.Column="2" Margin="6,0,0,0" Padding="5,1" CornerRadius="6" Background="Transparent"
                                                 BorderBrush="{StaticResource DangerBrush}" BorderThickness="1">
@@ -227,7 +227,7 @@
                                                 </Style>
                                             </Border.Style>
                                             <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold"
-                                                       Foreground="{StaticResource DangerBrush}" Text="{x:Static resources:Strings.K763}" />
+                                                       Foreground="{StaticResource DangerBrush}" Text="{x:Static resources:Strings.Lbl_Overdue}" />
                                         </Border>
                                     </Grid>
                                     <Grid Grid.Row="1" Margin="0,4,0,0">
@@ -256,9 +256,9 @@
 
                     <!--  空状态：筛选无结果或无工单时提示  -->
                     <controls:EmptyState
-                        Hint="{x:Static resources:Strings.K565}"
+                        Hint="{x:Static resources:Strings.Lbl_ClickAddBelowAdjustFilters}"
                         IconKind="ClipboardListOutline"
-                        Message="{x:Static resources:Strings.K566}">
+                        Message="{x:Static resources:Strings.Lbl_NoMatchingWorkOrder}">
                         <controls:EmptyState.Style>
                             <Style TargetType="controls:EmptyState">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -275,32 +275,32 @@
                 <!--  底部操作：新建 / 编辑 / 删除 + 更多（复制、样本工单）  -->
                 <StackPanel Grid.Row="4" Margin="18,12,18,18" Orientation="Horizontal">
                     <Button Margin="0,0,6,0"
-                            Command="{Binding AddCommand}" Content="{x:Static resources:Strings.K033}" Style="{StaticResource IconButtonPrimary}"
+                            Command="{Binding AddCommand}" Content="{x:Static resources:Strings.Lbl_Add}" Style="{StaticResource IconButtonPrimary}"
                             Tag="{x:Static mi:MaterialIconKind.Plus}" />
                     <Button Margin="0,0,6,0"
-                            Command="{Binding EditCommand}" Content="{x:Static resources:Strings.K072}" Style="{StaticResource IconButtonDefault}"
-                            Tag="{x:Static mi:MaterialIconKind.PencilOutline}" ToolTip="{x:Static resources:Strings.K789}" />
+                            Command="{Binding EditCommand}" Content="{x:Static resources:Strings.Lbl_Edit}" Style="{StaticResource IconButtonDefault}"
+                            Tag="{x:Static mi:MaterialIconKind.PencilOutline}" ToolTip="{x:Static resources:Strings.Lbl_DoubleClickRowEditWorkOrder}" />
                     <Button Margin="0,0,6,0"
-                            Command="{Binding DeleteCommand}" Content="{x:Static resources:Strings.K034}" Style="{StaticResource IconButtonDanger}"
+                            Command="{Binding DeleteCommand}" Content="{x:Static resources:Strings.Lbl_Delete}" Style="{StaticResource IconButtonDanger}"
                             Tag="{x:Static mi:MaterialIconKind.Delete}" />
                     <Button x:Name="MoreActionsButton"
-                            AutomationProperties.Name="{x:Static resources:Strings.K234}"
+                            AutomationProperties.Name="{x:Static resources:Strings.Lbl_MoreDeviceActions}"
                             Click="OnMoreActionsClick"
-                            Content="{x:Static resources:Strings.K235}"
+                            Content="{x:Static resources:Strings.Lbl_More}"
                             Style="{StaticResource IconButtonDefault}"
                             Tag="{x:Static mi:MaterialIconKind.DotsHorizontal}"
-                            ToolTip="{x:Static resources:Strings.K236}">
+                            ToolTip="{x:Static resources:Strings.Lbl_CopyImportExportRestoreVirtual}">
                         <Button.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Command="{Binding CopyCommand}" Header="{x:Static resources:Strings.K026}"
-                                          ToolTip="{x:Static resources:Strings.K567}">
+                                <MenuItem Command="{Binding CopyCommand}" Header="{x:Static resources:Strings.Lbl_Copy}"
+                                          ToolTip="{x:Static resources:Strings.Lbl_CopyCurrentOrderNewPendingOrder}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="ContentCopy" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <Separator />
-                                <MenuItem Command="{Binding SeedSampleWorkOrdersCommand}" Header="{x:Static resources:Strings.K571}"
-                                          ToolTip="{x:Static resources:Strings.K572}"
+                                <MenuItem Command="{Binding SeedSampleWorkOrdersCommand}" Header="{x:Static resources:Strings.Lbl_GenerateSamples}"
+                                          ToolTip="{x:Static resources:Strings.Lbl_GenerateSampleOrdersPreviewPasswordRequired}"
                                           Visibility="{Binding IsDebugBuild, Converter={StaticResource BooleanToVisibilityConverter}}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="ToyBrickPlus" />
@@ -323,7 +323,7 @@
             Cursor="SizeWE"
             ResizeBehavior="PreviousAndNext"
             ResizeDirection="Columns"
-            AutomationProperties.Name="{x:Static resources:Strings.K573}">
+            AutomationProperties.Name="{x:Static resources:Strings.Lbl_AdjustWidthOrderListDetail}">
             <GridSplitter.Template>
                 <ControlTemplate TargetType="GridSplitter">
                     <Grid Background="Transparent">
@@ -361,13 +361,13 @@
                         <DockPanel LastChildFill="False">
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                                 <Button Margin="0,0,6,0" Command="{Binding RefreshAllProductionCommand}"
-                                        Content="{x:Static resources:Strings.K568}" FontSize="{DynamicResource FontSizeCaption}"
-                                        Padding="8,4" Style="{StaticResource ButtonDefault}" ToolTip="{x:Static resources:Strings.K569}" />
+                                        Content="{x:Static resources:Strings.Lbl_RefreshOutput}" FontSize="{DynamicResource FontSizeCaption}"
+                                        Padding="8,4" Style="{StaticResource ButtonDefault}" ToolTip="{x:Static resources:Strings.Lbl_QueryOutputAllOrdersUpdateProgress}" />
                                 <Button Margin="0,0,6,0" Command="{Binding ImportCsvCommand}"
-                                        Content="{x:Static resources:Strings.K788}" FontSize="{DynamicResource FontSizeCaption}"
+                                        Content="{x:Static resources:Strings.Lbl_Import2}" FontSize="{DynamicResource FontSizeCaption}"
                                         Padding="8,4" Style="{StaticResource ButtonDefault}" />
                                 <Button Margin="0,0,6,0" Command="{Binding ExportCsvCommand}"
-                                        Content="{x:Static resources:Strings.K079}" FontSize="{DynamicResource FontSizeCaption}"
+                                        Content="{x:Static resources:Strings.Lbl_Export}" FontSize="{DynamicResource FontSizeCaption}"
                                         Padding="8,4" Style="{StaticResource ButtonDefault}" />
                                 <Border Padding="6,3" CornerRadius="6" BorderBrush="{StaticResource WarningBrush}" BorderThickness="1">
                                     <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold" Foreground="{StaticResource WarningBrush}"
@@ -381,33 +381,33 @@
                                 </Border>
                                 <Border Margin="0,0,6,0" Padding="5,2" CornerRadius="6" Background="{StaticResource RegionBrush}">
                                     <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
-                                               Text="{x:Static resources:Strings.K765}">
+                                               Text="{x:Static resources:Strings.Lbl_Target2}">
                                         <Run FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding FilteredTargetTotal, Mode=OneWay, StringFormat={}{0:N0}}" />
                                     </TextBlock>
                                 </Border>
                                 <Border Margin="0,0,6,0" Padding="5,2" CornerRadius="6" Background="{StaticResource RegionBrush}">
                                     <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
-                                               Text="{x:Static resources:Strings.K766}">
+                                               Text="{x:Static resources:Strings.Lbl_OK3}">
                                         <Run FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Text="{Binding FilteredOkTotal, Mode=OneWay, StringFormat={}{0:N0}}" />
                                     </TextBlock>
                                 </Border>
                                 <Border Padding="5,2" CornerRadius="6" Background="{StaticResource RegionBrush}">
                                     <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
-                                               Text="{x:Static resources:Strings.K767}">
+                                               Text="{x:Static resources:Strings.Lbl_Achievement}">
                                         <Run FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Text="{Binding FilteredAchievementRate, Mode=OneWay, StringFormat={}{0:P1}}" />
                                     </TextBlock>
                                 </Border>
                             </WrapPanel>
                         </DockPanel>
-                        <Expander Margin="0,8,0,0" IsExpanded="False" Header="{x:Static resources:Strings.K558}">
+                        <Expander Margin="0,8,0,0" IsExpanded="False" Header="{x:Static resources:Strings.Lbl_OrderScheduleSort}">
                             <WrapPanel Margin="0,6,0,0">
                                 <DatePicker Width="128" Margin="0,0,6,4" SelectedDate="{Binding FilterFromDate, Mode=TwoWay}" />
                                 <DatePicker Width="128" Margin="0,0,12,4" SelectedDate="{Binding FilterToDate, Mode=TwoWay}" />
                                 <ComboBox Width="150" Margin="0,0,12,4" DisplayMemberPath="Label" ItemsSource="{Binding SortOptions}"
                                           SelectedValue="{Binding SortMode, Mode=TwoWay}" SelectedValuePath="Value" Style="{StaticResource ComboBoxExtend}" />
-                                <CheckBox Margin="0,0,12,4" Content="{x:Static resources:Strings.K560}" IsChecked="{Binding OnlyOverdue, Mode=TwoWay}" />
-                                <CheckBox Margin="0,0,12,4" Content="{x:Static resources:Strings.K561}" IsChecked="{Binding OnlyAchieved, Mode=TwoWay}" />
-                                <CheckBox Margin="0,0,12,4" Content="{x:Static resources:Strings.K562}" IsChecked="{Binding OnlyHasNg, Mode=TwoWay}" />
+                                <CheckBox Margin="0,0,12,4" Content="{x:Static resources:Strings.Lbl_OverdueOnly}" IsChecked="{Binding OnlyOverdue, Mode=TwoWay}" />
+                                <CheckBox Margin="0,0,12,4" Content="{x:Static resources:Strings.Lbl_MetOnly}" IsChecked="{Binding OnlyAchieved, Mode=TwoWay}" />
+                                <CheckBox Margin="0,0,12,4" Content="{x:Static resources:Strings.Lbl_HasNG}" IsChecked="{Binding OnlyHasNg, Mode=TwoWay}" />
                             </WrapPanel>
                         </Expander>
                     </StackPanel>
@@ -415,7 +415,7 @@
 
                 <!--  详情 Tab 区  -->
                 <Grid Grid.Row="1" Margin="18,0,18,0">
-                    <controls:EmptyState IconKind="ClipboardTextOutline" Message="{x:Static resources:Strings.K074}" Hint="{x:Static resources:Strings.K574}">
+                    <controls:EmptyState IconKind="ClipboardTextOutline" Message="{x:Static resources:Strings.Lbl_SelectWorkOrderLeftViewDetails}" Hint="{x:Static resources:Strings.Lbl_SearchOrderNoProductNameDevice}">
                         <controls:EmptyState.Style>
                             <Style TargetType="controls:EmptyState">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -471,7 +471,7 @@
                                     <Border Grid.Column="0" Padding="12" CornerRadius="8" Background="{StaticResource SecondaryRegionBrush}"
                                             ToolTip="{Binding TargetTooltip}" ToolTipService.ShowDuration="30000">
                                         <StackPanel>
-                                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K035}" />
+                                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_PlannedOutput}" />
                                             <TextBlock Margin="0,4,0,0" FontSize="22" FontWeight="Bold"
                                                        Text="{Binding SelectedWorkOrder.TargetQuantity, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                                         </StackPanel>
@@ -479,14 +479,14 @@
                                     <Border Grid.Column="2" Padding="12" CornerRadius="8" Background="{StaticResource SecondaryRegionBrush}"
                                             ToolTip="{Binding AchievementTooltip}" ToolTipService.ShowDuration="30000">
                                         <StackPanel>
-                                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K576}" />
+                                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_AchievementRate}" />
                                             <TextBlock Margin="0,4,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Text="{Binding SelectedAchievementText}" />
                                         </StackPanel>
                                     </Border>
                                     <Border Grid.Column="4" Padding="12" CornerRadius="8" Background="{StaticResource SecondaryRegionBrush}"
                                             ToolTip="{Binding DefectRateTooltip}" ToolTipService.ShowDuration="30000">
                                         <StackPanel>
-                                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K085}" />
+                                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_DefectRate}" />
                                             <TextBlock Margin="0,4,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource WarningBrush}" Text="{Binding SelectedDefectRateText}" />
                                         </StackPanel>
                                     </Border>
@@ -497,9 +497,9 @@
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal" Visibility="{Binding IsProductionLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
                                             <hc:LoadingCircle Width="14" Height="14" Foreground="{StaticResource SecondaryTextBrush}" />
-                                            <TextBlock Margin="8,0,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.M159}" />
+                                            <TextBlock Margin="8,0,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Msg_Loading}" />
                                         </StackPanel>
-                                        <TextBlock Foreground="{StaticResource DangerBrush}" Text="{x:Static resources:Strings.M158}"
+                                        <TextBlock Foreground="{StaticResource DangerBrush}" Text="{x:Static resources:Strings.Msg_LoadFailed}"
                                                    Visibility="{Binding IsProductionLoadFailed, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         <Grid Margin="0,0,0,8">
                                             <Grid.ColumnDefinitions>
@@ -526,7 +526,7 @@
                                                        ToolTip="{Binding NgTooltip}" ToolTipService.ShowDuration="30000" />
                                         </Grid>
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K075}" />
+                                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_PlannedTime}" />
                                             <TextBlock Margin="6,0,0,0" FontSize="{DynamicResource FontSizeCaption}"
                                                        Text="{Binding SelectedWorkOrder.PlannedStart, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
                                             <TextBlock Margin="4,0" FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="~" />
@@ -534,7 +534,7 @@
                                                        Text="{Binding SelectedWorkOrder.PlannedEnd, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
                                         </StackPanel>
                                         <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
-                                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K021}" />
+                                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Remark}" />
                                             <TextBlock Margin="6,0,0,0" FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
                                                        Text="{Binding SelectedWorkOrder.Remark, TargetNullValue=-}" />
                                         </StackPanel>
@@ -546,7 +546,7 @@
                                         Visibility="{Binding IsSnSupported, Converter={StaticResource BooleanToVisibilityConverter}}">
                                     <StackPanel>
                                         <DockPanel Margin="0,0,0,8">
-                                            <TextBlock DockPanel.Dock="Left" FontWeight="Bold" Text="{x:Static resources:Strings.K914}" />
+                                            <TextBlock DockPanel.Dock="Left" FontWeight="Bold" Text="{x:Static resources:Strings.Lbl_SNTraceability}" />
                                             <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource ThirdlyTextBrush}"
                                                        Text="{Binding SnTotalCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=K919}" />
                                         </DockPanel>
@@ -554,7 +554,7 @@
                                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                                                         Visibility="{Binding IsSnLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                 <hc:LoadingCircle Width="14" Height="14" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" />
-                                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.M159}" />
+                                                <TextBlock Margin="0,8,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Msg_Loading}" />
                                             </StackPanel>
                                             <DataGrid MaxHeight="220" ItemsSource="{Binding SnItems}"
                                                       CellStyle="{StaticResource KanbanDataGridCell}" ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
@@ -571,8 +571,8 @@
                                                 </DataGrid.Style>
                                                 <DataGrid.Columns>
                                                     <DataGridTextColumn Header="SN" Binding="{Binding Sn}" Width="*" />
-                                                    <DataGridTextColumn Header="{x:Static resources:Strings.K037}" Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="150" />
-                                                    <DataGridTemplateColumn Header="{x:Static resources:Strings.K924}" Width="60">
+                                                    <DataGridTextColumn Header="{x:Static resources:Strings.Lbl_Time}" Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="150" />
+                                                    <DataGridTemplateColumn Header="{x:Static resources:Strings.Lbl_Result2}" Width="60">
                                                         <DataGridTemplateColumn.CellTemplate>
                                                             <DataTemplate>
                                                                 <TextBlock Text="OK" Foreground="{StaticResource SuccessBrush}">
@@ -593,7 +593,7 @@
                                                 </DataGrid.Columns>
                                             </DataGrid>
                                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}"
-                                                       Text="{x:Static resources:Strings.K920}">
+                                                       Text="{x:Static resources:Strings.Lbl_NoSNRecordsWorkOrder}">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -607,12 +607,12 @@
                                             </TextBlock>
                                         </Grid>
                                         <DockPanel Margin="0,8,0,0" LastChildFill="False">
-                                            <Button Command="{Binding SnPreviousPageCommand}" Content="{x:Static resources:Strings.K925}"
+                                            <Button Command="{Binding SnPreviousPageCommand}" Content="{x:Static resources:Strings.Lbl_Previous2}"
                                                     Style="{StaticResource IconButtonDefault}" Tag="{x:Static mi:MaterialIconKind.ChevronLeft}" />
                                             <TextBlock Margin="12,0" VerticalAlignment="Center"
                                                        Text="{Binding SnPage, Converter={StaticResource LocFormatConverter}, ConverterParameter=K927}" />
                                             <TextBlock VerticalAlignment="Center" Text="{Binding SnTotalPages, StringFormat={}/ {0}}" />
-                                            <Button DockPanel.Dock="Right" Command="{Binding SnNextPageCommand}" Content="{x:Static resources:Strings.K926}"
+                                            <Button DockPanel.Dock="Right" Command="{Binding SnNextPageCommand}" Content="{x:Static resources:Strings.Lbl_Next2}"
                                                     Style="{StaticResource IconButtonDefault}" Tag="{x:Static mi:MaterialIconKind.ChevronRight}" />
                                         </DockPanel>
                                     </StackPanel>
@@ -621,11 +621,11 @@
                                 <!--  排程甘特  -->
                                 <Border Margin="0,0,0,12" Padding="14,12" CornerRadius="10" Background="{StaticResource SecondaryRegionBrush}">
                                     <StackPanel>
-                                        <TextBlock Margin="0,0,0,8" FontWeight="Bold" Text="{x:Static resources:Strings.K901}" />
+                                        <TextBlock Margin="0,0,0,8" FontWeight="Bold" Text="{x:Static resources:Strings.Lbl_WorkOrderSchedule}" />
                                         <Grid Height="200">
                                             <oxy:PlotView Model="{Binding WorkOrderGanttChartModel}" Background="Transparent" />
                                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}"
-                                                       Text="{x:Static resources:Strings.K906}">
+                                                       Text="{x:Static resources:Strings.Lbl_NoWorkOrdersCurrentFilter}">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -644,7 +644,7 @@
                                 <!--  时间线  -->
                                 <Border Margin="0,0,0,4" Padding="14,12" CornerRadius="10" Background="{StaticResource SecondaryRegionBrush}">
                                     <StackPanel>
-                                        <TextBlock Margin="0,0,0,8" FontWeight="Bold" Text="{x:Static resources:Strings.K771}" />
+                                        <TextBlock Margin="0,0,0,8" FontWeight="Bold" Text="{x:Static resources:Strings.Lbl_Timeline}" />
                                         <Grid Margin="0,4">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="14" />
@@ -652,7 +652,7 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
                                             <Ellipse Grid.Column="0" Width="8" Height="8" Margin="3,5,0,0" Fill="{StaticResource ThirdlyTextBrush}" />
-                                            <TextBlock Grid.Column="1" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K772}" />
+                                            <TextBlock Grid.Column="1" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_Created}" />
                                             <TextBlock Grid.Column="2" Text="{Binding SelectedWorkOrder.CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
                                         </Grid>
                                         <Grid Margin="0,4" Visibility="{Binding SelectedWorkOrder.StartedAt, Converter={StaticResource NullToVisibilityConverter}}">
@@ -662,7 +662,7 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
                                             <Ellipse Grid.Column="0" Width="8" Height="8" Margin="3,5,0,0" Fill="{StaticResource PrimaryBrush}" />
-                                            <TextBlock Grid.Column="1" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K774}" />
+                                            <TextBlock Grid.Column="1" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_ActualStart}" />
                                             <TextBlock Grid.Column="2" Foreground="{StaticResource PrimaryBrush}" Text="{Binding SelectedWorkOrder.StartedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
                                         </Grid>
                                         <Grid Margin="0,4" Visibility="{Binding SelectedWorkOrder.CompletedAt, Converter={StaticResource NullToVisibilityConverter}}">
@@ -686,11 +686,11 @@
                 <!--  底栏操作  -->
                 <StackPanel Grid.Row="2" Margin="18,10,18,16" Orientation="Horizontal"
                             Visibility="{Binding SelectedWorkOrder, Converter={StaticResource NullToVisibilityConverter}}">
-                    <Button Command="{Binding StartCommand}" Content="{x:Static resources:Strings.K036}" Style="{StaticResource IconButtonPrimary}"
+                    <Button Command="{Binding StartCommand}" Content="{x:Static resources:Strings.Lbl_Start}" Style="{StaticResource IconButtonPrimary}"
                             Tag="{x:Static mi:MaterialIconKind.Play}" ToolTip="{Binding StartActionReason}" />
-                    <Button Margin="8,0,0,0" Command="{Binding CompleteCommand}" Content="{x:Static resources:Strings.K076}" Style="{StaticResource IconButtonSuccess}"
+                    <Button Margin="8,0,0,0" Command="{Binding CompleteCommand}" Content="{x:Static resources:Strings.Lbl_Complete}" Style="{StaticResource IconButtonSuccess}"
                             Tag="{x:Static mi:MaterialIconKind.Check}" ToolTip="{Binding CompleteActionReason}" />
-                    <Button Margin="8,0,0,0" Command="{Binding AbortCommand}" Content="{x:Static resources:Strings.K077}" Style="{StaticResource IconButtonWarning}"
+                    <Button Margin="8,0,0,0" Command="{Binding AbortCommand}" Content="{x:Static resources:Strings.Lbl_Abort}" Style="{StaticResource IconButtonWarning}"
                             Tag="{x:Static mi:MaterialIconKind.Stop}" ToolTip="{Binding AbortActionReason}" />
                 </StackPanel>
             </Grid>

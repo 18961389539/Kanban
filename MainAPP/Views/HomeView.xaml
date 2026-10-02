@@ -13,7 +13,7 @@
     d:DataContext="{d:DesignInstance Type=vm:HomeViewModel}"
     d:DesignHeight="1080"
     d:DesignWidth="1712"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.Resources>
         <!--  共享样式（DashboardCard/CardTitleIcon/CardTitleText）已移至 Styles/HomeResources.xaml
               并在 App.xaml 全局注册：子 UserControl 在 XAML 加载阶段无法跨 UserControl 边界查找父级资源。
@@ -46,7 +46,7 @@
             <StackPanel Grid.Column="0" Margin="0,0,12,0"
                         HorizontalAlignment="Left" Orientation="Horizontal" VerticalAlignment="Center">
                 <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="ChartLineVariant" />
-                <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.K335}" />
+                <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.Lbl_ProductionDashboard}" />
                 <controls:PageHelpButton Margin="8,0,0,0" PageKey="home" />
             </StackPanel>
 
@@ -58,11 +58,11 @@
                     <Ellipse.Style>
                         <Style TargetType="Ellipse">
                             <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
-                            <Setter Property="ToolTip" Value="{x:Static resources:Strings.K336}" />
+                            <Setter Property="ToolTip" Value="{x:Static resources:Strings.Lbl_PLCDisconnected}" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding ConnectionManager.IsConnected}" Value="True">
                                     <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
-                                    <Setter Property="ToolTip" Value="{x:Static resources:Strings.K337}" />
+                                    <Setter Property="ToolTip" Value="{x:Static resources:Strings.Lbl_PLCConnected}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -80,32 +80,32 @@
                 <ComboBox
                     Width="200"
                     VerticalAlignment="Center"
-                    AutomationProperties.Name="{x:Static resources:Strings.K024}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_DeviceFilter}"
                     DisplayMemberPath="Name"
                     ItemsSource="{Binding DeviceFilterItems}"
                     SelectedValue="{Binding SelectedDeviceId}"
                     SelectedValuePath="Id"
                     Style="{StaticResource ComboBoxExtend}"
                     hc:InfoElement.Placeholder="{x:Static resources:Strings.Home_SelectDeviceHint}"
-                    ToolTip="{x:Static resources:Strings.K024}" />
+                    ToolTip="{x:Static resources:Strings.Lbl_DeviceFilter}" />
 
                 <!--  工单管理入口  -->
                 <Button Margin="10,0,0,0" VerticalAlignment="Center"
-                        AutomationProperties.Name="{x:Static resources:Strings.K089}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_WorkOrderManagement}"
                         Command="{Binding ViewWorkOrderManagerCommand}"
-                        Content="{x:Static resources:Strings.K089}"
+                        Content="{x:Static resources:Strings.Lbl_WorkOrderManagement}"
                         Style="{StaticResource IconButtonPrimary}"
                         Tag="{x:Static mi:MaterialIconKind.ClipboardListOutline}"
-                        ToolTip="{x:Static resources:Strings.K338}" />
+                        ToolTip="{x:Static resources:Strings.Lbl_OpenWorkOrderManagement}" />
 
                 <!--  查看设备详情  -->
                 <Button Margin="6,0,0,0" VerticalAlignment="Center"
-                        AutomationProperties.Name="{x:Static resources:Strings.K339}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_ViewDetails}"
                         Command="{Binding ViewDeviceDetailCommand}"
-                        Content="{x:Static resources:Strings.K066}"
+                        Content="{x:Static resources:Strings.Lbl_DeviceDetail}"
                         Style="{StaticResource IconButtonDefault}"
                         Tag="{x:Static mi:MaterialIconKind.ChartBoxOutline}"
-                        ToolTip="{x:Static resources:Strings.K340}" />
+                        ToolTip="{x:Static resources:Strings.Lbl_ViewDetailsSelectedDevice}" />
             </WrapPanel>
         </Grid>
 

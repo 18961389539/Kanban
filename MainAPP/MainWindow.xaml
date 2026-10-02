@@ -19,7 +19,7 @@
     WindowStyle="None"
     ResizeMode="NoResize"
     WindowState="Maximized"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
 
     <Window.InputBindings>
         <KeyBinding Gesture="Ctrl+1" Command="{Binding SelectPageCommand}" CommandParameter="0" />
@@ -107,10 +107,10 @@
                         Width="40"
                         Height="40"
                         Padding="0"
-                        AutomationProperties.Name="{x:Static resources:Strings.K577}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_CollapseExpandSidebar}"
                         Command="{Binding ToggleSidebarCommand}"
                         FocusVisualStyle="{StaticResource TouchFocusVisual}"
-                        ToolTip="{x:Static resources:Strings.K578}">
+                        ToolTip="{x:Static resources:Strings.Lbl_CollapseExpandSidebar2}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
                                 <Setter Property="HorizontalAlignment" Value="Left" />
@@ -139,7 +139,7 @@
                             FontSize="16"
                             FontWeight="Bold"
                             Foreground="{StaticResource PrimaryTextBrush}"
-                            Text="{x:Static resources:Strings.K579}" />
+                            Text="{x:Static resources:Strings.Lbl_KanbanSystem}" />
                     </StackPanel>
                 </DockPanel>
 
@@ -213,11 +213,11 @@
                     MinHeight="38"
                     HorizontalContentAlignment="Stretch"
                     VerticalContentAlignment="Center"
-                    AutomationProperties.Name="{x:Static resources:Strings.M338}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Msg_SwitchUser}"
                     Command="{Binding SwitchUserCommand}"
                     DockPanel.Dock="Bottom"
                     FocusVisualStyle="{StaticResource TouchFocusVisual}"
-                    ToolTip="{x:Static resources:Strings.M338}">
+                    ToolTip="{x:Static resources:Strings.Msg_SwitchUser}">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
                             <Setter Property="Visibility" Value="Visible" />
@@ -283,7 +283,7 @@
                     x:Name="NavListBox"
                     Margin="12,8,12,8"
                     VerticalAlignment="Stretch"
-                    AutomationProperties.Name="{x:Static resources:Strings.K582}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_MainNavigation}"
                     ItemTemplate="{StaticResource SidebarNavItemTemplate}"
                     ItemsSource="{Binding NavItems}"
                     SelectionChanged="OnNavigationSelectionChanged"
@@ -364,10 +364,10 @@
                 VerticalAlignment="Top"
                 Panel.ZIndex="900"
                 AutomationProperties.AutomationId="FullscreenMenuButton"
-                AutomationProperties.Name="{x:Static resources:Strings.K121}"
+                AutomationProperties.Name="{x:Static resources:Strings.Lbl_ShowNavigationMenu}"
                 Click="OnFullscreenMenuClick"
                 FocusVisualStyle="{StaticResource TouchFocusVisual}"
-                ToolTip="{x:Static resources:Strings.K121}">
+                ToolTip="{x:Static resources:Strings.Lbl_ShowNavigationMenu}">
                 <Button.Style>
                     <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
                         <!--  半透明常驻：全屏时停靠左侧中部，低调不喧宾夺主，悬停时加深便于点击  -->
@@ -402,11 +402,11 @@
                             Padding="0"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center"
-                            AutomationProperties.Name="{x:Static resources:Strings.K143}"
+                            AutomationProperties.Name="{x:Static resources:Strings.Lbl_Close}"
                             Command="{Binding PageHelp.CloseCommand}"
                             Cursor="Hand"
                             FocusVisualStyle="{StaticResource TouchFocusVisual}"
-                            ToolTip="{x:Static resources:Strings.K143}">
+                            ToolTip="{x:Static resources:Strings.Lbl_Close}">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
                                     <Setter Property="Background" Value="Transparent" />

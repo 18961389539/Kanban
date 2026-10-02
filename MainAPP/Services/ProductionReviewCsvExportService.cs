@@ -36,7 +36,7 @@ public sealed class ProductionReviewCsvExportService : IProductionReviewCsvExpor
     public string Build(ProductionReviewCsvData data)
     {
         var builder = new StringBuilder();
-        builder.AppendLine(Strings.M239);
+        builder.AppendLine(Strings.Msg_ProductionReviewReport);
         builder.AppendLine(string.Format("{0},{1},{2}",
             Strings.Csv_LabelRange,
             CsvUtil.Escape(data.From.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)),
@@ -45,18 +45,18 @@ public sealed class ProductionReviewCsvExportService : IProductionReviewCsvExpor
             Strings.Csv_LabelShift,
             CsvUtil.Escape(data.ShiftName)));
         builder.AppendLine();
-        builder.AppendLine(Strings.M240);
-        builder.AppendLine(string.Format("{0},{1}", Strings.M241, data.TotalOk));
-        builder.AppendLine(string.Format("{0},{1}", Strings.M242, data.TotalNg));
-        builder.AppendLine(string.Format("{0},{1}", Strings.M238, data.QualityRate.ToString("P1", CultureInfo.InvariantCulture)));
+        builder.AppendLine(Strings.Msg_MetricValue);
+        builder.AppendLine(string.Format("{0},{1}", Strings.Msg_TotalOK, data.TotalOk));
+        builder.AppendLine(string.Format("{0},{1}", Strings.Msg_TotalNG, data.TotalNg));
+        builder.AppendLine(string.Format("{0},{1}", Strings.Msg_QualityRate, data.QualityRate.ToString("P1", CultureInfo.InvariantCulture)));
         builder.AppendLine(string.Format("OEE,{0}", data.Oee.ToString("P1", CultureInfo.InvariantCulture)));
-        builder.AppendLine(string.Format("{0},{1:F2}h", Strings.M244, data.RunTimeHours));
-        builder.AppendLine(string.Format("{0},{1:F2}h", Strings.M245, data.PausedTimeHours));
-        builder.AppendLine(string.Format("{0},{1:F2}h", Strings.M246, data.AlarmDurationHours));
-        builder.AppendLine(string.Format("{0},{1}", Strings.M247, data.AlarmCount));
+        builder.AppendLine(string.Format("{0},{1:F2}h", Strings.Msg_RunTime, data.RunTimeHours));
+        builder.AppendLine(string.Format("{0},{1:F2}h", Strings.Msg_IdleTime, data.PausedTimeHours));
+        builder.AppendLine(string.Format("{0},{1:F2}h", Strings.Msg_AlarmTime, data.AlarmDurationHours));
+        builder.AppendLine(string.Format("{0},{1}", Strings.Msg_AlarmCount2, data.AlarmCount));
         builder.AppendLine();
-        builder.AppendLine(Strings.M248);
-        builder.AppendLine(Strings.M249);
+        builder.AppendLine(Strings.Msg_DeviceDetails);
+        builder.AppendLine(Strings.Msg_DeviceOKNGQualityOEERun);
         foreach (var device in data.Devices)
         {
             builder.AppendLine(string.Join(",",
@@ -67,8 +67,8 @@ public sealed class ProductionReviewCsvExportService : IProductionReviewCsvExpor
                 CsvUtil.Escape(device.TopAlarmName)));
         }
         builder.AppendLine();
-        builder.AppendLine(Strings.M250);
-        builder.AppendLine(Strings.M251);
+        builder.AppendLine(Strings.Msg_ShiftComparison);
+        builder.AppendLine(Strings.Msg_ShiftOKNGTotalQualityAlarms);
         foreach (var shift in data.Shifts)
         {
             builder.AppendLine(string.Join(",",
@@ -76,8 +76,8 @@ public sealed class ProductionReviewCsvExportService : IProductionReviewCsvExpor
                 shift.OkRatio.ToString("P1", CultureInfo.InvariantCulture), shift.AlarmCount, shift.AlarmRate.ToString("P1", CultureInfo.InvariantCulture)));
         }
         builder.AppendLine();
-        builder.AppendLine(Strings.M252);
-        builder.AppendLine(Strings.M253);
+        builder.AppendLine(Strings.Msg_TopAlarms);
+        builder.AppendLine(Strings.Msg_AlarmDeviceCountDuration);
         foreach (var alarm in data.TopAlarms)
         {
             builder.AppendLine(string.Join(",",

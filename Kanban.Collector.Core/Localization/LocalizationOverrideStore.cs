@@ -1,4 +1,5 @@
 using System.Globalization;
+using Kanban.Localization;
 
 namespace Kanban.Collector.Core.Localization;
 

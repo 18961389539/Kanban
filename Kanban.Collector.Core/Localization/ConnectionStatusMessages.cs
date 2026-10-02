@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Resources;
 
 namespace Kanban.Collector.Core.Localization;
 
@@ -11,10 +10,6 @@ namespace Kanban.Collector.Core.Localization;
 /// </summary>
 public static class ConnectionStatusMessages
 {
-    private static readonly ResourceManager s_rm = new(
-        "Kanban.Collector.Core.Resources.Messages",
-        typeof(ConnectionStatusMessages).Assembly);
-
     /// <summary>默认（zh-CN）。</summary>
     public const string DefaultConnected = "已连接";
     public const string DefaultDisconnected = "未连接";
@@ -88,13 +83,13 @@ public static class ConnectionStatusMessages
         }
 
         Override(
-            connected: s_rm.GetString("Conn_Connected", culture),
-            disconnected: s_rm.GetString("Conn_Disconnected", culture),
-            connectionLost: s_rm.GetString("Conn_ConnectionLost", culture),
-            disconnectedWithRetry: s_rm.GetString("Conn_DisconnectedWithRetry", culture),
-            connectingPrefix: s_rm.GetString("Conn_ConnectingPrefix", culture),
-            connectingSuffix: s_rm.GetString("Conn_ConnectingSuffix", culture),
-            remoteConnecting: s_rm.GetString("Conn_RemoteConnecting", culture));
+            connected: CoreText.Get("Conn_Connected", culture, DefaultConnected),
+            disconnected: CoreText.Get("Conn_Disconnected", culture, DefaultDisconnected),
+            connectionLost: CoreText.Get("Conn_ConnectionLost", culture, DefaultConnectionLost),
+            disconnectedWithRetry: CoreText.Get("Conn_DisconnectedWithRetry", culture, DefaultDisconnectedWithRetry),
+            connectingPrefix: CoreText.Get("Conn_ConnectingPrefix", culture, DefaultConnectingPrefix),
+            connectingSuffix: CoreText.Get("Conn_ConnectingSuffix", culture, DefaultConnectingSuffix),
+            remoteConnecting: CoreText.Get("Conn_RemoteConnecting", culture, DefaultRemoteConnecting));
         ApplyExternalOverrides(culture);
     }
 

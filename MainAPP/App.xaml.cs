@@ -140,7 +140,7 @@ public partial class App : Application
                 Log($"无法建立全局单实例互斥体：{_singleInstanceError}");
                 ShowHostDialog(
                     _singleInstanceError,
-                    MainAPP.Resources.Strings.M130,
+                    MainAPP.Resources.Strings.Msg_StartupFailed,
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 Shutdown();
@@ -153,8 +153,8 @@ public partial class App : Application
                 Log("检测到已有实例在运行，禁止多开，准备退出");
                 // 启动早期 Growl 容器未就绪，用 HC MessageBox（理由详见下方配置文件损坏处）
                 ShowHostDialog(
-                    MainAPP.Resources.Strings.M309,
-                    MainAPP.Resources.Strings.M036,
+                    MainAPP.Resources.Strings.Msg_ProgramAlreadyRunningCannotStartedAgain,
+                    MainAPP.Resources.Strings.Msg_Tip,
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
                 Shutdown();
@@ -185,11 +185,11 @@ public partial class App : Application
 
                 activationVm.StatusMessage = licenseStatus switch
                 {
-                    LicenseStatus.TrialExpired => string.Format(Strings.F215, TrialTracker.TrialDays),
-                    LicenseStatus.TrialManipulated => MainAPP.Resources.Strings.M304,
-                    LicenseStatus.Expired => MainAPP.Resources.Strings.M305,
-                    LicenseStatus.MachineMismatch => MainAPP.Resources.Strings.M306,
-                    _ => MainAPP.Resources.Strings.M307,
+                    LicenseStatus.TrialExpired => string.Format(Strings.Prompt_TrialExpiredDaysEnterActivationCode, TrialTracker.TrialDays),
+                    LicenseStatus.TrialManipulated => MainAPP.Resources.Strings.Msg_SystemTimeAnomalyDetectedTrialHas,
+                    LicenseStatus.Expired => MainAPP.Resources.Strings.Msg_LicenseHasExpiredPleaseEnterNew,
+                    LicenseStatus.MachineMismatch => MainAPP.Resources.Strings.Msg_LicenseDoesMatchMachinePleaseReactivate2,
+                    _ => MainAPP.Resources.Strings.Msg_PleaseEnterActivationCodeContinue,
                 };
 
                 var result = activationDialog.ShowDialog();
@@ -284,15 +284,15 @@ public partial class App : Application
             if (justActivated)
             {
                 var expireText = licenseGate.CurrentLicense?.IsPermanent == false
-                    ? string.Format(Strings.F042, licenseGate.CurrentLicense.ExpireDate)
-                    : MainAPP.Resources.Strings.M308;
+                    ? string.Format(Strings.Prompt_Expires, licenseGate.CurrentLicense.ExpireDate)
+                    : MainAPP.Resources.Strings.Msg_PermanentLicense2;
                 _host.Services.GetRequiredService<IDialogService>().NotifySuccess(
-                    string.Format(Strings.F163, expireText));
+                    string.Format(Strings.Prompt_ActivatedSuccessfully, expireText));
             }
             else if (licenseStatus == LicenseStatus.Trial && licenseGate.RemainingTrialDays.HasValue)
             {
                 _host.Services.GetRequiredService<IDialogService>().NotifyInfo(
-                    string.Format(Strings.F214, licenseGate.RemainingTrialDays));
+                    string.Format(Strings.Prompt_TrialPeriodDaysRemainingEnterActivation2, licenseGate.RemainingTrialDays));
             }
 
             await Dispatcher.InvokeAsync(() =>
@@ -313,7 +313,7 @@ public partial class App : Application
                 // 此时 MainWindow 已 Show，Growl 容器已就绪，用非模态通知避免阻塞。
                 Log($"后台初始化失败: {ex.Message}");
                 _host.Services.GetService<IDialogService>()?.NotifyWarning(
-                    string.Format(Strings.F133, ex.Message));
+                    string.Format(Strings.Prompt_DatabaseAcquisitionInitializationFailedSomeFeatu, ex.Message));
             }
         }
         catch (Exception ex)
@@ -324,8 +324,8 @@ public partial class App : Application
             try { Serilog.Log.Error(ex, "OnStartup 启动失败"); }
             catch (Exception logEx) { System.Diagnostics.Debug.WriteLine($"[OnStartup] Serilog 记录失败: {logEx.Message}"); }
             ShowHostDialog(
-                string.Format(Strings.F178, ex.Message),
-                Strings.M130,
+                string.Format(Strings.Prompt_StartupFailedAppExit, ex.Message),
+                Strings.Msg_StartupFailed,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             Shutdown();
@@ -363,8 +363,8 @@ public partial class App : Application
                     if (errors.Count > 0)
                     {
                         ShowHostDialog(
-                            Strings.M355 + "\n\n" + string.Join("\n", errors),
-                            Strings.M356,
+                            Strings.Msg_DataCouldFullySavedExitData + "\n\n" + string.Join("\n", errors),
+                            Strings.Msg_PersistenceFailed,
                             MessageBoxButton.OK,
                             MessageBoxImage.Warning);
                     }
@@ -454,11 +454,11 @@ public partial class App : Application
             {
                 await RunStep(errors, "停止 PLC 采集", budget, StepAcquisitionTimeout,
                     _ => _host.Services.GetRequiredService<PlcDataAcquisitionService>().StopAsync(),
-                    ex => string.Format(Strings.F068, ex.Message)).ConfigureAwait(false);
+                    ex => string.Format(Strings.Prompt_FailedStopCollectionService, ex.Message)).ConfigureAwait(false);
 
                 await RunStep(errors, "停止日报服务", budget, StepDailyReportTimeout,
                     _ => _host.Services.GetRequiredService<Services.ProductionDailyReportService>().StopAsync(),
-                    ex => string.Format(Strings.F191, ex.Message)).ConfigureAwait(false);
+                    ex => string.Format(Strings.Prompt_FailedStopAutoDailyReportService, ex.Message)).ConfigureAwait(false);
             }
 
             // Remote 模式必须在 Host 释放 SignalR 之前把设备配置推送到 Collector，
@@ -470,7 +470,7 @@ public partial class App : Application
             {
                 await RunStep(errors, "保存设备配置", budget, StepConfigSaveTimeout,
                     _ => _host.Services.GetRequiredService<DeviceRepository>().SaveAllAsync(),
-                    ex => string.Format(Strings.F210, ex.Message)).ConfigureAwait(false);
+                    ex => string.Format(Strings.Prompt_FailedSaveDeviceData, ex.Message)).ConfigureAwait(false);
             }
             else
             {
@@ -481,7 +481,7 @@ public partial class App : Application
 
             await RunStep(errors, "保存应用设置", budget, StepSettingsSaveTimeout,
                 _ => Task.Run(() => _host.Services.GetRequiredService<AppSettings>().Save()),
-                ex => string.Format(Strings.F119, ex.Message)).ConfigureAwait(false);
+                ex => string.Format(Strings.Prompt_FailedSaveApplicationSettings, ex.Message)).ConfigureAwait(false);
 
             await RunStep(errors, "停止 Host", budget, StepHostStopTimeout,
                 _ => _host.StopAsync(),

@@ -12,7 +12,7 @@
     d:DataContext="{d:DesignInstance Type=vm:RuntimeMonitoringViewModel}"
     d:DesignHeight="900"
     d:DesignWidth="1400"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
     </UserControl.InputBindings>
@@ -51,10 +51,10 @@
         <Style x:Key="HealthKpiValue" TargetType="TextBlock" BasedOn="{StaticResource KpiValueMd}">
             <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding HealthText}" Value="{x:Static resources:Strings.K418}">
+                <DataTrigger Binding="{Binding HealthText}" Value="{x:Static resources:Strings.Lbl_RunningNormally}">
                     <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding HealthText}" Value="{x:Static resources:Strings.K419}">
+                <DataTrigger Binding="{Binding HealthText}" Value="{x:Static resources:Strings.Lbl_CommunicationLost}">
                     <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                 </DataTrigger>
             </Style.Triggers>
@@ -109,8 +109,8 @@
             <StackPanel Grid.Row="0" Orientation="Horizontal">
                 <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="MonitorDashboard" />
                 <StackPanel Margin="10,0,0,0">
-                    <TextBlock Style="{StaticResource PageTitleText}" Text="{x:Static resources:Strings.K420}" />
-                    <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K421}" />
+                    <TextBlock Style="{StaticResource PageTitleText}" Text="{x:Static resources:Strings.Lbl_RuntimeMonitoring}" />
+                    <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_HealthPLCCommunicationAcquisitionLoopDevice}" />
                 </StackPanel>
                 <controls:PageHelpButton Margin="8,0,0,0" VerticalAlignment="Center" PageKey="runtime-monitor" />
             </StackPanel>
@@ -167,8 +167,8 @@
                 </WrapPanel>
                 <Button Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center"
                         Command="{Binding RefreshCommand}" Style="{StaticResource IconButtonPrimary}"
-                        Tag="{x:Static mi:MaterialIconKind.Refresh}" Content="{x:Static resources:Strings.K015}"
-                        ToolTip="{x:Static resources:Strings.K422}" />
+                        Tag="{x:Static mi:MaterialIconKind.Refresh}" Content="{x:Static resources:Strings.Lbl_Refresh}"
+                        ToolTip="{x:Static resources:Strings.Lbl_RefreshRuntimeMetricsF5}" />
             </Grid>
         </Grid>
 
@@ -193,7 +193,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource StatusAlarmBrush}" Text="{x:Static resources:Strings.K423}" />
+                    <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource StatusAlarmBrush}" Text="{x:Static resources:Strings.Lbl_AcquisitionAbnormal}" />
                     <TextBlock Margin="0,4,0,0" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding LastFailureMessage}" TextWrapping="Wrap" />
                     <TextBlock Margin="0,4,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding LastFailureAt, Converter={StaticResource LocFormatConverter}, ConverterParameter=F279}" />
                     <!-- 刷新本身抛异常（配置校验/设备快照/资源采样）：数据已停止更新，必须显式告知，
@@ -217,7 +217,7 @@
                 <!-- 断连时展示"连续失败 N 次"会自相矛盾（刚断连时 N 还是 0，看着像"没失败却报警"）。
                      断连状态下改展示断线持续时长——此时用户真正想知道的是"断了多久"。 -->
                 <StackPanel Grid.Column="1" Margin="20,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K424}" />
+                    <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_ConsecutiveFailures}" />
                     <TextBlock HorizontalAlignment="Right" FontSize="22" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}"
                                Text="{Binding ConsecutiveFailureCycles}"
                                ToolTip="{Binding ConsecutiveFailTooltip}" ToolTipService.ShowDuration="30000" />
@@ -233,7 +233,7 @@
                     </StackPanel.Style>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Margin="20,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K442}" />
+                    <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_DisconnectDuration}" />
                     <TextBlock HorizontalAlignment="Right" FontSize="22" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding DisconnectDurationText}"
                                ToolTip="{Binding DisconnectDurationTooltip}" ToolTipService.ShowDuration="30000" />
                     <StackPanel.Style>
@@ -270,7 +270,7 @@
             <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8"
                     ToolTip="{Binding ConnectionTooltip}" ToolTipService.ShowDuration="30000">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K099}" />
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Lbl_PLCConnection}" />
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center" Style="{StaticResource ConnectionIndicator}" />
                         <TextBlock Style="{StaticResource ConnectionKpiValue}" Text="{Binding ConnectionStatus}" />
@@ -306,21 +306,21 @@
             <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8"
                     ToolTip="{Binding AcquisitionHealthTooltip}" ToolTipService.ShowDuration="30000">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K425}" />
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Lbl_SystemHealth}" />
                     <TextBlock Style="{StaticResource HealthKpiValue}" Text="{Binding HealthText}" />
                     <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding IsAcquisitionRunning, Converter={StaticResource LocFormatConverter}, ConverterParameter=F280}" />
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K426}" />
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Lbl_RecentAcquisitionCycle}" />
                     <TextBlock Style="{StaticResource KpiValueMd}" Text="{Binding LastCycleMilliseconds, StringFormat={}{0} ms}" />
                     <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding AverageCycleMilliseconds, Converter={StaticResource LocFormatConverter}, ConverterParameter=F281}" />
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K100}" />
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Lbl_CumulativeDisconnects}" />
                     <TextBlock Style="{StaticResource KpiValueMd}" Text="{Binding TotalDisconnectCount}" />
                     <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding FailedCycles, Converter={StaticResource LocFormatConverter}, ConverterParameter=F282}" />
                 </StackPanel>
@@ -345,7 +345,7 @@
 
             <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource MainCard}" Padding="20">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K427}" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.Lbl_AcquisitionLoop}" />
                     <Grid Margin="0,18,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -358,26 +358,26 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K428}" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_CompletedPolls}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CompletedCycles, Converter={StaticResource LocFormatConverter}, ConverterParameter=F247}" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K429}" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_AverageCycle}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding AverageCycleMilliseconds, StringFormat={}{0:F1} ms}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K430}" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_MaxCycle}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding MaxCycleMilliseconds, StringFormat={}{0} ms}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K431}" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_ConfiguredPollInterval}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PollingIntervalMs, StringFormat={}{0} ms}" />
-                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K432}" />
+                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_HistoryWriteFrequency}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryWriteIntervalScans, Converter={StaticResource LocFormatConverter}, ConverterParameter=F283}" />
                     </Grid>
                     <Border Style="{StaticResource HintCard}" Margin="0,22,0,0">
-                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K433}" />
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_ActualCycleIncludesPLCReadTime}" />
                     </Border>
                 </StackPanel>
             </Border>
 
             <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource MainCard}" Padding="20">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K434}" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.Lbl_DeviceReads}" />
                     <Grid Margin="0,18,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -390,26 +390,26 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K435}" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_ConfiguredDevices}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TotalDeviceCount}" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K436}" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_RecentSuccessfulReads}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulDevices}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K437}" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue={x:Static resources:Strings.K595}}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K446}" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_LastSuccessTime}" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue={x:Static resources:Strings.Lbl_N}}" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_ReadPointsConfigured}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ReadDetailText}" />
-                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K447}" />
+                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_RecentSuccessfulDevices}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DeviceReadSummary}" />
                     </Grid>
                     <Border Style="{StaticResource HintCard}" Margin="0,22,0,0">
-                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K439}" />
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Lbl_SuccessfulReadsLastRound0Triggers}" />
                     </Border>
                 </StackPanel>
             </Border>
 
             <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource MainCard}" Padding="20" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K440}" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.Lbl_PLCCommunicationDetails}" />
                     <Grid Margin="0,14,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -420,11 +420,11 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K441}" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_ConnectionEndpoint}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PlcEndpoint}" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K442}" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_DisconnectDuration}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DisconnectDurationText}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K443}" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_ConsecutiveFailureRetries}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ConsecutiveFailures, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                     </Grid>
                 </StackPanel>
@@ -432,7 +432,7 @@
 
             <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource MainCard}" Padding="20" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K444}" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.Lbl_AcquisitionQualityReadPerformance}" />
                     <Grid Margin="0,14,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -443,9 +443,9 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K445}" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_PollSuccessRate}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}"
-                                   Text="{Binding SuccessRateDisplay, StringFormat={}{0:F1}%, TargetNullValue={x:Static resources:Strings.K595}}"
+                                   Text="{Binding SuccessRateDisplay, StringFormat={}{0:F1}%, TargetNullValue={x:Static resources:Strings.Lbl_N}}"
                                    ToolTip="{Binding SuccessRateTooltip}" ToolTipService.ShowDuration="30000" />
                         <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_P95Cycle}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CycleP95Milliseconds, StringFormat={}{0} ms}" />
@@ -464,13 +464,13 @@
                             </Style>
                         </ProgressBar.Style>
                     </ProgressBar>
-                    <TextBlock Margin="0,6,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K449}" />
+                    <TextBlock Margin="0,6,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.Lbl_AcquisitionSuccessRate}" />
                 </StackPanel>
             </Border>
 
             <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource MainCard}" Padding="20" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K450}" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.Lbl_HistoryWriteHealth}" />
                     <Grid Margin="0,14,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -490,17 +490,17 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K451}" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_PendingSnapshots}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}"
                                    Text="{Binding PendingHistoryCount}"
                                    ToolTip="{Binding PendingHistoryTooltip}" ToolTipService.ShowDuration="30000" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K452}" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_RecoveryFiles}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding RecoveryFileText}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K453}" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastHistoryFlushAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue={x:Static resources:Strings.K595}}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K454}" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_LastSuccessfulWrite}" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastHistoryFlushAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue={x:Static resources:Strings.Lbl_N}}" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_WriteFailures}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryFlushFailureCount}" />
-                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K455}" />
+                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_DatabaseStorage}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryStorageText}" />
                         <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_DataSourcePending}" />
                         <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PendingDataSourceCount}" />
@@ -520,7 +520,7 @@
 
             <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource MainCard}" Padding="20" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K456}" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.Lbl_AcquisitionProcessResourcesConfiguration}" />
                     <Grid Margin="0,14,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -539,19 +539,19 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K457}" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_CPUMemory}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CpuMemoryText}" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K458}" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_ProgramUptime}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ProcessUptimeText}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K459}" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_GPUUsage}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding GpuUsageText}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K460}" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_ConfigCheck}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DataConsistencyText}" />
-                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K461}" />
+                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_ProcessResources}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ProcessResourceText}" />
-                        <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K462}" />
+                        <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_MemoryDisk}" />
                         <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding SystemMemoryText}" />
-                        <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K463}" />
+                        <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_FreeDisk}" />
                         <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DiskFreeText}" />
                         <!-- 配置校验算了三个指标，原来只露出"配置检查"一项汇总：
                              用户看到"发现 3 项问题"却定位不到是地址冲突还是非法地址。 -->
@@ -561,13 +561,13 @@
                         <TextBlock Grid.Row="8" Grid.Column="1" Style="{StaticResource IssueCountValue}" Text="{Binding InvalidAddressCount}" />
                         <!-- 阶段耗时/批次计划原本是卡片底部两对"孤立小标题 + 长文本"，
                              把卡片撑得比数据区还长；收进表体后与其他指标对齐，也便于扫读。 -->
-                        <TextBlock Grid.Row="9" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K465}" />
+                        <TextBlock Grid.Row="9" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_StageDuration}" />
                         <TextBlock Grid.Row="9" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding StageTimingText}" TextWrapping="Wrap" />
-                        <TextBlock Grid.Row="10" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K466}" />
+                        <TextBlock Grid.Row="10" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Lbl_BatchPlan}" />
                         <TextBlock Grid.Row="10" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding BatchPlanText}" TextWrapping="Wrap" />
                     </Grid>
                     <!-- GPU 不可用时整块隐藏：原来只留一条空进度条 + 孤立标题 -->
-                    <TextBlock Margin="0,6,0,0" Text="{x:Static resources:Strings.K464}">
+                    <TextBlock Margin="0,6,0,0" Text="{x:Static resources:Strings.Lbl_GPUEngineLoad}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock" BasedOn="{StaticResource HintText}">
                                 <Style.Triggers>
@@ -594,7 +594,7 @@
 
             <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource MainCard}" Padding="16" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K467}" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.Lbl_DeviceAcquisitionStatus}" />
                     <Grid>
                         <!-- 不再写死 Height=220：本页外层已有 ScrollViewer，固定高度会让列表内部再长出一条
                              独立滚动条（外层滚 + 内层滚 = 双层滚动，滚到底就得先"穿过"内层）。
@@ -602,10 +602,10 @@
                         <ListView x:Name="DeviceStatusList" Margin="0,12,0,0" MaxHeight="480" Style="{StaticResource MetricListView}" ItemsSource="{Binding DeviceStatuses}">
                             <ListView.View>
                                 <GridView ColumnHeaderContainerStyle="{StaticResource MetricColumnHeader}">
-                                    <GridViewColumn Header="{x:Static resources:Strings.K002}" Width="220" DisplayMemberBinding="{Binding DeviceName}" />
-                                    <GridViewColumn Header="{x:Static resources:Strings.K083}" Width="140" DisplayMemberBinding="{Binding StatusText}" />
-                                    <GridViewColumn Header="{x:Static resources:Strings.K468}" Width="140" DisplayMemberBinding="{Binding AcquisitionText}" />
-                                    <GridViewColumn Header="{x:Static resources:Strings.K469}" Width="160" DisplayMemberBinding="{Binding ReadSummary}" />
+                                    <GridViewColumn Header="{x:Static resources:Strings.Lbl_Device}" Width="220" DisplayMemberBinding="{Binding DeviceName}" />
+                                    <GridViewColumn Header="{x:Static resources:Strings.Lbl_CurrentStatus}" Width="140" DisplayMemberBinding="{Binding StatusText}" />
+                                    <GridViewColumn Header="{x:Static resources:Strings.Lbl_Round}" Width="140" DisplayMemberBinding="{Binding AcquisitionText}" />
+                                    <GridViewColumn Header="{x:Static resources:Strings.Lbl_ReadConfig}" Width="160" DisplayMemberBinding="{Binding ReadSummary}" />
                                     <GridViewColumn Header="{x:Static resources:Strings.Wo_OkNg}" Width="140" DisplayMemberBinding="{Binding ProductionSummary}" />
                                 </GridView>
                             </ListView.View>
@@ -613,7 +613,7 @@
                         <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Margin="0,12,0,0"
                                    Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="{x:Static resources:Strings.K583}">
+                                   Text="{x:Static resources:Strings.Lbl_NoData}">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -631,14 +631,14 @@
 
             <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource MainCard}" Padding="16" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K470}" />
-                    <TextBlock Margin="0,2,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K471}" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.Lbl_PollCycleTrend}" />
+                    <TextBlock Margin="0,2,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.Lbl_Last60RefreshesMs}" />
                     <Grid>
                         <!-- PlotView 自身没有滚动条，但整行宽度下 220 太扁，趋势起伏看不出来；加高到 280。 -->
                         <oxy:PlotView x:Name="PollingTrendChart" Height="280" Margin="0,10,0,0" Model="{Binding PollingTrend}" Background="Transparent" />
                         <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="{x:Static resources:Strings.K583}">
+                                   Text="{x:Static resources:Strings.Lbl_NoData}">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Collapsed" />

@@ -19,7 +19,7 @@ internal static class LicenseAudit
         var license = gate.CurrentLicense;
         var detail = succeeded
             ? license?.IsPermanent == true
-                ? Strings.M308
+                ? Strings.Msg_PermanentLicense2
                 : license?.ExpireDate?.ToLocalTime().ToString("yyyy-MM-dd")
             : error;
         if (detail is { Length: > 400 })

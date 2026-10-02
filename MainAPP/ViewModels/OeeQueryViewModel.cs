@@ -59,7 +59,7 @@ public partial class OeeQueryViewModel : ObservableObject
     public string PerformanceTooltip => FormatHelper.Tip(
         Strings.Home_Tip_Performance,
         OeeTargetCycle > 0 && OeeRunTime > 0
-            ? string.Format(Strings.F037, OeeOkProduction, OeeNgProduction, OeeTargetCycle * OeeRunTimeHours)
+            ? string.Format(Strings.Prompt_Pcs5, OeeOkProduction, OeeNgProduction, OeeTargetCycle * OeeRunTimeHours)
             : "— / —",
         $"{OeePerformanceRate:P1}");
     public string AvailabilityTooltip => FormatHelper.Tip(
@@ -191,7 +191,7 @@ public partial class OeeQueryViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Error(ex, "OEE 查询失败");
-            QueryError = string.Format(Strings.F007, ex.Message);
+            QueryError = string.Format(Strings.Prompt_FailedQueryOEEHistory, ex.Message);
             return (0, 0);
         }
     }
@@ -240,20 +240,20 @@ public partial class OeeQueryViewModel : ObservableObject
         if (!_hasQueried) return null;
 
         List<OeeCsvRow> rows = [
-            new() { Metric = Strings.M046, Value = OeeQualityRate.ToString("F4", CultureInfo.InvariantCulture) },
-            new() { Metric = Strings.M047, Value = OeePerformanceRate.ToString("F4", CultureInfo.InvariantCulture) },
-            new() { Metric = Strings.M048, Value = OeeAvailabilityRate.ToString("F4", CultureInfo.InvariantCulture) },
-            new() { Metric = Strings.M347, Value = OeeValue.ToString("F4", CultureInfo.InvariantCulture) },
-            new() { Metric = Strings.M348, Value = OeeOkProduction.ToString(CultureInfo.InvariantCulture) },
-            new() { Metric = Strings.M349, Value = OeeNgProduction.ToString(CultureInfo.InvariantCulture) },
-            new() { Metric = Strings.M350, Value = OeeRunTime.ToString("F0", CultureInfo.InvariantCulture) },
-            new() { Metric = Strings.M351, Value = OeeAlarmTime.ToString("F0", CultureInfo.InvariantCulture) },
-            new() { Metric = Strings.M352, Value = OeeTargetCycle.ToString(CultureInfo.InvariantCulture) }
+            new() { Metric = Strings.Msg_CQualityRate, Value = OeeQualityRate.ToString("F4", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.Msg_BPerformanceRate, Value = OeePerformanceRate.ToString("F4", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.Msg_TimeAvailability, Value = OeeAvailabilityRate.ToString("F4", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.Msg_OEE, Value = OeeValue.ToString("F4", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.Msg_OKQty, Value = OeeOkProduction.ToString(CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.Msg_NGQty, Value = OeeNgProduction.ToString(CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.Msg_RuntimeS, Value = OeeRunTime.ToString("F0", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.Msg_AlarmTimeS, Value = OeeAlarmTime.ToString("F0", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.Msg_TargetOutputPcsH, Value = OeeTargetCycle.ToString(CultureInfo.InvariantCulture) }
         ];
 
         return HistoryQueryHelper.BuildCsv(rows,
-            string.Format(Strings.M353, deviceId),
-            $"# {OeeInsight ?? Strings.M176}");
+            string.Format(Strings.Msg_Device2, deviceId),
+            $"# {OeeInsight ?? Strings.Msg_NoInsights}");
     }
 
     private List<ShiftOeeRecord> ComputePerShiftOee(
@@ -357,20 +357,20 @@ public partial class OeeQueryViewModel : ObservableObject
 
         var items = new[]
         {
-            (Name: Strings.M046, Value: q),
-            (Name: Strings.M047, Value: p),
-            (Name: Strings.M048, Value: a)
+            (Name: Strings.Msg_CQualityRate, Value: q),
+            (Name: Strings.Msg_BPerformanceRate, Value: p),
+            (Name: Strings.Msg_TimeAvailability, Value: a)
         };
         var min = items.MinBy(x => x.Value);
         var max = items.MaxBy(x => x.Value);
 
         string main;
         if (min.Value < HistoryQueryViewModel.LowPerformanceThreshold)
-            main = string.Format(Strings.F051, min.Name, min.Value);
+            main = string.Format(Strings.Prompt_BottleneckFactorOnlyMainDragOEE, min.Name, min.Value);
         else if (min.Value < max.Value - 0.1)
-            main = string.Format(Strings.F241, max.Name, max.Value, min.Name, min.Value);
+            main = string.Format(Strings.Prompt_PerformsBestLow, max.Name, max.Value, min.Name, min.Value);
         else
-            main = string.Format(Strings.F053, q, p, a, q * p * a);
+            main = string.Format(Strings.Prompt_ThreeMetricsBalancedOEE, q, p, a, q * p * a);
 
         var shiftInsight = BuildShiftComparisonInsight(perShiftOee);
         return shiftInsight == null ? main : $"{main}\n{shiftInsight}";
@@ -396,18 +396,18 @@ public partial class OeeQueryViewModel : ObservableObject
         // 定位 worst 班次的拖累项：与 best 班次的 Q/P/A 比较，差距最大的因子即主因
         var factors = new[]
         {
-            (Name: Strings.M046, Diff: worst.Quality - best.Quality, Worst: worst.Quality, Best: best.Quality),
-            (Name: Strings.M047, Diff: worst.Performance - best.Performance, Worst: worst.Performance, Best: best.Performance),
-            (Name: Strings.M048, Diff: worst.Availability - best.Availability, Worst: worst.Availability, Best: best.Availability)
+            (Name: Strings.Msg_CQualityRate, Diff: worst.Quality - best.Quality, Worst: worst.Quality, Best: best.Quality),
+            (Name: Strings.Msg_BPerformanceRate, Diff: worst.Performance - best.Performance, Worst: worst.Performance, Best: best.Performance),
+            (Name: Strings.Msg_TimeAvailability, Diff: worst.Availability - best.Availability, Worst: worst.Availability, Best: best.Availability)
         };
         var drag = factors.MinBy(f => f.Diff);
 
         var timeLabel = worst.ShiftTime.ToString("MM-dd HH:mm");
         var dragHint = drag!.Diff < -0.05
-            ? string.Format(Strings.F238, drag.Name, drag.Worst, drag.Best)
+            ? string.Format(Strings.Prompt_MainDragVs, drag.Name, drag.Worst, drag.Best)
             : "";
-        return string.Format(Strings.F243, worst.ShiftName, timeLabel, worst.Oee) +
-               string.Format(Strings.F065, gap, dragHint);
+        return string.Format(Strings.Prompt_WorstShiftOEE, worst.ShiftName, timeLabel, worst.Oee) +
+               string.Format(Strings.Prompt_BelowBestShift, gap, dragHint);
     }
 
     private class OeeCsvRow

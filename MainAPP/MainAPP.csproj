@@ -19,28 +19,6 @@
     <Resource Include="app_icon.png" />
   </ItemGroup>
 
-  <!-- 编译前从统一 Localization.csv 生成 WPF 资源和 Strings.cs。 -->
-  <Target Name="GenerateStrings" BeforeTargets="AssignCulture">
-    <Message Importance="high" Text="Generating WPF localization resources from Localization.csv…" />
-    <Exec Command="py $(ProjectDir)..\ci\generate_localization.py --wpf"
-          WorkingDirectory="$(ProjectDir).."
-          ContinueOnError="false" />
-    <ItemGroup>
-      <EmbeddedResource Remove="Resources\Strings*.resx" />
-      <EmbeddedResource Include="Resources\Strings.resx" />
-      <EmbeddedResource Include="Resources\Strings.*.resx">
-        <DependentUpon>Strings.resx</DependentUpon>
-      </EmbeddedResource>
-    </ItemGroup>
-  </Target>
-
-  <!-- 多语言资源：Localization.csv 的全部语言列生成 Strings.*.resx，不能只枚举固定语言。 -->
-  <ItemGroup>
-    <EmbeddedResource Update="Resources\Strings.*.resx">
-      <DependentUpon>Strings.resx</DependentUpon>
-    </EmbeddedResource>
-  </ItemGroup>
-
   <ItemGroup>
     <!-- 现场翻译覆盖模板：复制到 Config/Localization.override.csv 后编辑并重启生效。 -->
     <None Update="Resources\Localization.override.sample.csv">
@@ -121,6 +99,7 @@
     <!-- SignalR 客户端共享库（WPF/Blazor WASM 共用）：连接封装 + 事件订阅 + 服务调用 -->
     <ProjectReference Include="..\Kanban.Client\Kanban.Client.csproj" />
     <!-- 展示端瘦身过渡期：采集/存储/领域模型已迁入 Core，MainAPP 经项目引用继续使用（第 4 步改为客户端代理后移除） -->
+    <ProjectReference Include="..\Kanban.Localization\Kanban.Localization.csproj" />
     <ProjectReference Include="..\Kanban.Collector.Core\Kanban.Collector.Core.csproj" />
     <ProjectReference Include="..\Kanban.Contracts\Kanban.Contracts.csproj" />
     <ProjectReference Include="..\Kanban.Analysis\Kanban.Analysis.csproj" />

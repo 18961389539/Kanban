@@ -198,7 +198,7 @@ public partial class AlarmQueryViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Error(ex, "报警查询失败");
-            QueryError = string.Format(Strings.F129, ex.Message);
+            QueryError = string.Format(Strings.Prompt_FailedQueryAlarmHistory, ex.Message);
             return (0, 0);
         }
     }
@@ -258,7 +258,7 @@ public partial class AlarmQueryViewModel : ObservableObject
 
         return HistoryQueryHelper.BuildCsv(rows,
             $"# {string.Format(Strings.Csv_Alarm_Summary, AlarmTriggerCount, AlarmRecoverCount, AlarmPendingCount)}",
-            $"# {AlarmInsight ?? Strings.M176}");
+            $"# {AlarmInsight ?? Strings.Msg_NoInsights}");
     }
 
     private static string? BuildAlarmInsight(
@@ -274,9 +274,9 @@ public partial class AlarmQueryViewModel : ObservableObject
         var parts = top3.Select(t =>
         {
             var ratio = (double)t.TriggerCount / totalTriggers;
-            return string.Format(Strings.F040, t.AlarmName, t.TriggerCount, ratio);
+            return string.Format(Strings.Prompt_Times2, t.AlarmName, t.TriggerCount, ratio);
         });
-        var topInsight = string.Format(Strings.F242, string.Join(" / ", parts));
+        var topInsight = string.Format(Strings.Prompt_TopAlarms, string.Join(" / ", parts));
 
         var sb = new StringBuilder(topInsight);
 
@@ -325,9 +325,9 @@ public partial class AlarmQueryViewModel : ObservableObject
             var dur = p.Minutes >= 60
                 ? $"{p.Minutes / 60.0:F1}h"
                 : $"{p.Minutes:F0}min";
-            return string.Format(Strings.F034, p.AlarmName, dur, p.TriggerTime);
+            return string.Format(Strings.Prompt_Since, p.AlarmName, dur, p.TriggerTime);
         });
-        return string.Format(Strings.F044, string.Join(" / ", parts));
+        return string.Format(Strings.Prompt_TopPendingDuration, string.Join(" / ", parts));
     }
 
     /// <summary>
@@ -372,7 +372,7 @@ public partial class AlarmQueryViewModel : ObservableObject
         if (groups.Count == 0) return null;
 
         var top = groups.First();
-        return string.Format(Strings.F052, top.Pattern, top.Count);
+        return string.Format(Strings.Prompt_ChainTriggerTimesWithin5Minute, top.Pattern, top.Count);
     }
 
     private class AlarmCsvRow

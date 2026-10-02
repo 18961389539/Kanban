@@ -9,7 +9,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     mc:Ignorable="d"
     d:DesignHeight="400"
-    d:DesignWidth="500" xmlns:resources="clr-namespace:MainAPP.Resources">
+    d:DesignWidth="500" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <!--
         主页仪表板卡片 4：OEE设备综合使用效率（OEE 主环 + 可用率/性能率/合格率三环小卡 + 标题栏设备健康分）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
@@ -29,7 +29,7 @@
             <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="False">
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Gauge" />
-                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K319}" />
+                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.Lbl_OEEOverallEquipmentEffectiveness}" />
                     <controls:KpiScopeChip Kind="Shift" />
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
@@ -76,7 +76,7 @@
                                        Foreground="{StaticResource ThirdlyTextBrush}" Text="OEE" />
                         </StackPanel>
                         <!-- 空状态：OeeRingChart 为 null 时显示，遮盖空环和 0% 文本 -->
-                        <controls:EmptyState IconKind="ChartArc" Message="{x:Static resources:Strings.K320}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <controls:EmptyState IconKind="ChartArc" Message="{x:Static resources:Strings.Lbl_NoOEEData}" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <controls:EmptyState.Style>
                                 <Style TargetType="controls:EmptyState">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -110,7 +110,7 @@
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock VerticalAlignment="Center"
                                                FontSize="{DynamicResource FontSizeMicro}"
-                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K321}" />
+                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_TimeAvailability2}" />
                                     <controls:KpiScopeChip Kind="Shift" />
                                 </StackPanel>
                                 <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
@@ -135,7 +135,7 @@
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock VerticalAlignment="Center"
                                                FontSize="{DynamicResource FontSizeMicro}"
-                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K322}" />
+                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_BPerformanceRate}" />
                                     <controls:KpiScopeChip Kind="Shift" />
                                 </StackPanel>
                                 <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
@@ -160,7 +160,7 @@
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock VerticalAlignment="Center"
                                                FontSize="{DynamicResource FontSizeMicro}"
-                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K084}" />
+                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Lbl_CQualityRate}" />
                                     <controls:KpiScopeChip Kind="Shift" />
                                 </StackPanel>
                                 <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"

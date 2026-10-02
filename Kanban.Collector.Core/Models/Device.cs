@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
@@ -10,53 +10,113 @@ namespace Kanban.Collector.Core.Models;
 /// </summary>
 public partial class Device : ObservableObject
 {
-    [ObservableProperty]
     private string _id = Guid.NewGuid().ToString("N");
 
-    [ObservableProperty]
+    public string Id
+    {
+        get => _id;
+    set => SetProperty(ref _id, value);
+    }
+
     private string _name = string.Empty;
 
-    /// <summary>设备机型/类型（配方按机型归属的关联键）。空字符串 = 通用。</summary>
-    [ObservableProperty]
+    public string Name
+    {
+        get => _name;
+    set => SetProperty(ref _name, value);
+    }
+
     private string _machineType = string.Empty;
 
-    /// <summary>设备使用的连接档案；缺失的旧设备迁移到默认档案。</summary>
-    [ObservableProperty]
+    /// <summary>设备机型/类型（配方按机型归属的关联键）。空字符串 = 通用。</summary>
+    public string MachineType
+    {
+        get => _machineType;
+    set => SetProperty(ref _machineType, value);
+    }
+
     private string _connectionProfileId = ConnectionProfile.DefaultId;
+
+    /// <summary>设备使用的连接档案；缺失的旧设备迁移到默认档案。</summary>
+    public string ConnectionProfileId
+    {
+        get => _connectionProfileId;
+    set => SetProperty(ref _connectionProfileId, value);
+    }
 
     // ──────────── PLC 地址配置 ────────────
 
-    [ObservableProperty]
     private string _okCountAddress = string.Empty;
 
-    [ObservableProperty]
+    public string OkCountAddress
+    {
+        get => _okCountAddress;
+    set => SetProperty(ref _okCountAddress, value);
+    }
+
     private string _ngCountAddress = string.Empty;
 
-    [ObservableProperty]
+    public string NgCountAddress
+    {
+        get => _ngCountAddress;
+    set => SetProperty(ref _ngCountAddress, value);
+    }
+
     private string _statusCountAddress = string.Empty;
 
-    [ObservableProperty]
+    public string StatusCountAddress
+    {
+        get => _statusCountAddress;
+    set => SetProperty(ref _statusCountAddress, value);
+    }
+
     private string _productionResetAddress = string.Empty;
+
+    public string ProductionResetAddress
+    {
+        get => _productionResetAddress;
+    set => SetProperty(ref _productionResetAddress, value);
+    }
 
     // ──────────── 配方配置 ────────────
 
-    [ObservableProperty]
     private string _recipeName = string.Empty;
 
-    [ObservableProperty]
+    public string RecipeName
+    {
+        get => _recipeName;
+    set => SetProperty(ref _recipeName, value);
+    }
+
     private int _recipeValue;
 
-    [ObservableProperty]
+    public int RecipeValue
+    {
+        get => _recipeValue;
+    set => SetProperty(ref _recipeValue, value);
+    }
+
     private string _recipeAddress = string.Empty;
 
+    public string RecipeAddress
+    {
+        get => _recipeAddress;
+    set => SetProperty(ref _recipeAddress, value);
+    }
+
     // ──────────── 生产节拍 ────────────
+
+    private int _targetCycle;
 
     /// <summary>
     /// 目标产能（件/小时）。属性名 <c>TargetCycle</c> 为历史兼容，不是秒/件。
     /// 秒/件展示用 <c>3600 / TargetCycle</c>。
     /// </summary>
-    [ObservableProperty]
-    private int _targetCycle;
+    public int TargetCycle
+    {
+        get => _targetCycle;
+    set => SetProperty(ref _targetCycle, value);
+    }
 
     // ──────────── 子集合 ────────────
 

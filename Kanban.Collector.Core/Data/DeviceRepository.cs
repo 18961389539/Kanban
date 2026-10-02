@@ -211,7 +211,7 @@ public class DeviceRepository : IDeviceRepository
         }
 
         // 原子写入：复用 AppSettings 的实现，避免写入中途崩溃产生截断的 JSON 文件
-        Services.AppSettings.WriteFileAtomically(FilePath, json);
+        Services.AtomicFileWriter.Write(FilePath, json);
 
         // 保存即地址可能变更：失效 PLC 地址解析缓存
         PlcAddressParser.ClearCache();
@@ -225,7 +225,7 @@ public class DeviceRepository : IDeviceRepository
     {
         var snapshot = CreateDeepSnapshot();
         var json = JsonSerializer.Serialize(snapshot, JsonOptions);
-        Services.AppSettings.WriteFileAtomically(path, json);
+        Services.AtomicFileWriter.Write(path, json);
     }
 
     /// <summary>
@@ -276,7 +276,7 @@ public class DeviceRepository : IDeviceRepository
             }
 
             var json = JsonSerializer.Serialize(deviceList, JsonOptions);
-            Services.AppSettings.WriteFileAtomically(FilePath, json);
+            Services.AtomicFileWriter.Write(FilePath, json);
             ReplaceStateLocked(deviceList);
         }
     }

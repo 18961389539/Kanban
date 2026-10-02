@@ -341,12 +341,12 @@ public class ProductionLineViewModelTests
             await vm.ResetAllProductionCommand.ExecuteAsync(null);
 
             var prompt = Assert.Single(dialog.ShowCalls);
-            Assert.Equal(Strings.M385, prompt.Title);
-            Assert.Equal(string.Format(Strings.F717, 2), prompt.Message);
+            Assert.Equal(Strings.Msg_ConfirmResetOEEAll, prompt.Title);
+            Assert.Equal(string.Format(Strings.Prompt_ResetOEEAllDevicesClearsOK, 2), prompt.Message);
             Assert.Equal(MessageBoxButton.YesNo, prompt.Buttons);
             Assert.Equal(MessageBoxImage.Warning, prompt.Icon);
 
-            Assert.Equal(string.Format(Strings.F718, 2, 2), Assert.Single(dialog.Success));
+            Assert.Equal(string.Format(Strings.Prompt_OEEResetTriggeredAllDevices, 2, 2), Assert.Single(dialog.Success));
             service.Received(1).ResetAllDevicesProduction();
             Assert.False(vm.IsResettingAll);
         }
@@ -400,7 +400,7 @@ public class ProductionLineViewModelTests
 
             await vm.ResetAllProductionCommand.ExecuteAsync(null);
 
-            Assert.Equal(Strings.M386, Assert.Single(dialog.Info));
+            Assert.Equal(Strings.Msg_NoDevicesReset, Assert.Single(dialog.Info));
             Assert.Empty(dialog.Success);
         }
         finally

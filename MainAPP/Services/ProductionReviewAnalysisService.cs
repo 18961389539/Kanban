@@ -146,13 +146,13 @@ public sealed class ProductionReviewAnalysisService : IProductionReviewAnalysisS
             health.Issues,
             health.Score,
             runningWorkOrder == null
-                ? Strings.M055
-                : string.Format(Strings.F038, runningWorkOrder.OrderNo, runningWorkOrder.TargetQuantity),
+                ? Strings.Msg_NoActiveWorkOrder
+                : string.Format(Strings.Prompt_TargetPcs, runningWorkOrder.OrderNo, runningWorkOrder.TargetQuantity),
             runningWorkOrder == null
-                ? Strings.M056
+                ? Strings.Msg_NoProductInfo
                 : $"{runningWorkOrder.ProductCode} · {runningWorkOrder.ProductName}",
             string.IsNullOrWhiteSpace(device.RecipeName)
-                ? Strings.M057
+                ? Strings.Msg_NoRecipeInfo
                 : $"{device.RecipeName} · {device.RecipeValue:N0}");
     }
 

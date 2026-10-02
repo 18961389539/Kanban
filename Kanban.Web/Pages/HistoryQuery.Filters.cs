@@ -16,7 +16,7 @@ public partial class HistoryQuery
 
     // ──────────── Tab 状态 ────────────
     private int TabIndex { get; set; }
-    private string[] TabTitles => [L.T("Tab_Production"), L.T("Tab_Status"), L.T("Tab_Alarm"), L.T("Tab_Oee"), L.T("K914")];
+    private string[] TabTitles => [L.T("Tab_Production"), L.T("Tab_Status"), L.T("Tab_Alarm"), L.T("Tab_Oee"), L.T("Lbl_SNTraceability")];
     private bool IsAnyLoading => ProdIsLoading || StIsLoading || AlIsLoading || OeIsLoading || SnIsLoading;
 
     // ──────────── 共享筛选条件 ────────────

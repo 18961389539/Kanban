@@ -53,12 +53,12 @@ public partial class ChangePasswordDialog : Window
         var password = NewPasswordBox.Password;
         if (!PasswordPolicy.IsLongEnough(password))
         {
-            ErrorText.Text = Strings.M364;
+            ErrorText.Text = Strings.Msg_PasswordMustLeast8Characters;
             return;
         }
         if (password != ConfirmPasswordBox.Password)
         {
-            ErrorText.Text = Strings.M365;
+            ErrorText.Text = Strings.Msg_TwoPasswordsDoMatch;
             return;
         }
         DialogResult = true;

@@ -14,7 +14,7 @@
     d:DesignWidth="1920"
     PreviewKeyDown="OnPreviewKeyDown"
     IsVisibleChanged="OnIsVisibleChanged"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
 
     <UserControl.Resources>
         <Style x:Key="LineFilterChip" TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
@@ -68,7 +68,7 @@
         <DockPanel Grid.Row="0" Margin="0,0,0,16" VerticalAlignment="Center">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                 <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="Factory" />
-                <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.K405}" />
+                <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.Lbl_ProductionLine}" />
                 <controls:PageHelpButton Margin="8,0,0,0" PageKey="production-line" />
                 <TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
                            FontSize="{DynamicResource FontSizeKpiLabel}"
@@ -80,7 +80,7 @@
                   ToolTipService.ShowDuration="30000">
                 <TextBlock MaxWidth="340" TextTrimming="CharacterEllipsis"
                            FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center">
-                    <Run Text="{x:Static resources:Strings.K415}" />
+                    <Run Text="{x:Static resources:Strings.Lbl_CurrentShift}" />
                     <Run FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding CurrentShiftName, Mode=OneWay}" />
                     <Run Text="  " />
                     <Run Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding CurrentShiftTimeRange, Mode=OneWay}" />
@@ -101,9 +101,9 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <hc:TextBox
                         Width="220"
-                        hc:InfoElement.Title="{x:Static resources:Strings.K196}"
+                        hc:InfoElement.Title="{x:Static resources:Strings.Lbl_TargetOutputPcsHour}"
                         hc:InfoElement.TitlePlacement="Top"
-                        AutomationProperties.Name="{x:Static resources:Strings.K196}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Lbl_TargetOutputPcsHour}"
                         Style="{StaticResource TextBoxExtend}"
                         Text="{Binding BatchTargetPcsPerHour, UpdateSourceTrigger=PropertyChanged}" />
                     <Button
@@ -175,12 +175,12 @@
             <Button Grid.Column="2"
                     Margin="12,0,0,0"
                     VerticalAlignment="Center"
-                    AutomationProperties.Name="{x:Static resources:Strings.K929}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ResetOEEAllDevices}"
                     Command="{Binding ResetAllProductionCommand}"
-                    Content="{x:Static resources:Strings.K928}"
+                    Content="{x:Static resources:Strings.Lbl_ResetAll}"
                     Style="{StaticResource GhostDangerButton}"
                     Tag="{x:Static mi:MaterialIconKind.DeleteSweep}"
-                    ToolTip="{x:Static resources:Strings.K930}"
+                    ToolTip="{x:Static resources:Strings.Lbl_WritesOEEResetCommandEveryDevice}"
                     ToolTipService.ShowOnDisabled="True" />
         </Grid>
 
@@ -275,12 +275,12 @@
                     x:Name="LineSearchBar"
                     Width="260"
                     Margin="0,0,10,0"
-                    AutomationProperties.Name="{x:Static resources:Strings.K406}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_SearchDeviceName}"
                     Style="{StaticResource SearchBarExtend}"
                     Text="{Binding LineSearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
                 <hc:ComboBox
                     Width="150"
-                    AutomationProperties.Name="{x:Static resources:Strings.K408}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_Sort}"
                     DisplayMemberPath="Label"
                     ItemsSource="{Binding LineSortOptions}"
                     SelectedValue="{Binding LineSortBy}"
@@ -294,8 +294,8 @@
             <Border Background="{StaticResource RegionBrush}" CornerRadius="8"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                     Visibility="{Binding HasNoDevices, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <controls:EmptyState IconKind="Factory" Message="{x:Static resources:Strings.K416}"
-                                     Hint="{x:Static resources:Strings.K417}" />
+                <controls:EmptyState IconKind="Factory" Message="{x:Static resources:Strings.Lbl_NoDevices}"
+                                     Hint="{x:Static resources:Strings.Lbl_AddDevicesDeviceManagement}" />
             </Border>
 
             <Border Background="{StaticResource RegionBrush}" CornerRadius="8"

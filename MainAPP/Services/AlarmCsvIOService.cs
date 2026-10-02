@@ -69,7 +69,7 @@ public class AlarmCsvIOService(
     IPlcRuntimeProfileProvider? profileProvider = null)
 {
     // 文件对话框过滤器（本地化资源，与其它 CSV 服务同源 M310）
-    private static string CsvFileFilter => Strings.M310;
+    private static string CsvFileFilter => Strings.Msg_CSVFilesCsvAllFiles;
 
     private static readonly CsvConfiguration CsvConfig = new(CultureInfo.InvariantCulture)
     {
@@ -105,12 +105,12 @@ public class AlarmCsvIOService(
         try
         {
             var count = ExportAlarmsToPath(device, path);
-            _dialog.NotifySuccess(string.Format(Strings.F107, count, Path.GetFileName(path)));
+            _dialog.NotifySuccess(string.Format(Strings.Prompt_ExportedAlarms, count, Path.GetFileName(path)));
             return true;
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ExportFailed, ex.Message));
             return false;
         }
     }
@@ -123,7 +123,7 @@ public class AlarmCsvIOService(
             Strings.Csv_Alarm_FileName,
             device.Name,
             System.DateTime.Now);
-        return _dialog.ShowSaveFileDialog(Strings.M222, defaultFileName, CsvFileFilter);
+        return _dialog.ShowSaveFileDialog(Strings.Msg_ExportAlarmConfig, defaultFileName, CsvFileFilter);
     }
 
     /// <summary>
@@ -162,7 +162,7 @@ public class AlarmCsvIOService(
     /// <returns>导入结果；用户取消返回 null。</returns>
     public AlarmCsvImportResult? ImportAlarms()
     {
-        var path = _dialog.ShowOpenFileDialog(Strings.M223, CsvFileFilter);
+        var path = _dialog.ShowOpenFileDialog(Strings.Msg_ImportAlarmConfig, CsvFileFilter);
         if (string.IsNullOrEmpty(path)) return null;
 
         return ParseAndValidate(path);
@@ -173,7 +173,7 @@ public class AlarmCsvIOService(
     /// 用户取消返回 null。供调用方拆分"选文件(UI)"与"解析校验(后台)"两阶段异步使用。
     /// </summary>
     public string? PickImportPath()
-        => _dialog.ShowOpenFileDialog(Strings.M223, CsvFileFilter);
+        => _dialog.ShowOpenFileDialog(Strings.Msg_ImportAlarmConfig, CsvFileFilter);
 
     /// <summary>
     /// 读取并校验指定路径的 CSV 文件，返回校验通过的报警列表与失败行错误。
@@ -192,7 +192,7 @@ public class AlarmCsvIOService(
 
             if (records.Count == 0)
             {
-                result.Errors.Add(Strings.F323);
+                result.Errors.Add(Strings.Prompt_NoAlarmDataCSVFile);
                 return result;
             }
 
@@ -204,12 +204,12 @@ public class AlarmCsvIOService(
                 // 必填校验
                 if (string.IsNullOrWhiteSpace(rec.Name))
                 {
-                    result.Errors.Add(string.Format(Strings.F184, rowNum));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowAlarmNameEmpty, rowNum));
                     continue;
                 }
                 if (string.IsNullOrWhiteSpace(rec.PlcAddress))
                 {
-                    result.Errors.Add(string.Format(Strings.F183, rowNum));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowPLCAddressEmpty, rowNum));
                     continue;
                 }
 
@@ -217,19 +217,19 @@ public class AlarmCsvIOService(
                 var parseResult = CurrentCodec.Parse(rec.PlcAddress.Trim());
                 if (!parseResult.IsValid)
                 {
-                    result.Errors.Add(string.Format(Strings.F182, rowNum, rec.PlcAddress, parseResult.ErrorMessage));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowPLCAddressInvalid, rowNum, rec.PlcAddress, parseResult.ErrorMessage));
                     continue;
                 }
                 if (parseResult.Type != PlcAddressType.MBit)
                 {
-                    result.Errors.Add(string.Format(Strings.F181, rowNum, rec.PlcAddress, parseResult.Type));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowPLCAddressShouldMBit, rowNum, rec.PlcAddress, parseResult.Type));
                     continue;
                 }
 
                 // 接受当前语言、其它内置语言和旧版英文枚举名。
                 if (!CsvLocalization.TryParseAlarmLevel(rec.Level, out var level))
                 {
-                    result.Errors.Add(string.Format(Strings.F185, rowNum, rec.Level));
+                    result.Errors.Add(string.Format(Strings.Prompt_RowAlarmLevelInvalidExpectLow, rowNum, rec.Level));
                     continue;
                 }
 
@@ -248,7 +248,7 @@ public class AlarmCsvIOService(
         }
         catch (Exception ex)
         {
-            result.Errors.Add(string.Format(Strings.F134, ex.Message));
+            result.Errors.Add(string.Format(Strings.Prompt_FileReadParseFailed, ex.Message));
         }
 
         return result;

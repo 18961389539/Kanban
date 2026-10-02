@@ -81,7 +81,7 @@ public sealed class AlarmCenterEventItem : INotifyPropertyChanged
     public string RepeatBadge => IsStormGroup ? $"×{RepeatCount}" : string.Empty;
     /// <summary>风暴合并说明悬浮文案。</summary>
     public string RepeatTooltip => IsStormGroup
-        ? string.Format(MainAPP.Resources.Strings.K718, RepeatCount)
+        ? string.Format(MainAPP.Resources.Strings.Lbl_RepeatedTriggersSameAlarmWithinShort, RepeatCount)
         : string.Empty;
     /// <summary>相对时间文案（刚刚/N 分钟前/N 小时前/MM-dd HH:mm），随 60s 统计刷新滚动更新。</summary>
     public string EventRelativeText
@@ -89,9 +89,9 @@ public sealed class AlarmCenterEventItem : INotifyPropertyChanged
         get
         {
             var elapsed = DateTime.Now - EventTime;
-            if (elapsed.TotalSeconds < 60) return MainAPP.Resources.Strings.K720;
-            if (elapsed.TotalMinutes < 60) return string.Format(MainAPP.Resources.Strings.K721, (int)elapsed.TotalMinutes);
-            if (elapsed.TotalHours < 24) return string.Format(MainAPP.Resources.Strings.K722, (int)elapsed.TotalHours);
+            if (elapsed.TotalSeconds < 60) return MainAPP.Resources.Strings.Lbl_JustNow;
+            if (elapsed.TotalMinutes < 60) return string.Format(MainAPP.Resources.Strings.Lbl_MinAgo, (int)elapsed.TotalMinutes);
+            if (elapsed.TotalHours < 24) return string.Format(MainAPP.Resources.Strings.Lbl_HrAgo, (int)elapsed.TotalHours);
             return EventTime.ToString("MM-dd HH:mm");
         }
     }
@@ -247,26 +247,26 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
     /// <summary>今日恢复 KPI 展示值（统计失败时显示 —）。</summary>
     public string TodayRecoverCountDisplay => HasStatsError ? "—" : TodayRecoverCount.ToString();
 
-    public string ActiveCountTooltip => FormatHelper.Tip("{0}\\n{1}", Strings.K709, ActiveCount);
-    public string AffectedDeviceTooltip => FormatHelper.Tip("{0}\\n{1}", Strings.K713, AffectedDeviceCount);
-    public string LongestDurationTooltip => FormatHelper.Tip("{0}\\n{1}", Strings.K712, LongestDurationText);
+    public string ActiveCountTooltip => FormatHelper.Tip("{0}\\n{1}", Strings.Lbl_CountAlarmsYetRecoveredLiveSnapshot, ActiveCount);
+    public string AffectedDeviceTooltip => FormatHelper.Tip("{0}\\n{1}", Strings.Lbl_NumberDevicesUnrecoveredAlarmsLiveSnapshot, AffectedDeviceCount);
+    public string LongestDurationTooltip => FormatHelper.Tip("{0}\\n{1}", Strings.Lbl_EarliestStartedAlarmYetRecoveredLive, LongestDurationText);
 
     public string TodayTriggerKpiToolTip => HasStatsError
         ? StatsErrorText!
-        : FormatHelper.Tip("{0}\\n{1}", Strings.K710, TodayTriggerCount);
+        : FormatHelper.Tip("{0}\\n{1}", Strings.Lbl_TotalTriggerEventsSinceMidnightToday, TodayTriggerCount);
 
     public string TodayRecoverKpiToolTip => HasStatsError
         ? StatsErrorText!
-        : FormatHelper.Tip("{0}\\n{1}", Strings.K711, TodayRecoverCount);
+        : FormatHelper.Tip("{0}\\n{1}", Strings.Lbl_TotalRecoveryEventsSinceMidnightToday, TodayRecoverCount);
 
     public string MostFrequentKpiToolTip => HasStatsError
         ? StatsErrorText!
-        : FormatHelper.Tip("{0}\\n{1}", Strings.K714, MostFrequentAlarm);
+        : FormatHelper.Tip("{0}\\n{1}", Strings.Lbl_TopAlarmTriggerCountSelectedTime, MostFrequentAlarm);
 
     public bool HasTruncation => FilteredAlarmCount > MaxActiveAlarms;
 
     public string ActiveTruncationHint => HasTruncation
-        ? string.Format(Strings.K708, MaxActiveAlarms)
+        ? string.Format(Strings.Lbl_ShowingFirstOnly, MaxActiveAlarms)
         : string.Empty;
 
     /// <summary>窗口内事件流合并后的总条数（截断前，已按级别/设备/搜索筛选）。</summary>
@@ -288,19 +288,19 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
     public bool HasRecentEventTruncation => RecentEventTotalCount > MaxRecentEvents;
 
     public string RecentEventTruncationHint => HasRecentEventTruncation
-        ? string.Format(Strings.K708, MaxRecentEvents)
+        ? string.Format(Strings.Lbl_ShowingFirstOnly, MaxRecentEvents)
         : string.Empty;
 
     public bool HasTopAlarmTruncation => TopAlarmGroupCount > TopAlarmsCount;
 
     public string TopAlarmTruncationHint => HasTopAlarmTruncation
-        ? string.Format(Strings.K708, TopAlarmsCount)
+        ? string.Format(Strings.Lbl_ShowingFirstOnly, TopAlarmsCount)
         : string.Empty;
 
     public bool ShowStatsLastUpdateTime => StatsLastUpdateTime.HasValue;
 
     public string StatsLastUpdateTimeText => StatsLastUpdateTime.HasValue
-        ? string.Format(Strings.F715, StatsLastUpdateTime.Value)
+        ? string.Format(Strings.Prompt_StatsRefresh, StatsLastUpdateTime.Value)
         : string.Empty;
 
     // ──────────── 今日 KPI 较昨日同期对比（昨日 0 点 至"今日已过时长"同窗口径） ────────────
@@ -323,7 +323,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
         !HasStatsError && YesterdayTriggerCount > 0 && TodayTriggerCount < YesterdayTriggerCount;
     public string TodayTriggerCompareTooltip => HasStatsError
         ? StatsErrorText!
-        : string.Format(Strings.K719, YesterdayTriggerCount, TodayTriggerCount);
+        : string.Format(Strings.Lbl_VersusYesterdaySameTimeYesterdayToday, YesterdayTriggerCount, TodayTriggerCount);
 
     /// <summary>今日恢复较昨日同期变化文案（▲/▼ + 百分比；不可比时 —）。</summary>
     public string TodayRecoverCompareText => FormatCompareText(TodayRecoverCount, YesterdayRecoverCount);
@@ -331,7 +331,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
     public bool TodayRecoverCompareBetter => false;
     public string TodayRecoverCompareTooltip => HasStatsError
         ? StatsErrorText!
-        : string.Format(Strings.K719, YesterdayRecoverCount, TodayRecoverCount);
+        : string.Format(Strings.Lbl_VersusYesterdaySameTimeYesterdayToday, YesterdayRecoverCount, TodayRecoverCount);
 
     private string FormatCompareText(int today, int yesterday)
     {
@@ -343,17 +343,17 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
     }
 
     /// <summary>最频繁报警 KPI 标签：带时间范围标注，避免与"今日"口径混淆。</summary>
-    public string MostFrequentLabel => string.Format(Strings.K707, SelectedTimeRange switch
+    public string MostFrequentLabel => string.Format(Strings.Lbl_MostFrequentAlarm, SelectedTimeRange switch
     {
-        AlarmCenterTimeRange.Hour1 => Strings.K042,
-        AlarmCenterTimeRange.Hours4 => Strings.K043,
-        AlarmCenterTimeRange.CurrentShift => Strings.K078,
-        _ => Strings.K025,
+        AlarmCenterTimeRange.Hour1 => Strings.Lbl_Last1h,
+        AlarmCenterTimeRange.Hours4 => Strings.Lbl_Last4h,
+        AlarmCenterTimeRange.CurrentShift => Strings.Lbl_Shift2,
+        _ => Strings.Lbl_Last24h,
     });
 
     public string ActiveEmptyStateMessage => ActiveAlarms.Count == 0
-        ? (_unfilteredActiveCount > 0 ? Strings.M060 : Strings.M061)
-        : Strings.M061;
+        ? (_unfilteredActiveCount > 0 ? Strings.Msg_NoMatchingAlarms : Strings.Msg_NoActiveFaults)
+        : Strings.Msg_NoActiveFaults;
 
     // ──────────── 列表数据 ────────────
 
@@ -1102,7 +1102,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
                     YesterdayTriggerCount = yesterdayTrigger;
                     YesterdayRecoverCount = yesterdayRecover;
                     MostFrequentAlarm = mostFrequent != null
-                        ? string.Format(Strings.F033, mostFrequent.DisplayName, mostFrequent.TriggerCount)
+                        ? string.Format(Strings.Prompt_Times, mostFrequent.DisplayName, mostFrequent.TriggerCount)
                         : "—";
                     StatsLastUpdateTime = now;
                     RefreshActiveAlarms();
@@ -1121,7 +1121,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
                     if (_disposed || requestVersion != _statsRefreshVersion) return;
                     // 保留上一轮事件流、排行和今日数字，只亮出失败横幅。数字展示会变成「—」，
                     // 避免一次查询失败把整页清空。
-                    StatsErrorText = string.Format(Strings.F073, ex.Message);
+                    StatsErrorText = string.Format(Strings.Prompt_FailedRefreshAlarmStatistics, ex.Message);
                 }
 
                 if (UiDispatcher.HasWpfAppHost)
@@ -1283,8 +1283,8 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
             AlarmLevel.Low => Strings.Level_Low,
             _ => alarm.Level.ToString(),
         };
-        Clipboard.SetText(string.Format(Strings.F032, alarm.DeviceName, alarm.DisplayName, levelText, alarm.EventTime, alarm.DurationText));
-        _dialog.NotifySuccess(Strings.M007);
+        Clipboard.SetText(string.Format(Strings.Prompt_LevelTriggeredDuration, alarm.DeviceName, alarm.DisplayName, levelText, alarm.EventTime, alarm.DurationText));
+        _dialog.NotifySuccess(Strings.Msg_AlarmInfoCopied);
     }
 
     private void RebuildDeviceFilterItems()

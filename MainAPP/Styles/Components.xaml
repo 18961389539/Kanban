@@ -5,7 +5,7 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     xmlns:entities="clr-namespace:Kanban.Collector.Core.Entities;assembly=Kanban.Collector.Core"
-    xmlns:resources="clr-namespace:MainAPP.Resources">
+    xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
 
     <!--  取代 HandyControl 默认 Validation.ErrorTemplate：用转换器安全读取首条错误，
           保留错误文本显示，但集合为空时返回空串、不再抛异常。  -->
@@ -395,19 +395,19 @@
         <Setter Property="Text" Value="—" />
         <Style.Triggers>
             <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Pending}">
-                <Setter Property="Text" Value="{x:Static resources:Strings.K010}" />
+                <Setter Property="Text" Value="{x:Static resources:Strings.Lbl_Pending}" />
             </DataTrigger>
             <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Running}">
-                <Setter Property="Text" Value="{x:Static resources:Strings.K011}" />
+                <Setter Property="Text" Value="{x:Static resources:Strings.Lbl_Progress}" />
                 <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
                 <Setter Property="FontWeight" Value="Bold" />
             </DataTrigger>
             <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Completed}">
-                <Setter Property="Text" Value="{x:Static resources:Strings.K012}" />
+                <Setter Property="Text" Value="{x:Static resources:Strings.Lbl_Completed}" />
                 <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
             </DataTrigger>
             <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Aborted}">
-                <Setter Property="Text" Value="{x:Static resources:Strings.K013}" />
+                <Setter Property="Text" Value="{x:Static resources:Strings.Lbl_Aborted}" />
                 <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
             </DataTrigger>
         </Style.Triggers>

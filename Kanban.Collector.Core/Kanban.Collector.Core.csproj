@@ -10,14 +10,11 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>Kanban.Collector.Core</RootNamespace>
     <AssemblyName>Kanban.Collector.Core</AssemblyName>
-    <!-- RootNamespace 与程序集名统一：资源命名 Kanban.Collector.Core.Resources.Messages
-         （ValidationMessages/ConnectionStatusMessages 的 ResourceManager 字符串依赖此约定） -->
     <!-- 展示端瘦身：采集/存储/领域模型迁入此类库，MainAPP 与 Kanban.Collector 共同引用 -->
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" />
-    <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="CsvHelper" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
     <PackageReference Include="NodaTime" />
@@ -39,31 +36,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Kanban.ComponentModel\Kanban.ComponentModel.csproj" />
+    <ProjectReference Include="..\Kanban.Localization\Kanban.Localization.csproj" />
     <ProjectReference Include="..\Kanban.Contracts\Kanban.Contracts.csproj" />
     <!-- 共享分析层：OEE 四率公式单源（本库 OeeCalculator 门面委托） -->
     <ProjectReference Include="..\Kanban.Analysis\Kanban.Analysis.csproj" />
-  </ItemGroup>
-
-  <!-- 编译前从统一 Localization.csv 生成 Core 多语言 Messages 资源。 -->
-  <Target Name="GenerateCoreLocalization" BeforeTargets="AssignCulture">
-    <Message Importance="high" Text="Generating Core localization resources from Localization.csv…" />
-    <Exec Command="py $(ProjectDir)..\ci\generate_localization.py --core"
-          WorkingDirectory="$(ProjectDir).."
-          ContinueOnError="false" />
-    <ItemGroup>
-      <EmbeddedResource Remove="Resources\Messages*.resx" />
-      <EmbeddedResource Include="Resources\Messages.resx" />
-      <EmbeddedResource Include="Resources\Messages.*.resx">
-        <DependentUpon>Messages.resx</DependentUpon>
-      </EmbeddedResource>
-    </ItemGroup>
-  </Target>
-
-  <!-- 多语言资源：Localization.csv 的全部语言列生成 Messages.*.resx，不能只枚举固定语言。 -->
-  <ItemGroup>
-    <EmbeddedResource Update="Resources\Messages.*.resx">
-      <DependentUpon>Messages.resx</DependentUpon>
-    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

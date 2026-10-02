@@ -40,7 +40,7 @@ public class SnQueryViewModelTests
 
         await vm.SearchCommand.ExecuteAsync(null);
 
-        Assert.Equal(Strings.K921, vm.QueryError);
+        Assert.Equal(Strings.Lbl_PleaseEnterSNTrace, vm.QueryError);
         Assert.False(vm.HasQueried, "空输入应在查询前返回，不标记已查询");
         Assert.Empty(vm.Results);
         Assert.False(vm.IsEmptyResult);
@@ -75,7 +75,7 @@ public class SnQueryViewModelTests
         await vm.SearchCommand.ExecuteAsync(null);
 
         Assert.True(vm.HasQueried);
-        Assert.Equal(string.Format(Strings.K922, "SN-001"), vm.QueryError);
+        Assert.Equal(string.Format(Strings.Lbl_NoTraceRecordsFoundSN, "SN-001"), vm.QueryError);
         Assert.Empty(vm.Results);
         Assert.False(vm.IsEmptyResult);
     }

@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.ComponentModel;
 using NodaTime;
 using System.Text.Json.Serialization;
 
@@ -9,25 +9,40 @@ namespace Kanban.Collector.Core.Models;
 /// </summary>
 public partial class ShiftConfig : ObservableObject
 {
+    private string _name = "默认班次";
+
     /// <summary>
     /// 班次名称（如 早班 / 中班 / 晚班）
     /// </summary>
-    [ObservableProperty]
-    private string _name = "默认班次";
+    public string Name
+    {
+        get => _name;
+    set => SetProperty(ref _name, value);
+    }
+
+    private TimeSpan _startTime = new(8, 0, 0);
 
     /// <summary>
     /// 班次开始时间（仅时分秒部分有效，日期部分忽略）
     /// </summary>
-    [ObservableProperty]
-    private TimeSpan _startTime = new(8, 0, 0);
+    public TimeSpan StartTime
+    {
+        get => _startTime;
+    set => SetProperty(ref _startTime, value);
+    }
+
+    private TimeSpan _endTime = new(20, 0, 0);
 
     /// <summary>
     /// 班次结束时间（仅时分秒部分有效；若小于 StartTime 表示跨天）。
     /// 允许 24:00（TimeSpan.FromHours(24)）表示当天结束；
     /// Contains/DurationHours/GetCurrentStart 对该值语义正确，ResolveRange 内部已做归一化。
     /// </summary>
-    [ObservableProperty]
-    private TimeSpan _endTime = new(20, 0, 0);
+    public TimeSpan EndTime
+    {
+        get => _endTime;
+    set => SetProperty(ref _endTime, value);
+    }
 
     /// <summary>
     /// 班次时长（小时）。跨天时自动 +24。

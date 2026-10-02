@@ -5,14 +5,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="clr-namespace:MainAPP.Models"
-    Title="{x:Static resources:Strings.K140}"
+    Title="{x:Static resources:Strings.Lbl_SaveFailedConfigValidation}"
     Width="540"
     Height="380"
     Background="{StaticResource RegionBrush}"
     ResizeMode="NoResize"
     WindowStartupLocation="CenterOwner"
     PreviewKeyDown="OnPreviewKeyDown"
-    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -26,14 +26,14 @@
             FontSize="{DynamicResource FontSizeKpiLabel}"
             FontWeight="Medium"
             Foreground="{StaticResource PrimaryTextBrush}"
-            Text="{x:Static resources:Strings.K141}" />
+            Text="{x:Static resources:Strings.Lbl_FollowingConfigurationIssuesWereFound}" />
 
         <TextBlock
             Grid.Row="1"
             Margin="0,4,0,8"
             FontSize="{DynamicResource FontSizeHint}"
             Foreground="{DynamicResource SecondaryTextBrush}"
-            Text="{x:Static resources:Strings.K142}" />
+            Text="{x:Static resources:Strings.Lbl_DoubleClickErrorJumpDeviceTab}" />
 
         <ListBox
             x:Name="ErrorList"
@@ -57,7 +57,7 @@
             HorizontalAlignment="Right"
             Width="80"
             Click="Close_Click"
-            Content="{x:Static resources:Strings.K143}"
+            Content="{x:Static resources:Strings.Lbl_Close}"
             IsCancel="True"
             IsDefault="True"
             Style="{StaticResource ButtonPrimary}" />

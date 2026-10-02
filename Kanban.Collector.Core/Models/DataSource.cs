@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -19,65 +19,119 @@ namespace Kanban.Collector.Core.Models;
 /// </summary>
 public partial class DataSource : ObservableObject
 {
-    /// <summary>唯一标识</summary>
-    [ObservableProperty]
     private string _id = Guid.NewGuid().ToString("N");
 
-    /// <summary>所属设备 Id</summary>
-    [ObservableProperty]
+    /// <summary>唯一标识</summary>
+    public string Id
+    {
+        get => _id;
+    set => SetProperty(ref _id, value);
+    }
+
     private string _deviceId = string.Empty;
 
-    /// <summary>名称（展示用）</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(DisplayName))]
+    /// <summary>所属设备 Id</summary>
+    public string DeviceId
+    {
+        get => _deviceId;
+    set => SetProperty(ref _deviceId, value);
+    }
+
     private string _name = string.Empty;
 
-    /// <summary>名称（英文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(DisplayName))]
+    /// <summary>名称（展示用）</summary>
+    public string Name
+    {
+        get => _name;
+    set => SetProperty(ref _name, value, [nameof(DisplayName)]);
+    }
+
     private string? _nameEn;
 
-    /// <summary>名称（日文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(DisplayName))]
+    /// <summary>名称（英文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    public string? NameEn
+    {
+        get => _nameEn;
+    set => SetProperty(ref _nameEn, value, [nameof(DisplayName)]);
+    }
+
     private string? _nameJa;
 
-    /// <summary>名称（葡萄牙文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(DisplayName))]
+    /// <summary>名称（日文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    public string? NameJa
+    {
+        get => _nameJa;
+    set => SetProperty(ref _nameJa, value, [nameof(DisplayName)]);
+    }
+
     private string? _namePt;
 
-    /// <summary>类型标识（温湿度 / 电表 等，仅标识与展示）</summary>
-    [ObservableProperty]
+    /// <summary>名称（葡萄牙文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    public string? NamePt
+    {
+        get => _namePt;
+    set => SetProperty(ref _namePt, value, [nameof(DisplayName)]);
+    }
+
     private string _type = string.Empty;
 
-    /// <summary>是否启用（停用后采集循环与快照跳过此源）</summary>
-    [ObservableProperty]
+    /// <summary>类型标识（温湿度 / 电表 等，仅标识与展示）</summary>
+    public string Type
+    {
+        get => _type;
+    set => SetProperty(ref _type, value);
+    }
+
     private bool _enabled = true;
 
-    /// <summary>描述</summary>
-    [ObservableProperty]
+    /// <summary>是否启用（停用后采集循环与快照跳过此源）</summary>
+    public bool Enabled
+    {
+        get => _enabled;
+    set => SetProperty(ref _enabled, value);
+    }
+
     private string _description = string.Empty;
 
+    /// <summary>描述</summary>
+    public string Description
+    {
+        get => _description;
+    set => SetProperty(ref _description, value);
+    }
+
     // ──────────── 触发配置（源级：一个触发位驱动整个源的全部值项） ────────────
+
+    private string _triggerAddress = string.Empty;
 
     /// <summary>
     /// 触发地址（D 字地址，可选）。配置后为电平触发：每轮读此地址，值 == <see cref="TriggerValue"/> 时采集全部值项，
     /// 完成后向此地址写 <see cref="AckValue"/>（回执地址 = 触发地址，唯一拓扑）。
     /// 未配置 = 每轮无条件采集（定时，周期 = 扫描周期）。
     /// </summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasTrigger))]
-    [NotifyPropertyChangedFor(nameof(DisplayName))]
-    private string _triggerAddress = string.Empty;
+    public string TriggerAddress
+    {
+        get => _triggerAddress;
+    set => SetProperty(ref _triggerAddress, value, [nameof(HasTrigger), nameof(DisplayName)]);
+    }
 
-    /// <summary>触发值：触发寄存器等于此值时执行采集（默认 1）</summary>
-    [ObservableProperty]
     private int _triggerValue = 1;
 
-    /// <summary>回执值：采集完成后写入触发地址的值（默认 2；下一轮读到后不再触发）</summary>
-    [ObservableProperty]
+    /// <summary>触发值：触发寄存器等于此值时执行采集（默认 1）</summary>
+    public int TriggerValue
+    {
+        get => _triggerValue;
+    set => SetProperty(ref _triggerValue, value);
+    }
+
     private int _ackValue = 2;
+
+    /// <summary>回执值：采集完成后写入触发地址的值（默认 2；下一轮读到后不再触发）</summary>
+    public int AckValue
+    {
+        get => _ackValue;
+    set => SetProperty(ref _ackValue, value);
+    }
 
     // ──────────── 值项（多值源：一个源一个或多个采集值） ────────────
 

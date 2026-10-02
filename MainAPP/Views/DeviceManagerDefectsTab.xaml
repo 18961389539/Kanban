@@ -12,7 +12,7 @@
     xmlns:sys="clr-namespace:System;assembly=System.Runtime"
     mc:Ignorable="d"
     d:DesignHeight="600"
-    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources">
+    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.Resources>
         <!--  缺陷严重等级 / 类别枚举值（ComboBox 数据源），仅本 Tab 使用  -->
         <ObjectDataProvider
@@ -50,9 +50,9 @@
             <Button
                 Margin="0,0,0,10"
                 HorizontalAlignment="Stretch"
-                AutomationProperties.Name="{x:Static resources:Strings.K058}"
+                AutomationProperties.Name="{x:Static resources:Strings.Lbl_AddDefect}"
                 Command="{Binding DataContext.AddDefectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                Content="{x:Static resources:Strings.K058}"
+                Content="{x:Static resources:Strings.Lbl_AddDefect}"
                 DockPanel.Dock="Top"
                 Style="{StaticResource IconButtonDefault}"
                 Tag="{x:Static mi:MaterialIconKind.Plus}" />
@@ -83,26 +83,26 @@
                     Grid.Column="0"
                     Height="40"
                     Padding="10,0"
-                    AutomationProperties.Name="{x:Static resources:Strings.K605}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ExportDefectsCSV}"
                     Command="{Binding DataContext.ExportDefectsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="{x:Static resources:Strings.K653}"
+                    Content="{x:Static resources:Strings.Lbl_Export2}"
                     Style="{StaticResource IconButtonDefault}"
                     Tag="{x:Static mi:MaterialIconKind.FileExportOutline}"
-                    ToolTip="{x:Static resources:Strings.K606}" />
+                    ToolTip="{x:Static resources:Strings.Lbl_ExportAllDefectsCurrentDeviceCSV}" />
                 <Button
                     Grid.Column="2"
                     Height="40"
                     Padding="10,0"
-                    AutomationProperties.Name="{x:Static resources:Strings.K607}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_ImportDefectsCSV}"
                     Command="{Binding DataContext.ImportDefectsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="{x:Static resources:Strings.K654}"
+                    Content="{x:Static resources:Strings.Lbl_Import}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.FileImportOutline}"
-                    ToolTip="{x:Static resources:Strings.K608}" />
+                    ToolTip="{x:Static resources:Strings.Lbl_ImportDefectsCSVAppendReplaceCurrent}" />
             </Grid>
             <Grid>
                 <ListBox
-                    AutomationProperties.Name="{x:Static resources:Strings.K187}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_DefectList}"
                 ItemContainerStyle="{StaticResource CardListItemStyle}"
                 ItemsSource="{Binding Defects}"
                 SelectedItem="{Binding DataContext.SelectedDefect, RelativeSource={RelativeSource AncestorType=UserControl}}">
@@ -140,7 +140,7 @@
             </ListBox>
                 <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
                            Foreground="{StaticResource ThirdlyTextBrush}"
-                           Text="{x:Static resources:Strings.K052}">
+                           Text="{x:Static resources:Strings.Lbl_NoDefectData}">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed" />
@@ -168,16 +168,16 @@
                 IsEnabled="{Binding DataContext.CanManageDevices, RelativeSource={RelativeSource AncestorType=UserControl}}">
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K059}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_DefectName}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="{x:Static resources:Strings.K059}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_DefectName}"
                     Style="{StaticResource TextBoxExtend}"
                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K188}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_PLCAddressEGD200}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="{x:Static resources:Strings.K189}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_DefectPLCAddress}"
                     Style="{StaticResource TextBoxExtend}">
                     <hc:TextBox.Text>
                         <Binding Path="PlcAddress" UpdateSourceTrigger="PropertyChanged">
@@ -189,9 +189,9 @@
                 </hc:TextBox>
                 <hc:ComboBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K190}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_Severity}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="{x:Static resources:Strings.K191}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_DefectSeverity}"
                     ItemsSource="{Binding Source={StaticResource DefectSeverityValues}}"
                     SelectedItem="{Binding Severity, UpdateSourceTrigger=PropertyChanged}"
                     Style="{StaticResource ComboBoxExtend}">
@@ -203,9 +203,9 @@
                 </hc:ComboBox>
                 <hc:ComboBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K060}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Lbl_DefectCategory}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="{x:Static resources:Strings.K060}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_DefectCategory}"
                     ItemsSource="{Binding Source={StaticResource DefectCategoryValues}}"
                     SelectedItem="{Binding Category, UpdateSourceTrigger=PropertyChanged}"
                     Style="{StaticResource ComboBoxExtend}">
@@ -245,10 +245,10 @@
                     Text="{Binding NamePt, UpdateSourceTrigger=PropertyChanged}" />
                 <Button
                     HorizontalAlignment="Right"
-                    AutomationProperties.Name="{x:Static resources:Strings.K061}"
+                    AutomationProperties.Name="{x:Static resources:Strings.Lbl_DeleteDefect}"
                     Command="{Binding DataContext.RemoveDefectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding}"
-                    Content="{x:Static resources:Strings.K061}"
+                    Content="{x:Static resources:Strings.Lbl_DeleteDefect}"
                     Style="{StaticResource IconButtonDanger}"
                     Tag="{x:Static mi:MaterialIconKind.Delete}" />
             </StackPanel>

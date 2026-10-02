@@ -25,7 +25,7 @@ public partial class DeviceSetupWizardViewModel : ObservableObject
         _existingDevices = existingDevices;
         _addressCodec = addressCodec;
         Name = DeviceManagerViewModel.EnsureUniqueName(
-            string.Format(Strings.F135, existingDevices.Count + 1),
+            string.Format(Strings.Prompt_NewDevice, existingDevices.Count + 1),
             existingDevices.Select(device => device.Name));
         TargetCycle = 600;
     }

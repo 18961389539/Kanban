@@ -1,3 +1,4 @@
+using Kanban.Localization;
 using System.Windows.Threading;
 using Kanban.Contracts.Dtos;
 using System.Globalization;
@@ -109,7 +110,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
 
     private readonly CancellationTokenSource _disposeCts = new();
 
-    public string UnsavedChangesText => HasUnsavedChanges ? Strings.M074 : Strings.M075;
+    public string UnsavedChangesText => HasUnsavedChanges ? Strings.Msg_UnsavedChanges : Strings.Msg_Saved;
 
     partial void OnHasUnsavedChangesChanged(bool value)
     {
@@ -128,7 +129,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [ObservableProperty]
     private bool _isTestingConnection;
 
-    public string TestConnectionButtonText => IsTestingConnection ? Strings.M076 : Strings.M077;
+    public string TestConnectionButtonText => IsTestingConnection ? Strings.Msg_Testing : Strings.Msg_TestConnection;
 
     // ──────────── 数据源与运行模式（[连接向导]）────────────
 
@@ -188,7 +189,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [ObservableProperty]
     private bool _isTestingCollectorConnection;
 
-    public string TestCollectorButtonText => IsTestingCollectorConnection ? Strings.M076 : Strings.M077;
+    public string TestCollectorButtonText => IsTestingCollectorConnection ? Strings.Msg_Testing : Strings.Msg_TestConnection;
 
     /// <summary>测试采集服务连接结果文案。</summary>
     [ObservableProperty]
@@ -231,14 +232,14 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         var url = DraftSettings.CollectorHubUrl;
         if (string.IsNullOrWhiteSpace(url))
         {
-            CollectorTestResult = Strings.M064;
+            CollectorTestResult = Strings.Msg_PleaseEnterCollectorAddress;
             CollectorTestResultType = "Error";
             return;
         }
 
         var revision = Volatile.Read(ref _collectorTestRevision);
         IsTestingCollectorConnection = true;
-        CollectorTestResult = string.Format(Strings.F158, url);
+        CollectorTestResult = string.Format(Strings.Prompt_Connecting2, url);
         CollectorTestResultType = "None";
         try
         {
@@ -247,14 +248,14 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             await using var connection = builder.Build();
             await connection.StartAsync(cts.Token);
             if (revision != Volatile.Read(ref _collectorTestRevision)) return;
-            CollectorTestResult = Strings.M065;
+            CollectorTestResult = Strings.Msg_ConnectionSuccessful;
             CollectorTestResultType = "Success";
         }
         catch (Exception ex)
         {
             if (revision == Volatile.Read(ref _collectorTestRevision))
             {
-                CollectorTestResult = string.Format(Strings.F222, ex.Message);
+                CollectorTestResult = string.Format(Strings.Prompt_ConnectionFailed, ex.Message);
                 CollectorTestResultType = "Error";
             }
         }
@@ -272,7 +273,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [ObservableProperty]
     private bool _isSaving;
 
-    public string SaveButtonText => IsSaving ? Strings.M078 : Strings.M079;
+    public string SaveButtonText => IsSaving ? Strings.Msg_Saving : Strings.Msg_SaveSettings;
 
     /// <summary>IsSaving 变化时刷新 SaveCommand CanExecute。</summary>
     partial void OnIsSavingChanged(bool value)
@@ -308,20 +309,20 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         // 前置校验（复用 Save 的校验逻辑，避免无效参数发起网络请求）
         if (string.IsNullOrWhiteSpace(ip) || !IPAddress.TryParse(ip, out _))
         {
-            TestConnectionResult = Strings.M299;
+            TestConnectionResult = Strings.Msg_InvalidIPAddress;
             TestConnectionResultType = "Error";
             return;
         }
         if (port < 1 || port > 65535)
         {
-            TestConnectionResult = string.Format(Strings.F179, port);
+            TestConnectionResult = string.Format(Strings.Prompt_PortMustBetween165535Current, port);
             TestConnectionResultType = "Error";
             return;
         }
 
         var revision = Volatile.Read(ref _plcTestRevision);
         IsTestingConnection = true;
-        TestConnectionResult = string.Format(Strings.F157, ip, port);
+        TestConnectionResult = string.Format(Strings.Prompt_Connecting, ip, port);
         TestConnectionResultType = "None";
 
         try
@@ -345,7 +346,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
 
             if (result.IsSuccess)
             {
-                TestConnectionResult = string.Format(Strings.F225, ip, port);
+                TestConnectionResult = string.Format(Strings.Prompt_Connected, ip, port);
                 TestConnectionResultType = "Success";
             }
             else if (IsSingleConnectionRefused(ip, port, result))
@@ -353,12 +354,12 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
                 // 目标 PLC 单连接限制：连接被拒绝（TCP RST/10061）且主采集正连着同一端点
                 // → 极可能是 PLC 并发连接数上限（如 S7-1200 默认仅 1 个 S7 连接），
                 //   给出可执行提示而不是黑盒的"目标计算机拒绝"。
-                TestConnectionResult = Strings.K636;
+                TestConnectionResult = Strings.Lbl_TargetPLCMayOnlyAllowSingle;
                 TestConnectionResultType = "Error";
             }
             else
             {
-                TestConnectionResult = string.Format(Strings.F223, result.Message);
+                TestConnectionResult = string.Format(Strings.Prompt_ConnectionFailed2, result.Message);
                 TestConnectionResultType = "Error";
             }
         }
@@ -366,7 +367,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         {
             if (revision == Volatile.Read(ref _plcTestRevision))
             {
-                TestConnectionResult = Strings.F226;
+                TestConnectionResult = Strings.Prompt_ConnectionTimedOutNoResponse5;
                 TestConnectionResultType = "Error";
             }
         }
@@ -374,7 +375,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         {
             if (revision == Volatile.Read(ref _plcTestRevision))
             {
-                TestConnectionResult = string.Format(Strings.F224, ex.Message);
+                TestConnectionResult = string.Format(Strings.Prompt_ConnectionError, ex.Message);
                 TestConnectionResultType = "Error";
             }
         }
@@ -574,9 +575,9 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             return status switch
             {
                 LicenseStatus.Active when _licenseGate.CurrentLicense?.IsPermanent == false
-                    => string.Format(Strings.F113, _licenseGate.CurrentLicense.ExpireDate),
+                    => string.Format(Strings.Prompt_ActivatedExpires, _licenseGate.CurrentLicense.ExpireDate),
                 LicenseStatus.Active => Strings.License_ActivePermanent,
-                LicenseStatus.Trial => string.Format(Strings.F212, RemainingTrialDays ?? 0),
+                LicenseStatus.Trial => string.Format(Strings.Prompt_TrialDaysLeft2, RemainingTrialDays ?? 0),
                 LicenseStatus.TrialExpired => Strings.License_TrialExpired,
                 LicenseStatus.TrialManipulated => Strings.License_TrialManipulated,
                 LicenseStatus.Expired => Strings.License_Expired,
@@ -593,8 +594,8 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         {
             var status = _licenseGate.CurrentStatus;
             if (status == LicenseStatus.Active && _licenseGate.CurrentLicense != null)
-                return _licenseGate.CurrentLicense.IsPermanent ? Strings.M293 : Strings.M294;
-            if (status == LicenseStatus.Trial) return Strings.M015;
+                return _licenseGate.CurrentLicense.IsPermanent ? Strings.Msg_PermanentLicense : Strings.Msg_TemporaryLicense;
+            if (status == LicenseStatus.Trial) return Strings.Msg_TrialLicense;
             return "—";
         }
     }
@@ -616,7 +617,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         {
             if (_licenseGate.CurrentLicense == null) return "—";
             return _licenseGate.CurrentLicense.IsPermanent
-                ? Strings.M339
+                ? Strings.Msg_Permanent
                 : _licenseGate.CurrentLicense.ExpireDate!.Value.ToLocalTime().ToString("yyyy-MM-dd");
         }
     }
@@ -685,12 +686,12 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         // 根据当前状态设置提示消息
         activationVm.StatusMessage = _licenseGate.CurrentStatus switch
         {
-            LicenseStatus.Active => Strings.M340,
-            LicenseStatus.Trial => string.Format(Strings.F213, RemainingTrialDays ?? 0),
-            LicenseStatus.TrialExpired => Strings.M341,
-            LicenseStatus.Expired => Strings.M342,
-            LicenseStatus.MachineMismatch => Strings.M343,
-            _ => Strings.M344,
+            LicenseStatus.Active => Strings.Msg_EnterNewActivationCodeReplaceCurrent2,
+            LicenseStatus.Trial => string.Format(Strings.Prompt_TrialPeriodDaysRemainingEnterActivation, RemainingTrialDays ?? 0),
+            LicenseStatus.TrialExpired => Strings.Msg_TrialExpiredEnterActivationCodeContinue2,
+            LicenseStatus.Expired => Strings.Msg_LicenseExpiredEnterNewActivationCode2,
+            LicenseStatus.MachineMismatch => Strings.Msg_LicenseDoesMatchMachinePleaseReactivate3,
+            _ => Strings.Msg_EnterActivationCodeContinue2,
         };
 
         if (dialog.ShowDialog() == true)
@@ -698,7 +699,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             // 激活成功 → 刷新本页授权信息 + 通知主窗口刷新侧边栏状态
             RefreshLicenseStatus(recheck: true);
             NotifyMainWindowLicenseChanged();
-            _dialog.NotifySuccess(Strings.M016);
+            _dialog.NotifySuccess(Strings.Msg_ActivationSuccessful);
         }
     }
 
@@ -711,11 +712,11 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         try
         {
             Clipboard.SetText(_licenseGate.MachineCode);
-            _dialog.NotifySuccess(Strings.M017);
+            _dialog.NotifySuccess(Strings.Msg_MachineCodeCopiedClipboard);
         }
         catch
         {
-            _dialog.NotifyWarning(Strings.M018);
+            _dialog.NotifyWarning(Strings.Msg_CopyFailedRecordMachineCodeManually);
         }
     }
 
@@ -728,18 +729,18 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         var key = _licenseGate.CurrentLicense?.ProductKey;
         if (string.IsNullOrEmpty(key))
         {
-            _dialog.NotifyWarning(Strings.M019);
+            _dialog.NotifyWarning(Strings.Msg_ActivatedNoLicenseKeyCopy);
             return;
         }
 
         try
         {
             Clipboard.SetText(key);
-            _dialog.NotifySuccess(Strings.M020);
+            _dialog.NotifySuccess(Strings.Msg_LicenseKeyCopiedClipboard);
         }
         catch
         {
-            _dialog.NotifyWarning(Strings.M021);
+            _dialog.NotifyWarning(Strings.Msg_CopyFailedRecordLicenseKeyManually);
         }
     }
 
@@ -778,7 +779,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [RelayCommand]
     private void AddShift()
     {
-        DraftSettings.Shifts.Add(new ShiftConfig { Name = string.Format(Strings.F166, DraftSettings.Shifts.Count + 1) });
+        DraftSettings.Shifts.Add(new ShiftConfig { Name = string.Format(Strings.Prompt_Shift, DraftSettings.Shifts.Count + 1) });
     }
 
     /// <summary>
@@ -790,7 +791,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         if (shift == null) return;
         if (DraftSettings.Shifts.Count <= 1)
         {
-            _dialog.NotifyInfo(Strings.M022);
+            _dialog.NotifyInfo(Strings.Msg_KeepLeastOneShift);
             return;
         }
         DraftSettings.Shifts.Remove(shift);
@@ -822,7 +823,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         // 权限门禁（下沉到危险项）：非管理员可保存主题/语言/标题等无害设置，但 PLC/数据源/运行模式需管理员
         if (_userSession is { IsAdmin: false } && (plcConfigChanged || dataModeChanged || runModeChanged))
         {
-            _dialog.NotifyWarning(Strings.M337);
+            _dialog.NotifyWarning(Strings.Msg_InsufficientPermissionAdministratorRequired);
             return;
         }
 
@@ -925,13 +926,13 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             else
             {
                 Feedback.Success(Strings.Ux_StatusSaved);
-                _dialog.NotifySuccess(Strings.M023);
+                _dialog.NotifySuccess(Strings.Msg_SettingsSaved);
             }
         }
         catch (Exception ex)
         {
-            Feedback.Error(string.Format(Strings.F066, ex.Message));
-            _dialog.NotifyError(string.Format(Strings.F066, ex.Message));
+            Feedback.Error(string.Format(Strings.Prompt_SaveFailed, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_SaveFailed, ex.Message));
             AuditLog.Record("Settings.Update", "Settings", null, succeeded: false, detail: ex.Message);
         }
         finally
@@ -949,7 +950,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private bool EnsureAdmin()
     {
         if (_userSession?.IsAdmin == true) return true;
-        _dialog.NotifyWarning(Strings.M337);
+        _dialog.NotifyWarning(Strings.Msg_InsufficientPermissionAdministratorRequired);
         return false;
     }
 
@@ -1001,12 +1002,12 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             if (client is null || !client.IsConnected) return CollectorSyncResult.NotAttempted; // 未连接时本地保存仍生效，连接恢复后由用户再保存一次
             var dto = CollectorSettingsMapper.ToDto(AppSettings);
             await client.SaveCollectorSettingsAsync(dto, cancellationToken);
-            _dialog?.NotifySuccess(Strings.M024);
+            _dialog?.NotifySuccess(Strings.Msg_CollectorParametersSyncedPollingShiftsPLC);
             return CollectorSyncResult.Success;
         }
         catch (Exception ex)
         {
-            return CollectorSyncResult.Failed(string.Format(Strings.F231, ex.Message));
+            return CollectorSyncResult.Failed(string.Format(Strings.Prompt_CollectionServiceParameterSyncFailedSaved, ex.Message));
         }
     }
 
@@ -1023,19 +1024,19 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         ReplaceDraft(CloneSettings(AppSettings));
         HasUnsavedChanges = false;
         OnPropertyChanged(nameof(UnsavedChangesText));
-        _dialog.NotifyInfo(Strings.M025);
+        _dialog.NotifyInfo(Strings.Msg_UnsavedChangesDiscarded);
     }
 
     [RelayCommand]
     private void RestoreDefaults()
     {
         if (!EnsureAdmin()) return;
-        var result = _dialog.Show(Strings.M026, Strings.M_RestoreDefaults, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        var result = _dialog.Show(Strings.Msg_RestoreDefaultSettingsUnsavedChangesOverwritten, Strings.M_RestoreDefaults, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return;
         ReplaceDraft(new AppSettings());
         HasUnsavedChanges = true;
         OnPropertyChanged(nameof(UnsavedChangesText));
-        _dialog.NotifyInfo(Strings.M027);
+        _dialog.NotifyInfo(Strings.Msg_DefaultsRestoredClickSaveSettingsApply);
     }
 
     private void ReplaceDraft(AppSettings settings)
@@ -1111,57 +1112,57 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     {
         // 看板标题校验
         if (string.IsNullOrWhiteSpace(settings.AppTitle))
-            return Strings.M028;
+            return Strings.Msg_DashboardTitleCannotEmpty;
 
         // IP 地址校验
         var ip = settings.PlcConfig.IpAddress;
         if (string.IsNullOrWhiteSpace(ip))
-            return Strings.M029;
+            return Strings.Msg_IPAddressCannotEmpty;
         if (!IPAddress.TryParse(ip, out var parsedIp) || parsedIp.AddressFamily != AddressFamily.InterNetwork)
-            return string.Format(Strings.F136, ip);
+            return string.Format(Strings.Prompt_InvalidIPAddress, ip);
 
         // 端口校验
         var port = settings.PlcConfig.Port;
         if (port < 1 || port > 65535)
-            return string.Format(Strings.F180, port);
+            return string.Format(Strings.Prompt_PortMustBetween165535Current2, port);
 
         if (!Enum.IsDefined(settings.PlcConfig.Brand))
-            return string.Format(Strings.F056, settings.PlcConfig.Brand);
+            return string.Format(Strings.Prompt_UnsupportedPLCBrand, settings.PlcConfig.Brand);
         if (settings.PlcConfig.TimeoutMs < 100 || settings.PlcConfig.TimeoutMs > 60000)
-            return string.Format(Strings.F016, settings.PlcConfig.TimeoutMs);
+            return string.Format(Strings.Prompt_PLCTimeoutMustBetween10060000, settings.PlcConfig.TimeoutMs);
         if (settings.PlcConfig.Brand == PlcBrand.Siemens && !SiemensModels.Contains(settings.PlcConfig.SiemensModel, StringComparer.OrdinalIgnoreCase))
-            return string.Format(Strings.F057, settings.PlcConfig.SiemensModel);
+            return string.Format(Strings.Prompt_UnsupportedSiemensModel, settings.PlcConfig.SiemensModel);
         if (settings.PlcConfig.Brand == PlcBrand.Siemens && settings.PlcConfig.SiemensRack > 7)
-            return string.Format(Strings.F017, settings.PlcConfig.SiemensRack);
+            return string.Format(Strings.Prompt_SiemensRackMustBetween07, settings.PlcConfig.SiemensRack);
         if (settings.PlcConfig.Brand == PlcBrand.Siemens && settings.PlcConfig.SiemensSlot > 31)
-            return string.Format(Strings.F018, settings.PlcConfig.SiemensSlot);
+            return string.Format(Strings.Prompt_SiemensSlotMustBetween031, settings.PlcConfig.SiemensSlot);
         if (settings.PlcConfig.Brand == PlcBrand.Siemens && settings.PlcConfig.SiemensBatchInt32Limit is < 1 or > 55)
-            return string.Format(Strings.F019, settings.PlcConfig.SiemensBatchInt32Limit);
+            return string.Format(Strings.Prompt_SiemensBatchInt32LimitMustBetween, settings.PlcConfig.SiemensBatchInt32Limit);
         if (settings.PlcConfig.Brand == PlcBrand.Omron && settings.PlcConfig.OmronReadSplits is < 1 or > 999)
-            return string.Format(Strings.F156, settings.PlcConfig.OmronReadSplits);
+            return string.Format(Strings.Prompt_OmronFINSReadSplitLengthMust, settings.PlcConfig.OmronReadSplits);
         if (settings.PlcConfig.Brand == PlcBrand.ModbusTcp && settings.PlcConfig.ModbusUnitId is < 1 or > 247)
-            return string.Format(Strings.F003, settings.PlcConfig.ModbusUnitId);
+            return string.Format(Strings.Prompt_ModbusUnitIdMustBetween1247, settings.PlcConfig.ModbusUnitId);
         if (settings.PlcConfig.Brand == PlcBrand.ModbusTcp && settings.PlcConfig.ModbusRegisterFunction is not (3 or 4))
-            return string.Format(Strings.F005, settings.PlcConfig.ModbusRegisterFunction);
+            return string.Format(Strings.Prompt_ModbusRegisterFunctionCodeMust3, settings.PlcConfig.ModbusRegisterFunction);
         if (settings.PlcConfig.Brand == PlcBrand.ModbusTcp && settings.PlcConfig.ModbusBitFunction is not (1 or 2))
-            return string.Format(Strings.F004, settings.PlcConfig.ModbusBitFunction);
+            return string.Format(Strings.Prompt_ModbusBitFunctionCodeMust1, settings.PlcConfig.ModbusBitFunction);
         if (!Enum.IsDefined(settings.PlcConfig.ModbusDataFormat) || !Enum.IsDefined(settings.PlcConfig.SiemensDataFormat))
-            return Strings.M030;
+            return Strings.Msg_InvalidPLCDataFormat;
 
         // 轮询间隔校验
         var interval = settings.PollingIntervalMs;
         if (interval < 50)
-            return string.Format(Strings.F218, interval);
+            return string.Format(Strings.Prompt_PollIntervalMustLess50Ms, interval);
 
         // 历史写入间隔校验
         var historyInterval = settings.HistoryWriteIntervalScans;
         if (historyInterval < 1)
-            return string.Format(Strings.F075, historyInterval);
+            return string.Format(Strings.Prompt_HistoryWriteIntervalMustLess1, historyInterval);
 
         if (settings.PlcBatchReadMaxLength < 1 || settings.PlcBatchReadMaxLength > 1024)
-            return string.Format(Strings.F014, settings.PlcBatchReadMaxLength);
+            return string.Format(Strings.Prompt_PLCBatchReadCountMustBetween, settings.PlcBatchReadMaxLength);
         if (settings.PlcBatchReadMaxGapSlots < 0 || settings.PlcBatchReadMaxGapSlots > 16)
-            return string.Format(Strings.F013, settings.PlcBatchReadMaxGapSlots);
+            return string.Format(Strings.Prompt_PLCBatchReadAddressGapMust, settings.PlcBatchReadMaxGapSlots);
 
         // 班次配置校验
         var shiftError = ShiftValidator.Validate(settings.Shifts);

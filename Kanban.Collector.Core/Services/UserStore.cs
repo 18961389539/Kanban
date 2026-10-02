@@ -8,7 +8,7 @@ using Serilog;
 namespace Kanban.Collector.Core.Services;
 
 /// <summary>
-/// 用户账号存储：持久化到 users.json，复用 AppSettings.WriteFileAtomically 原子写入。
+/// 用户账号存储：持久化到 users.json，复用 AtomicFileWriter 原子写入。
 /// 首次运行（users.json 不存在）时创建默认账号：
 /// - admin / gly（管理员）
 /// - engineer / gcs（工程师）
@@ -89,7 +89,7 @@ public class UserStore
         {
             _appSettings.EnsureDirectory();
             var json = JsonSerializer.Serialize(_users, JsonOptions);
-            AppSettings.WriteFileAtomically(FilePath, json);
+            AtomicFileWriter.Write(FilePath, json);
         }
     }
 

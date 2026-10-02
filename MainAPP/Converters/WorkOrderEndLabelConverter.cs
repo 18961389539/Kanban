@@ -13,7 +13,7 @@ namespace MainAPP.Converters;
 public sealed class WorkOrderEndLabelConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is WorkOrderStatus.Aborted ? Strings.K776 : Strings.K775;
+        => value is WorkOrderStatus.Aborted ? Strings.Lbl_Aborted2 : Strings.Lbl_Completed2;
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();

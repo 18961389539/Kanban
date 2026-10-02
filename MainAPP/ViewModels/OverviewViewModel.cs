@@ -165,7 +165,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
 
     [ObservableProperty] private int _targetOutput;
     [ObservableProperty] private double _outputAchievementRate;
-    [ObservableProperty] private string _comparisonLabel = Strings.M058;
+    [ObservableProperty] private string _comparisonLabel = Strings.Msg_PreviousPeriod;
     [ObservableProperty] private int _baselineTotalOutput;
     [ObservableProperty] private double _baselineQualityRate;
     [ObservableProperty] private double _baselineOee;
@@ -182,9 +182,9 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
     [NotifyPropertyChangedFor(nameof(HealthScoreText))]
     [NotifyPropertyChangedFor(nameof(HealthTooltip))]
     private int _healthScore = 100;
-    [ObservableProperty] private string _currentWorkOrderText = Strings.M055;
-    [ObservableProperty] private string _currentProductText = Strings.M056;
-    [ObservableProperty] private string _currentRecipeText = Strings.M057;
+    [ObservableProperty] private string _currentWorkOrderText = Strings.Msg_NoActiveWorkOrder;
+    [ObservableProperty] private string _currentProductText = Strings.Msg_NoProductInfo;
+    [ObservableProperty] private string _currentRecipeText = Strings.Msg_NoRecipeInfo;
 
     public string HealthScoreText => $"{HealthScore} / 100";
 
@@ -219,7 +219,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
     private double _performance;
 
     public string ComparisonSummaryText =>
-        string.Format(Strings.F021, ComparisonLabel, FormatSigned(OutputDelta), FormatPercentageDelta(QualityRateDelta), FormatPercentageDelta(OeeDelta));
+        string.Format(Strings.Prompt_OutputPcsQualityRateOEE, ComparisonLabel, FormatSigned(OutputDelta), FormatPercentageDelta(QualityRateDelta), FormatPercentageDelta(OeeDelta));
 
     // 阈值唯一源（2026-08-16）：引用 KpiThresholds，与 Converter/ChartService 着色共用，改一处全局生效。
     public const double QualityTarget = KpiThresholds.QualityGood;
@@ -230,13 +230,13 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
     public bool HasStatusData => RunTimeHours > 0 || AlarmDurationHours > 0 || PausedTimeHours > 0;
     public bool HasAnyHistoryData => HasProductionData || HasAlarmData || HasStatusData;
     public string DataCoverageText => !HasAnyHistoryData
-        ? Strings.M102
+        ? Strings.Msg_NoHistoryDataRange
         : !HasProductionData
-            ? Strings.M103
+            ? Strings.Msg_OnlyStatusDataNoOutput
             : !HasAlarmData
-                ? Strings.M104
-                : Strings.M105;
-    public string TargetStatusText => string.Format(Strings.F192, QualityRate, QualityTarget, Oee, OeeTarget);
+                ? Strings.Msg_OutputDataNoAlarms
+                : Strings.Msg_AllDataCollected;
+    public string TargetStatusText => string.Format(Strings.Prompt_QualityRateTargetOEETarget, QualityRate, QualityTarget, Oee, OeeTarget);
 
     private static string FormatSigned(int value) => Services.ProductionReviewCalculations.FormatSigned(value);
     private static string FormatPercentageDelta(double value) => Services.ProductionReviewCalculations.FormatSignedPercentage(value);
@@ -255,13 +255,13 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
 
     public IReadOnlyList<OverviewTimeRangeOption> TimeRangeOptions { get; } = new[]
     {
-        new OverviewTimeRangeOption(OverviewTimeRange.CurrentShift, Strings.M106),
-        new OverviewTimeRangeOption(OverviewTimeRange.PreviousShift, Strings.M107),
-        new OverviewTimeRangeOption(OverviewTimeRange.Today, Strings.M108),
-        new OverviewTimeRangeOption(OverviewTimeRange.Hour1, Strings.K042),
-        new OverviewTimeRangeOption(OverviewTimeRange.Hours8, Strings.M109),
-        new OverviewTimeRangeOption(OverviewTimeRange.Hours24, Strings.K025),
-        new OverviewTimeRangeOption(OverviewTimeRange.Days7, Strings.K258),
+        new OverviewTimeRangeOption(OverviewTimeRange.CurrentShift, Strings.Msg_CurrentShift),
+        new OverviewTimeRangeOption(OverviewTimeRange.PreviousShift, Strings.Msg_PreviousShift),
+        new OverviewTimeRangeOption(OverviewTimeRange.Today, Strings.Msg_Today),
+        new OverviewTimeRangeOption(OverviewTimeRange.Hour1, Strings.Lbl_Last1h),
+        new OverviewTimeRangeOption(OverviewTimeRange.Hours8, Strings.Msg_Last8Hours),
+        new OverviewTimeRangeOption(OverviewTimeRange.Hours24, Strings.Lbl_Last24h),
+        new OverviewTimeRangeOption(OverviewTimeRange.Days7, Strings.Lbl_Last7Days),
     };
 
     [ObservableProperty] private bool _isLoading;
@@ -352,7 +352,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
     private async Task ExportReportAsync()
     {
         var path = _dialog.ShowSaveFileDialog(
-            Strings.M116,
+            Strings.Msg_ExportReviewReport,
             string.Format(Strings.Export_ReviewCsvFileName, DateTime.Now),
             Strings.Export_CsvFilter);
         if (string.IsNullOrWhiteSpace(path)) return;
@@ -380,12 +380,12 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
                 TopAlarms.ToList())));
             await Task.Run(() => File.WriteAllText(path, csv, new UTF8Encoding(true)));
             AuditLog.Record("Export.Csv", "Export", Path.GetFileName(path), detail: Strings.Audit_Detail_ReviewReport);
-            _dialog.NotifySuccess(string.Format(Strings.F168, Path.GetFileName(path)));
+            _dialog.NotifySuccess(string.Format(Strings.Prompt_ReviewReportExported, Path.GetFileName(path)));
         }
         catch (Exception ex)
         {
             Log.Error(ex, "导出生产复盘报表失败");
-            _dialog.NotifyError(string.Format(Strings.F126, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_ReportExportFailed, ex.Message));
         }
         finally
         {
@@ -398,7 +398,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
     {
         if (_pdfService == null) return;
         var path = _dialog.ShowSaveFileDialog(
-            Strings.M117,
+            Strings.Msg_ExportReviewPDF,
             string.Format(Strings.Export_ReviewPdfFileName, DateTime.Now),
             Strings.Export_PdfFilter);
         if (string.IsNullOrWhiteSpace(path)) return;
@@ -445,12 +445,12 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
         {
             await Task.Run(() => _pdfService.Export(path, data));
             AuditLog.Record("Export.Pdf", "Export", Path.GetFileName(path), detail: Strings.Audit_Detail_ReviewPdf);
-            _dialog.NotifySuccess(string.Format(Strings.F167, Path.GetFileName(path)));
+            _dialog.NotifySuccess(string.Format(Strings.Prompt_ReviewPDFExported, Path.GetFileName(path)));
         }
         catch (Exception ex)
         {
             Log.Error(ex, "导出生产复盘 PDF 失败");
-            _dialog.NotifyError(string.Format(Strings.F009, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_PDFExportFailed, ex.Message));
         }
         finally
         {
@@ -613,8 +613,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
         if (shift == null)
         {
             CurrentShiftName = shiftsSnapshot.Count == 0
-                ? Strings.M110
-                : Strings.M111;
+                ? Strings.Msg_NoShiftsConfigured
+                : Strings.Msg_NoMatchingShift;
             CurrentShiftDateRange = string.Empty;
             return;
         }
@@ -736,7 +736,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
             }
             Log.Warning(ex, "概览页数据查询失败");
             QueryErrorMessage = ex.Message;
-            _dialog.NotifyError(string.Format(Strings.F085, ex.Message));
+            _dialog.NotifyError(string.Format(Strings.Prompt_FailedLoadReviewData, ex.Message));
         }
         finally
         {
@@ -879,9 +879,9 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
                     Met = ReviewConclusionMetState.Neutral,
                 });
                 HealthScore = 100;
-                CurrentWorkOrderText = Strings.M055;
-                CurrentProductText = Strings.M056;
-                CurrentRecipeText = Strings.M057;
+                CurrentWorkOrderText = Strings.Msg_NoActiveWorkOrder;
+                CurrentProductText = Strings.Msg_NoProductInfo;
+                CurrentRecipeText = Strings.Msg_NoRecipeInfo;
                 TrendChart = null;
                 OnPropertyChanged(nameof(TrendChart));
                 OeeWaterfallChart = null;

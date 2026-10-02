@@ -354,7 +354,7 @@ public sealed class RecipeStore : IRecipeStore
     {
         _appSettings.EnsureDirectory();
         var json = JsonSerializer.Serialize(snapshot, JsonOptions);
-        AppSettings.WriteFileAtomically(FilePath, json);
+        AtomicFileWriter.Write(FilePath, json);
     }
 
     public bool Delete(string id)

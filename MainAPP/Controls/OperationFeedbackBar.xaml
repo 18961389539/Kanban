@@ -5,7 +5,7 @@
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     xmlns:models="clr-namespace:MainAPP.Models"
     AutomationProperties.Name="{x:Static resources:Strings.Ux_StatusSaved}"
-    xmlns:resources="clr-namespace:MainAPP.Resources">
+    xmlns:resources="clr-namespace:MainAPP.Resources;assembly=Kanban.Localization">
     <UserControl.Resources>
         <Style x:Key="FeedbackPanel" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
