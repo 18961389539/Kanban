@@ -85,6 +85,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
 
     public IReadOnlyList<PlcBrand> PlcBrands { get; } = Enum.GetValues<PlcBrand>();
     public IReadOnlyList<PlcDataFormat> PlcDataFormats { get; } = Enum.GetValues<PlcDataFormat>();
+    public IReadOnlyList<InovancePlcSeries> InovanceSeriesOptions { get; } = Enum.GetValues<InovancePlcSeries>();
     public IReadOnlyList<string> SiemensModels { get; } = ["S1200", "S1500", "S300", "S400", "S200Smart", "S200"];
 
     /// <summary>
@@ -1146,7 +1147,17 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             return string.Format(Strings.Prompt_ModbusRegisterFunctionCodeMust3, settings.PlcConfig.ModbusRegisterFunction);
         if (settings.PlcConfig.Brand == PlcBrand.ModbusTcp && settings.PlcConfig.ModbusBitFunction is not (1 or 2))
             return string.Format(Strings.Prompt_ModbusBitFunctionCodeMust1, settings.PlcConfig.ModbusBitFunction);
-        if (!Enum.IsDefined(settings.PlcConfig.ModbusDataFormat) || !Enum.IsDefined(settings.PlcConfig.SiemensDataFormat))
+        if (settings.PlcConfig.Brand == PlcBrand.Inovance && !Enum.IsDefined(settings.PlcConfig.InovanceSeries))
+            return string.Format(Strings.Prompt_InovanceSeriesUnsupported, settings.PlcConfig.InovanceSeries);
+        if (settings.PlcConfig.Brand == PlcBrand.Inovance && settings.PlcConfig.InovanceStation is < 1 or > 247)
+            return string.Format(Strings.Prompt_InovanceStationMust, settings.PlcConfig.InovanceStation);
+        if (settings.PlcConfig.Brand == PlcBrand.Inovance && settings.PlcConfig.InovanceBatchInt32Limit is < 1 or > 62)
+            return string.Format(Strings.Prompt_InovanceBatchInt32LimitMust, settings.PlcConfig.InovanceBatchInt32Limit);
+        if (settings.PlcConfig.Brand == PlcBrand.AllenBradley && settings.PlcConfig.AllenBradleySlot > 31)
+            return string.Format(Strings.Prompt_AllenBradleySlotMust, settings.PlcConfig.AllenBradleySlot);
+        if (!Enum.IsDefined(settings.PlcConfig.ModbusDataFormat)
+            || !Enum.IsDefined(settings.PlcConfig.SiemensDataFormat)
+            || !Enum.IsDefined(settings.PlcConfig.InovanceDataFormat))
             return Strings.Msg_InvalidPLCDataFormat;
 
         // 轮询间隔校验
@@ -1174,5 +1185,5 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private static PlcConfig ClonePlcConfig(PlcConfig source) => source.CreateSnapshot();
 
     private static string GetPlcConfigSignature(PlcConfig config) =>
-        $"{config.Brand}|{config.IpAddress}|{config.Port}|{config.TimeoutMs}|{config.SiemensModel}|{config.SiemensRack}|{config.SiemensSlot}|{config.SiemensBatchInt32Limit}|{config.OmronReadSplits}|{config.ModbusUnitId}|{config.ModbusAddressStartWithZero}|{config.ModbusRegisterFunction}|{config.ModbusBitFunction}|{config.ModbusDataFormat}|{config.SiemensDataFormat}";
+        $"{config.Brand}|{config.IpAddress}|{config.Port}|{config.TimeoutMs}|{config.SiemensModel}|{config.SiemensRack}|{config.SiemensSlot}|{config.SiemensBatchInt32Limit}|{config.OmronReadSplits}|{config.ModbusUnitId}|{config.ModbusAddressStartWithZero}|{config.ModbusRegisterFunction}|{config.ModbusBitFunction}|{config.ModbusDataFormat}|{config.SiemensDataFormat}|{config.InovanceSeries}|{config.InovanceStation}|{config.InovanceDataFormat}|{config.InovanceBatchInt32Limit}|{config.AllenBradleySlot}|{config.AllenBradleyUseConnectedCip}";
 }

@@ -232,5 +232,7 @@ public static class PlcAddressParser
         ModbusTcpAddressCodec.ClearParseCache();
         OmronAddressCodec.ClearParseCache();
         KeyenceAddressCodec.ClearParseCache();
+        InovanceAddressCodec.ClearParseCache();
+        AllenBradleyAddressCodec.ClearParseCache();
     }
 }

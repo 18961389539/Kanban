@@ -56,6 +56,8 @@ public static class CollectorSettingsMapper
                 {
                     ReadSplits = plc.Omron.ReadSplits,
                 },
+                Inovance = ToInovanceDto(plc),
+                AllenBradley = ToAllenBradleyDto(plc),
                 ConnectionProfiles = profiles.Select(ToDto).ToList(),
                 Shifts = settings.Shifts.Select(shift => new ShiftConfigDto
                 {
@@ -138,6 +140,8 @@ public static class CollectorSettingsMapper
 
         if (dto.Omron is { ReadSplits: { } readSplits })
             target.PlcConfig.Omron.ReadSplits = readSplits;
+        ApplyInovance(dto.Inovance, target.PlcConfig);
+        ApplyAllenBradley(dto.AllenBradley, target.PlcConfig);
 
         if (dto.ConnectionProfiles is { Count: > 0 } profiles)
         {
@@ -208,6 +212,8 @@ public static class CollectorSettingsMapper
                 BatchInt32Limit = plc.ModbusTcp.BatchInt32Limit,
             },
             Omron = new OmronFinsSettingsDto { ReadSplits = plc.Omron.ReadSplits },
+            Inovance = ToInovanceDto(plc),
+            AllenBradley = ToAllenBradleyDto(plc),
         };
     }
 
@@ -257,5 +263,47 @@ public static class CollectorSettingsMapper
 
         if (dto.Omron is { ReadSplits: { } readSplits })
             plc.Omron.ReadSplits = readSplits;
+        ApplyInovance(dto.Inovance, plc);
+        ApplyAllenBradley(dto.AllenBradley, plc);
+    }
+
+    private static InovanceSettingsDto ToInovanceDto(PlcConfig plc) => new()
+    {
+        Series = (int)plc.Inovance.Series,
+        Station = plc.Inovance.Station,
+        DataFormat = (int)plc.Inovance.DataFormat,
+        BatchInt32Limit = plc.Inovance.BatchInt32Limit,
+    };
+
+    private static AllenBradleySettingsDto ToAllenBradleyDto(PlcConfig plc) => new()
+    {
+        Slot = plc.AllenBradley.Slot,
+        UseConnectedCip = plc.AllenBradley.UseConnectedCip,
+    };
+
+    private static void ApplyInovance(InovanceSettingsDto? dto, PlcConfig plc)
+    {
+        if (dto is null) return;
+        if (dto.Series.HasValue)
+        {
+            if (!Enum.IsDefined(typeof(InovancePlcSeries), dto.Series.Value))
+                throw new ArgumentOutOfRangeException(nameof(dto.Series), dto.Series.Value, "不支持的汇川系列");
+            plc.Inovance.Series = (InovancePlcSeries)dto.Series.Value;
+        }
+        if (dto.Station.HasValue) plc.Inovance.Station = dto.Station.Value;
+        if (dto.DataFormat.HasValue)
+        {
+            if (!Enum.IsDefined(typeof(PlcDataFormat), dto.DataFormat.Value))
+                throw new ArgumentOutOfRangeException(nameof(dto.DataFormat), dto.DataFormat.Value, "不支持的汇川数据格式");
+            plc.Inovance.DataFormat = (PlcDataFormat)dto.DataFormat.Value;
+        }
+        if (dto.BatchInt32Limit.HasValue) plc.Inovance.BatchInt32Limit = dto.BatchInt32Limit.Value;
+    }
+
+    private static void ApplyAllenBradley(AllenBradleySettingsDto? dto, PlcConfig plc)
+    {
+        if (dto is null) return;
+        if (dto.Slot.HasValue) plc.AllenBradley.Slot = dto.Slot.Value;
+        if (dto.UseConnectedCip.HasValue) plc.AllenBradley.UseConnectedCip = dto.UseConnectedCip.Value;
     }
 }

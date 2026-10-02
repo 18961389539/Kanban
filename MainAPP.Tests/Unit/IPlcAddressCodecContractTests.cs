@@ -82,8 +82,8 @@ public class IPlcAddressCodecContractTests
     [MemberData(nameof(Implementations))]
     public void Parse_InvalidFormat_ReturnsInvalid(IPlcAddressCodec codec)
     {
-        // "ZZZ999" 不匹配任何品牌的地址格式
-        var result = codec.Parse("ZZZ999");
+        // "1ABC" 不匹配任何品牌的地址格式（罗克韦尔标签也不能以数字开头）
+        var result = codec.Parse("1ABC");
         Assert.False(result.IsValid);
         Assert.False(string.IsNullOrEmpty(result.ErrorMessage));
     }
@@ -111,7 +111,7 @@ public class IPlcAddressCodecContractTests
     [MemberData(nameof(Implementations))]
     public void Add_InvalidAddress_ThrowsFormatException(IPlcAddressCodec codec)
     {
-        Assert.Throws<FormatException>(() => codec.Add("ZZZ999", 1));
+        Assert.Throws<FormatException>(() => codec.Add("1ABC", 1));
     }
 
     // ──────────── ToTransportAddress 防御性契约 ────────────
@@ -121,7 +121,7 @@ public class IPlcAddressCodecContractTests
     public void ToTransportAddress_InvalidAddress_NoThrow(IPlcAddressCodec codec)
     {
         // 对无效地址不抛异常（返回空或原值由实现决定）
-        codec.ToTransportAddress("ZZZ999");
+        codec.ToTransportAddress("1ABC");
     }
 
     // ──────────── 往返一致性契约 ────────────
@@ -138,6 +138,8 @@ public class IPlcAddressCodecContractTests
             PlcBrand.ModbusTcp => "HR100",
             PlcBrand.Omron => "D100",
             PlcBrand.Keyence => "DM100",
+            PlcBrand.Inovance => "D100",
+            PlcBrand.AllenBradley => "LINECOUNT",
             _ => throw new InvalidOperationException($"未覆盖品牌 {codec.Brand} 的测试地址"),
         };
 

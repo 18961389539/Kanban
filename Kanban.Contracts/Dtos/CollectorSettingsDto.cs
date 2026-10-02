@@ -53,6 +53,12 @@ public sealed record CollectorSettingsDto
     /// <summary>Omron FINS 品牌参数（非空时部分更新，仅应用非空字段）。</summary>
     public OmronFinsSettingsDto? Omron { get; init; }
 
+    /// <summary>汇川品牌参数（非空时部分更新，仅应用非空字段）。</summary>
+    public InovanceSettingsDto? Inovance { get; init; }
+
+    /// <summary>罗克韦尔品牌参数（非空时部分更新，仅应用非空字段）。</summary>
+    public AllenBradleySettingsDto? AllenBradley { get; init; }
+
     /// <summary>命名连接档案（非空时按 ID 合并，兼容旧版全局 PLC 字段）。</summary>
     public List<ConnectionProfileSettingsDto>? ConnectionProfiles { get; init; }
 
@@ -89,6 +95,24 @@ public sealed record OmronFinsSettingsDto
     public int? ReadSplits { get; init; }
 }
 
+/// <summary>汇川专属参数的跨进程传输形态。</summary>
+public sealed record InovanceSettingsDto
+{
+    /// <summary>InovancePlcSeries 枚举值。</summary>
+    public int? Series { get; init; }
+    public byte? Station { get; init; }
+    /// <summary>PlcDataFormat 枚举值。</summary>
+    public int? DataFormat { get; init; }
+    public int? BatchInt32Limit { get; init; }
+}
+
+/// <summary>罗克韦尔专属参数的跨进程传输形态。</summary>
+public sealed record AllenBradleySettingsDto
+{
+    public byte? Slot { get; init; }
+    public bool? UseConnectedCip { get; init; }
+}
+
 /// <summary>命名连接档案的跨进程部分更新形态。</summary>
 public sealed record ConnectionProfileSettingsDto
 {
@@ -102,6 +126,8 @@ public sealed record ConnectionProfileSettingsDto
     public SiemensSettingsDto? Siemens { get; init; }
     public ModbusTcpSettingsDto? ModbusTcp { get; init; }
     public OmronFinsSettingsDto? Omron { get; init; }
+    public InovanceSettingsDto? Inovance { get; init; }
+    public AllenBradleySettingsDto? AllenBradley { get; init; }
 }
 
 /// <summary>班次配置的跨进程传输形态（Collector 端还原为 Kanban.Collector.Core.Models.ShiftConfig）。</summary>

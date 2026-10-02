@@ -28,6 +28,7 @@ public class IPlcRuntimeProfileProviderContractTests
     [InlineData(PlcBrand.ModbusTcp)]
     [InlineData(PlcBrand.Omron)]
     [InlineData(PlcBrand.Keyence)]
+    [InlineData(PlcBrand.Inovance)]
     public void BatchReadCapabilitiesFor_AllBrands_ReturnsValidCapabilities(PlcBrand brand)
     {
         var caps = PlcRuntimeProfileProvider.BatchReadCapabilitiesFor(brand);
@@ -49,6 +50,17 @@ public class IPlcRuntimeProfileProviderContractTests
 
         Assert.True(siemens.MaxInt32Length < mitsubishi.MaxInt32Length,
             $"Siemens MaxInt32Length({siemens.MaxInt32Length}) 应小于 Mitsubishi({mitsubishi.MaxInt32Length})");
+    }
+
+    [Fact]
+    public void BatchReadCapabilitiesFor_AllenBradley_DisablesCrossTagBatch()
+    {
+        var caps = PlcRuntimeProfileProvider.BatchReadCapabilitiesFor(PlcBrand.AllenBradley);
+
+        Assert.False(caps.SupportsInt32);
+        Assert.False(caps.SupportsBool);
+        Assert.True(caps.MaxInt32Length > 0);
+        Assert.Equal(1, caps.Int32AddressStride);
     }
 
     [Fact]

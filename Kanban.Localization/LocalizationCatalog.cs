@@ -10537,6 +10537,82 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "把焦点放到本页搜索框（报警中心、产线总览、设备管理、工单管理）", ["en-US"] = "Move focus to this page search box (Alarm Center Production Line Device Manager Work Orders)", ["ja-JP"] = "このページの検索欄へ移動（アラーム・生産ライン・設備管理・工単）", ["pt-BR"] = "Mover o foco para a busca desta página (alarmes linha dispositivos ordens)"
         },
+        ["Wpf|Lbl_InovanceSeries"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "汇川系列", ["en-US"] = "Inovance Series", ["ja-JP"] = "inovanceシリーズ", ["pt-BR"] = "Série Inovance"
+        },
+        ["Wpf|Lbl_InovanceStation"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "汇川站号", ["en-US"] = "Inovance Station", ["ja-JP"] = "inovance局番", ["pt-BR"] = "Estação Inovance"
+        },
+        ["Wpf|Lbl_InovanceDataFormat"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "汇川数据格式", ["en-US"] = "Inovance Data Format", ["ja-JP"] = "inovanceデータ形式", ["pt-BR"] = "Formato de dados Inovance"
+        },
+        ["Wpf|Lbl_InovanceBatchInt32Limit"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "汇川批量 Int32 上限", ["en-US"] = "Inovance Int32 Batch Limit", ["ja-JP"] = "inovance Int32 バッチ上限", ["pt-BR"] = "Limite de lote Int32 Inovance"
+        },
+        ["Wpf|Lbl_AllenBradleySlot"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "罗克韦尔槽位", ["en-US"] = "Allen-Bradley Slot", ["ja-JP"] = "Allen-Bradley スロット", ["pt-BR"] = "Slot Allen-Bradley"
+        },
+        ["Wpf|Lbl_AllenBradleyConnectedCip"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "使用有连接的 CIP", ["en-US"] = "Use connected CIP", ["ja-JP"] = "コネクション型 CIP を使う", ["pt-BR"] = "Usar CIP conectado"
+        },
+        ["Wpf|Prompt_InovanceSeriesUnsupported"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "汇川系列不受支持：{0}", ["en-US"] = "Unsupported Inovance series: {0}", ["ja-JP"] = "未対応の inovance シリーズ: {0}", ["pt-BR"] = "Série Inovance sem suporte: {0}"
+        },
+        ["Wpf|Prompt_InovanceStationMust"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "汇川站号必须在 1-247 之间，当前值: {0}", ["en-US"] = "Inovance station must be between 1 and 247. Current: {0}", ["ja-JP"] = "inovance 局番は 1〜247 の範囲である必要があります。現在値: {0}", ["pt-BR"] = "A estação Inovance deve estar entre 1 e 247. Atual: {0}"
+        },
+        ["Wpf|Prompt_InovanceBatchInt32LimitMust"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "汇川批量 Int32 上限必须在 1-62 之间，当前值: {0}", ["en-US"] = "Inovance Int32 batch limit must be between 1 and 62. Current: {0}", ["ja-JP"] = "inovance Int32 バッチ上限は 1〜62 の範囲である必要があります。現在値: {0}", ["pt-BR"] = "O limite de lote Int32 Inovance deve estar entre 1 e 62. Atual: {0}"
+        },
+        ["Wpf|Prompt_AllenBradleySlotMust"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "罗克韦尔槽位必须在 0-31 之间，当前值: {0}", ["en-US"] = "Allen-Bradley slot must be between 0 and 31. Current: {0}", ["ja-JP"] = "Allen-Bradley スロットは 0〜31 の範囲である必要があります。現在値: {0}", ["pt-BR"] = "O slot Allen-Bradley deve estar entre 0 e 31. Atual: {0}"
+        },
+        ["Wpf|Web_St_InovanceSeries"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "系列", ["en-US"] = "Series", ["ja-JP"] = "シリーズ", ["pt-BR"] = "Série"
+        },
+        ["Wpf|Web_St_InovanceStation"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "站号", ["en-US"] = "Station", ["ja-JP"] = "局番", ["pt-BR"] = "Estação"
+        },
+        ["Wpf|Web_St_CipSlot"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "槽位", ["en-US"] = "Slot", ["ja-JP"] = "スロット", ["pt-BR"] = "Slot"
+        },
+        ["Wpf|Web_St_ConnectedCip"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "有连接 CIP", ["en-US"] = "Connected CIP", ["ja-JP"] = "コネクション型 CIP", ["pt-BR"] = "CIP conectado"
+        },
+        ["Core|InovanceSeriesUnsupported"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "汇川系列不受支持：{0}", ["en-US"] = "Unsupported Inovance series: {0}", ["ja-JP"] = "未対応の inovance シリーズ: {0}", ["pt-BR"] = "Série Inovance sem suporte: {0}"
+        },
+        ["Core|InovanceStationOutOfRange"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "汇川站号 {0} 不在合法范围 (1-247)", ["en-US"] = "Inovance station {0} is out of range (1-247)", ["ja-JP"] = "inovance 局番 {0} が範囲外です (1-247)", ["pt-BR"] = "Estação Inovance {0} fora da faixa (1-247)"
+        },
+        ["Core|InovanceDataFormatInvalid"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "汇川数据格式无效：{0}", ["en-US"] = "Invalid Inovance data format: {0}", ["ja-JP"] = "無効な inovance データ形式: {0}", ["pt-BR"] = "Formato de dados Inovance inválido: {0}"
+        },
+        ["Core|InovanceBatchInt32LimitOutOfRange"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "汇川批量 Int32 上限 {0} 不在合法范围 (1-62)", ["en-US"] = "Inovance Int32 batch limit {0} is out of range (1-62)", ["ja-JP"] = "inovance Int32 バッチ上限 {0} が範囲外です (1-62)", ["pt-BR"] = "Limite de lote Int32 Inovance {0} fora da faixa (1-62)"
+        },
+        ["Core|AllenBradleySlotOutOfRange"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "罗克韦尔槽位 {0} 不在合法范围 (0-31)", ["en-US"] = "Allen-Bradley slot {0} is out of range (0-31)", ["ja-JP"] = "Allen-Bradley スロット {0} が範囲外です (0-31)", ["pt-BR"] = "Slot Allen-Bradley {0} fora da faixa (0-31)"
+        },
         };
 
     private static readonly Dictionary<string, Dictionary<string, string>> LanguageNames =
@@ -10635,7 +10711,7 @@ namespace MainAPP.Resources
 /// 多语言资源强类型访问。译文在 <see cref="Kanban.Localization.LocalizationCatalog"/>，
 /// 本类只保留当前文化和启动覆盖回调。
 /// WARNING: AUTO-GENERATED by ci/generate_localization.py. DO NOT EDIT MANUALLY.
-/// All 2543 Wpf keys come from MainAPP/Resources/Localization.csv.
+/// All 2557 Wpf keys come from MainAPP/Resources/Localization.csv.
 /// </summary>
 public static class Strings
 {
@@ -11098,6 +11174,8 @@ public static class Strings
     public static string Lbl_AlarmType => S("Lbl_AlarmType", "Lbl_AlarmType");
     public static string Lbl_AlarmTypeFilter => S("Lbl_AlarmTypeFilter", "Lbl_AlarmTypeFilter");
     public static string Lbl_All => S("Lbl_All", "Lbl_All");
+    public static string Lbl_AllenBradleyConnectedCip => S("Lbl_AllenBradleyConnectedCip", "Lbl_AllenBradleyConnectedCip");
+    public static string Lbl_AllenBradleySlot => S("Lbl_AllenBradleySlot", "Lbl_AllenBradleySlot");
     public static string Lbl_AllowedAddressGapsBatch => S("Lbl_AllowedAddressGapsBatch", "Lbl_AllowedAddressGapsBatch");
     public static string Lbl_AllowedUnconfiguredGapsWithinBatch0 => S("Lbl_AllowedUnconfiguredGapsWithinBatch0", "Lbl_AllowedUnconfiguredGapsWithinBatch0");
     public static string Lbl_ApplyDevice => S("Lbl_ApplyDevice", "Lbl_ApplyDevice");
@@ -11353,6 +11431,10 @@ public static class Strings
     public static string Lbl_ImportedDevice => S("Lbl_ImportedDevice", "Lbl_ImportedDevice");
     public static string Lbl_ImportedSkipped => S("Lbl_ImportedSkipped", "Lbl_ImportedSkipped");
     public static string Lbl_ImportedWorkOrdersSuccessfully => S("Lbl_ImportedWorkOrdersSuccessfully", "Lbl_ImportedWorkOrdersSuccessfully");
+    public static string Lbl_InovanceBatchInt32Limit => S("Lbl_InovanceBatchInt32Limit", "Lbl_InovanceBatchInt32Limit");
+    public static string Lbl_InovanceDataFormat => S("Lbl_InovanceDataFormat", "Lbl_InovanceDataFormat");
+    public static string Lbl_InovanceSeries => S("Lbl_InovanceSeries", "Lbl_InovanceSeries");
+    public static string Lbl_InovanceStation => S("Lbl_InovanceStation", "Lbl_InovanceStation");
     public static string Lbl_JSONFilesJsonAllFiles => S("Lbl_JSONFilesJsonAllFiles", "Lbl_JSONFilesJsonAllFiles");
     public static string Lbl_JustNow => S("Lbl_JustNow", "Lbl_JustNow");
     public static string Lbl_KanbanCollectorSignalRURLEG => S("Lbl_KanbanCollectorSignalRURLEG", "Lbl_KanbanCollectorSignalRURLEG");
@@ -12230,6 +12312,7 @@ public static class Strings
     public static string Prompt_AlarmsImportedRowsSkipped => S("Prompt_AlarmsImportedRowsSkipped", "Prompt_AlarmsImportedRowsSkipped");
     public static string Prompt_AlarmsTriggeredCurrentRangeCheckTop => S("Prompt_AlarmsTriggeredCurrentRangeCheckTop", "Prompt_AlarmsTriggeredCurrentRangeCheckTop");
     public static string Prompt_AllRecipesFileFailedValidationInvalid => S("Prompt_AllRecipesFileFailedValidationInvalid", "Prompt_AllRecipesFileFailedValidationInvalid");
+    public static string Prompt_AllenBradleySlotMust => S("Prompt_AllenBradleySlotMust", "Prompt_AllenBradleySlotMust");
     public static string Prompt_AvailabilityLoss => S("Prompt_AvailabilityLoss", "Prompt_AvailabilityLoss");
     public static string Prompt_AvgMs => S("Prompt_AvgMs", "Prompt_AvgMs");
     public static string Prompt_BackupFileReadParseFailed => S("Prompt_BackupFileReadParseFailed", "Prompt_BackupFileReadParseFailed");
@@ -12342,6 +12425,9 @@ public static class Strings
     public static string Prompt_ImportedRecipesSkipped => S("Prompt_ImportedRecipesSkipped", "Prompt_ImportedRecipesSkipped");
     public static string Prompt_ImportedSourcesValues => S("Prompt_ImportedSourcesValues", "Prompt_ImportedSourcesValues");
     public static string Prompt_ImportedSourcesValuesValidationErrors => S("Prompt_ImportedSourcesValuesValidationErrors", "Prompt_ImportedSourcesValuesValidationErrors");
+    public static string Prompt_InovanceBatchInt32LimitMust => S("Prompt_InovanceBatchInt32LimitMust", "Prompt_InovanceBatchInt32LimitMust");
+    public static string Prompt_InovanceSeriesUnsupported => S("Prompt_InovanceSeriesUnsupported", "Prompt_InovanceSeriesUnsupported");
+    public static string Prompt_InovanceStationMust => S("Prompt_InovanceStationMust", "Prompt_InovanceStationMust");
     public static string Prompt_InvalidAddressFormatDWordAddress => S("Prompt_InvalidAddressFormatDWordAddress", "Prompt_InvalidAddressFormatDWordAddress");
     public static string Prompt_InvalidAddressFormatDWordAddress2 => S("Prompt_InvalidAddressFormatDWordAddress2", "Prompt_InvalidAddressFormatDWordAddress2");
     public static string Prompt_InvalidIPAddress => S("Prompt_InvalidIPAddress", "Prompt_InvalidIPAddress");
@@ -13136,8 +13222,12 @@ public static class Strings
     public static string Web_St_BatchGapSlots => S("Web_St_BatchGapSlots", "Web_St_BatchGapSlots");
     public static string Web_St_BatchInt32 => S("Web_St_BatchInt32", "Web_St_BatchInt32");
     public static string Web_St_BatchMaxLen => S("Web_St_BatchMaxLen", "Web_St_BatchMaxLen");
+    public static string Web_St_CipSlot => S("Web_St_CipSlot", "Web_St_CipSlot");
+    public static string Web_St_ConnectedCip => S("Web_St_ConnectedCip", "Web_St_ConnectedCip");
     public static string Web_St_DataFormat => S("Web_St_DataFormat", "Web_St_DataFormat");
     public static string Web_St_HistoryScans => S("Web_St_HistoryScans", "Web_St_HistoryScans");
+    public static string Web_St_InovanceSeries => S("Web_St_InovanceSeries", "Web_St_InovanceSeries");
+    public static string Web_St_InovanceStation => S("Web_St_InovanceStation", "Web_St_InovanceStation");
     public static string Web_St_NoShifts => S("Web_St_NoShifts", "Web_St_NoShifts");
     public static string Web_St_Plc => S("Web_St_Plc", "Web_St_Plc");
     public static string Web_St_PlcBrand => S("Web_St_PlcBrand", "Web_St_PlcBrand");

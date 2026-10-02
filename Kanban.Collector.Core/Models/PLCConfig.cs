@@ -11,6 +11,16 @@ public enum PlcBrand
     ModbusTcp = 3,
     Omron = 4,
     Keyence = 5,
+    Inovance = 6,
+    AllenBradley = 7,
+}
+
+/// <summary>汇川 PLC 系列。AM 为中型机，H3U/H5U 为小型机，地址规则不同。</summary>
+public enum InovancePlcSeries
+{
+    H5U = 0,
+    H3U = 1,
+    AM = 2,
 }
 
 public enum PlcDataFormat
@@ -141,8 +151,74 @@ public partial class OmronFinsPlcOptions : ObservableObject
     public OmronFinsPlcOptions CreateSnapshot() => new() { ReadSplits = ReadSplits };
 }
 
+/// <summary>汇川 Modbus TCP 专属系列、站号与字节序。</summary>
+public partial class InovancePlcOptions : ObservableObject
+{
+    private InovancePlcSeries _series = InovancePlcSeries.H5U;
+
+    public InovancePlcSeries Series
+    {
+        get => _series;
+        set => SetProperty(ref _series, value);
+    }
+    private byte _station = 1;
+
+    public byte Station
+    {
+        get => _station;
+        set => SetProperty(ref _station, value);
+    }
+    private PlcDataFormat _dataFormat = PlcDataFormat.CDAB;
+
+    public PlcDataFormat DataFormat
+    {
+        get => _dataFormat;
+        set => SetProperty(ref _dataFormat, value);
+    }
+    private int _batchInt32Limit = 60;
+
+    public int BatchInt32Limit
+    {
+        get => _batchInt32Limit;
+        set => SetProperty(ref _batchInt32Limit, value);
+    }
+
+    public InovancePlcOptions CreateSnapshot() => new()
+    {
+        Series = Series,
+        Station = Station,
+        DataFormat = DataFormat,
+        BatchInt32Limit = BatchInt32Limit,
+    };
+}
+
+/// <summary>罗克韦尔 EtherNet/IP 专属槽位与连接方式。</summary>
+public partial class AllenBradleyPlcOptions : ObservableObject
+{
+    private byte _slot;
+
+    public byte Slot
+    {
+        get => _slot;
+        set => SetProperty(ref _slot, value);
+    }
+    private bool _useConnectedCip;
+
+    public bool UseConnectedCip
+    {
+        get => _useConnectedCip;
+        set => SetProperty(ref _useConnectedCip, value);
+    }
+
+    public AllenBradleyPlcOptions CreateSnapshot() => new()
+    {
+        Slot = Slot,
+        UseConnectedCip = UseConnectedCip,
+    };
+}
+
 /// <summary>
-/// PLC 连接配置。公共连接参数位于根级，品牌专属参数分别存放在 Siemens、ModbusTcp、Omron 中。
+/// PLC 连接配置。公共连接参数位于根级，品牌专属参数分别存放在 Siemens、ModbusTcp、Omron、Inovance、AllenBradley 中。
 /// 旧扁平属性保留为 JsonIgnore 兼容代理（供现有 ViewModel 与测试代码渐进迁移），
 /// JSON 序列化由 <see cref="PlcConfigJsonConverter"/> 接管：写入只输出嵌套结构，
 /// 读取同时兼容嵌套结构与旧版扁平字段（旧配置无需预迁移即可加载）。
@@ -219,6 +295,20 @@ public partial class PlcConfig : ObservableObject
         get => _omron;
     set => SetProperty(ref _omron, value);
     }
+    private InovancePlcOptions _inovance = new();
+
+    public InovancePlcOptions Inovance
+    {
+        get => _inovance;
+        set => SetProperty(ref _inovance, value);
+    }
+    private AllenBradleyPlcOptions _allenBradley = new();
+
+    public AllenBradleyPlcOptions AllenBradley
+    {
+        get => _allenBradley;
+        set => SetProperty(ref _allenBradley, value);
+    }
 
     // 兼容代理：运行时代码可渐进迁移到嵌套 Options；新 settings.json 不再写重复的扁平字段。
     [JsonIgnore]
@@ -248,6 +338,20 @@ public partial class PlcConfig : ObservableObject
     [JsonIgnore]
     public int OmronReadSplits { get => Omron.ReadSplits; set => SetOption(Omron.ReadSplits, value, v => Omron.ReadSplits = v); }
 
+    [JsonIgnore]
+    public InovancePlcSeries InovanceSeries { get => Inovance.Series; set => SetOption(Inovance.Series, value, v => Inovance.Series = v); }
+    [JsonIgnore]
+    public byte InovanceStation { get => Inovance.Station; set => SetOption(Inovance.Station, value, v => Inovance.Station = v); }
+    [JsonIgnore]
+    public PlcDataFormat InovanceDataFormat { get => Inovance.DataFormat; set => SetOption(Inovance.DataFormat, value, v => Inovance.DataFormat = v); }
+    [JsonIgnore]
+    public int InovanceBatchInt32Limit { get => Inovance.BatchInt32Limit; set => SetOption(Inovance.BatchInt32Limit, value, v => Inovance.BatchInt32Limit = v); }
+
+    [JsonIgnore]
+    public byte AllenBradleySlot { get => AllenBradley.Slot; set => SetOption(AllenBradley.Slot, value, v => AllenBradley.Slot = v); }
+    [JsonIgnore]
+    public bool AllenBradleyUseConnectedCip { get => AllenBradley.UseConnectedCip; set => SetOption(AllenBradley.UseConnectedCip, value, v => AllenBradley.UseConnectedCip = v); }
+
     public static int GetDefaultPort(PlcBrand brand) => brand switch
     {
         PlcBrand.Mitsubishi => 4999,
@@ -255,6 +359,8 @@ public partial class PlcConfig : ObservableObject
         PlcBrand.ModbusTcp => 502,
         PlcBrand.Omron => 9600,
         PlcBrand.Keyence => 5000,
+        PlcBrand.Inovance => 502,
+        PlcBrand.AllenBradley => 44818,
         _ => 4999,
     };
 
@@ -268,6 +374,8 @@ public partial class PlcConfig : ObservableObject
         Siemens = Siemens.CreateSnapshot(),
         ModbusTcp = ModbusTcp.CreateSnapshot(),
         Omron = Omron.CreateSnapshot(),
+        Inovance = Inovance.CreateSnapshot(),
+        AllenBradley = AllenBradley.CreateSnapshot(),
     };
 
     /// <summary>
@@ -358,6 +466,24 @@ public sealed class PlcConfigJsonConverter : System.Text.Json.Serialization.Json
         }
         if (root["Omron"] is System.Text.Json.Nodes.JsonObject omron && TryReadInt(omron, "ReadSplits", out var readSplits))
             config.Omron.ReadSplits = readSplits;
+        if (root["Inovance"] is System.Text.Json.Nodes.JsonObject inovance)
+        {
+            if (TryReadInt(inovance, "Series", out var series) && Enum.IsDefined(typeof(InovancePlcSeries), series))
+                config.Inovance.Series = (InovancePlcSeries)series;
+            if (TryReadInt(inovance, "Station", out var station))
+                config.Inovance.Station = (byte)station;
+            if (TryReadInt(inovance, "DataFormat", out var iFormat) && Enum.IsDefined(typeof(PlcDataFormat), iFormat))
+                config.Inovance.DataFormat = (PlcDataFormat)iFormat;
+            if (TryReadInt(inovance, "BatchInt32Limit", out var iBatch))
+                config.Inovance.BatchInt32Limit = iBatch;
+        }
+        if (root["AllenBradley"] is System.Text.Json.Nodes.JsonObject allenBradley)
+        {
+            if (TryReadInt(allenBradley, "Slot", out var abSlot))
+                config.AllenBradley.Slot = (byte)abSlot;
+            if (allenBradley["UseConnectedCip"] is System.Text.Json.Nodes.JsonValue cip && cip.TryGetValue<bool>(out var useConnected))
+                config.AllenBradley.UseConnectedCip = useConnected;
+        }
 
         // 旧版扁平字段兼容：嵌套对象优先，扁平字段仅在其未写入嵌套值时覆盖（旧文件只有扁平字段）。
         ApplyLegacyFlatFields(config, root);
@@ -396,6 +522,20 @@ public sealed class PlcConfigJsonConverter : System.Text.Json.Serialization.Json
         writer.WritePropertyName("Omron");
         writer.WriteStartObject();
         writer.WriteNumber("ReadSplits", value.Omron.ReadSplits);
+        writer.WriteEndObject();
+
+        writer.WritePropertyName("Inovance");
+        writer.WriteStartObject();
+        writer.WriteNumber("Series", (int)value.Inovance.Series);
+        writer.WriteNumber("Station", value.Inovance.Station);
+        writer.WriteNumber("DataFormat", (int)value.Inovance.DataFormat);
+        writer.WriteNumber("BatchInt32Limit", value.Inovance.BatchInt32Limit);
+        writer.WriteEndObject();
+
+        writer.WritePropertyName("AllenBradley");
+        writer.WriteStartObject();
+        writer.WriteNumber("Slot", value.AllenBradley.Slot);
+        writer.WriteBoolean("UseConnectedCip", value.AllenBradley.UseConnectedCip);
         writer.WriteEndObject();
 
         writer.WriteEndObject();

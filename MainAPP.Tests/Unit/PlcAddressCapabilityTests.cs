@@ -25,6 +25,9 @@ public sealed class PlcAddressCapabilityTests
     [InlineData(PlcBrand.ModbusTcp, "DI10")]
     [InlineData(PlcBrand.Keyence, "DM100")]
     [InlineData(PlcBrand.Keyence, "MR10")]
+    [InlineData(PlcBrand.Inovance, "D100")]
+    [InlineData(PlcBrand.Inovance, "M10")]
+    [InlineData(PlcBrand.AllenBradley, "LINECOUNT")]
     public void ValidAddresses_AreReadable(PlcBrand brand, string address)
     {
         var codec = Resolve(brand);
@@ -57,6 +60,7 @@ public sealed class PlcAddressCapabilityTests
     [InlineData(PlcBrand.Siemens, "I10.3")]
     [InlineData(PlcBrand.ModbusTcp, "IR100")]
     [InlineData(PlcBrand.ModbusTcp, "DI10")]
+    [InlineData(PlcBrand.Inovance, "X0")]
     public void InputAreas_AreReadOnly(PlcBrand brand, string address)
     {
         var codec = Resolve(brand);

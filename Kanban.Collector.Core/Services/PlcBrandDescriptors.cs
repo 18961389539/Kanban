@@ -169,6 +169,71 @@ internal sealed class OmronPlcBrandDescriptor : PlcBrandDescriptorBase
     }
 }
 
+internal sealed class InovancePlcBrandDescriptor : PlcBrandDescriptorBase
+{
+    public override PlcBrand Brand => PlcBrand.Inovance;
+    public override IPlcDriver CreateDriver(PlcConfig config, ILoggerFactory loggerFactory) =>
+        new HslInovanceTcpDriver(config, loggerFactory.CreateLogger<HslInovanceTcpDriver>());
+    public override IPlcAddressCodec CreateAddressCodec(PlcConfig config) => new InovanceAddressCodec(config);
+    public override BatchReadCapabilities GetBatchReadCapabilities(PlcConfig config) =>
+        new(true, (ushort)Math.Clamp(config.Inovance.BatchInt32Limit, 1, 62), 2, true, 2000, 1);
+
+    public override void Validate(PlcConfig config, ICollection<string> errors)
+    {
+        var options = config.Inovance;
+        if (!Enum.IsDefined(options.Series))
+            errors.Add(string.Format(ValidationMessages.InovanceSeriesUnsupported, options.Series));
+        if (options.Station is < 1 or > 247)
+            errors.Add(string.Format(ValidationMessages.InovanceStationOutOfRange, options.Station));
+        if (!Enum.IsDefined(options.DataFormat))
+            errors.Add(string.Format(ValidationMessages.InovanceDataFormatInvalid, options.DataFormat));
+        if (options.BatchInt32Limit is < 1 or > 62)
+            errors.Add(string.Format(ValidationMessages.InovanceBatchInt32LimitOutOfRange, options.BatchInt32Limit));
+    }
+
+    protected override PlcErrorKind? ClassifyErrorCode(int errorCode) => errorCode switch
+    {
+        1 => PlcErrorKind.UnsupportedOperation,
+        2 => PlcErrorKind.InvalidAddress,
+        3 => PlcErrorKind.InvalidAddress,
+        4 => PlcErrorKind.ProtocolError,
+        5 => PlcErrorKind.ProtocolError,
+        6 => PlcErrorKind.ProtocolError,
+        _ => null,
+    };
+}
+
+internal sealed class AllenBradleyPlcBrandDescriptor : PlcBrandDescriptorBase
+{
+    public override PlcBrand Brand => PlcBrand.AllenBradley;
+    public override IPlcDriver CreateDriver(PlcConfig config, ILoggerFactory loggerFactory) =>
+        new HslAllenBradleyDriver(config, loggerFactory.CreateLogger<HslAllenBradleyDriver>());
+    public override IPlcAddressCodec CreateAddressCodec(PlcConfig config) => new AllenBradleyAddressCodec();
+
+    /// <summary>
+    /// 标签名没有统一的区域步进，标量标签不能按地址偏移合并。
+    /// 关闭批量读后，采集按点位自己的数据类型逐点读取，避免把 BOOL 标签当成 DINT 批读。
+    /// 驱动仍实现数组批量接口，供同一数组的显式批量调用使用。
+    /// </summary>
+    public override BatchReadCapabilities GetBatchReadCapabilities(PlcConfig config) =>
+        new(false, 80, 1, false, 80, 1);
+
+    public override void Validate(PlcConfig config, ICollection<string> errors)
+    {
+        if (config.AllenBradley.Slot > 31)
+            errors.Add(string.Format(ValidationMessages.AllenBradleySlotOutOfRange, config.AllenBradley.Slot));
+    }
+
+    protected override PlcErrorKind? ClassifyErrorCode(int errorCode) => errorCode switch
+    {
+        0x01 => PlcErrorKind.ConnectionLost,
+        0x04 => PlcErrorKind.InvalidAddress,
+        0x05 => PlcErrorKind.InvalidAddress,
+        0x0F => PlcErrorKind.AccessDenied,
+        _ => null,
+    };
+}
+
 internal sealed class KeyencePlcBrandDescriptor : PlcBrandDescriptorBase
 {
     public override PlcBrand Brand => PlcBrand.Keyence;
@@ -188,5 +253,7 @@ internal static class PlcBrandDescriptors
         new ModbusTcpPlcBrandDescriptor(),
         new OmronPlcBrandDescriptor(),
         new KeyencePlcBrandDescriptor(),
+        new InovancePlcBrandDescriptor(),
+        new AllenBradleyPlcBrandDescriptor(),
     ]);
 }

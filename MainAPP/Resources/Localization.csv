@@ -2783,3 +2783,22 @@ Wpf,Ux_Kb9,导出查询结果（历史查询）,Export results (History Query),�
 Wpf,Ux_Kb10,保存（系统设置或设备管理）,Save (System Settings or Device Manager),保存（システム設定または設備管理）,Salvar (Configurações ou Gerenciador de dispositivos)
 Wpf,Ux_Kb11,打开快捷键小窗,Open the shortcut list,ショートカット一覧を開く,Abrir a lista de atalhos
 Wpf,Ux_Kb12,把焦点放到本页搜索框（报警中心、产线总览、设备管理、工单管理）,Move focus to this page search box (Alarm Center Production Line Device Manager Work Orders),このページの検索欄へ移動（アラーム・生産ライン・設備管理・工単）,Mover o foco para a busca desta página (alarmes linha dispositivos ordens)
+Wpf,Lbl_InovanceSeries,汇川系列,Inovance Series,inovanceシリーズ,Série Inovance
+Wpf,Lbl_InovanceStation,汇川站号,Inovance Station,inovance局番,Estação Inovance
+Wpf,Lbl_InovanceDataFormat,汇川数据格式,Inovance Data Format,inovanceデータ形式,Formato de dados Inovance
+Wpf,Lbl_InovanceBatchInt32Limit,汇川批量 Int32 上限,Inovance Int32 Batch Limit,inovance Int32 バッチ上限,Limite de lote Int32 Inovance
+Wpf,Lbl_AllenBradleySlot,罗克韦尔槽位,Allen-Bradley Slot,Allen-Bradley スロット,Slot Allen-Bradley
+Wpf,Lbl_AllenBradleyConnectedCip,使用有连接的 CIP,Use connected CIP,コネクション型 CIP を使う,Usar CIP conectado
+Wpf,Prompt_InovanceSeriesUnsupported,汇川系列不受支持：{0},Unsupported Inovance series: {0},未対応の inovance シリーズ: {0},Série Inovance sem suporte: {0}
+Wpf,Prompt_InovanceStationMust,汇川站号必须在 1-247 之间，当前值: {0},Inovance station must be between 1 and 247. Current: {0},inovance 局番は 1〜247 の範囲である必要があります。現在値: {0},A estação Inovance deve estar entre 1 e 247. Atual: {0}
+Wpf,Prompt_InovanceBatchInt32LimitMust,汇川批量 Int32 上限必须在 1-62 之间，当前值: {0},Inovance Int32 batch limit must be between 1 and 62. Current: {0},inovance Int32 バッチ上限は 1〜62 の範囲である必要があります。現在値: {0},O limite de lote Int32 Inovance deve estar entre 1 e 62. Atual: {0}
+Wpf,Prompt_AllenBradleySlotMust,罗克韦尔槽位必须在 0-31 之间，当前值: {0},Allen-Bradley slot must be between 0 and 31. Current: {0},Allen-Bradley スロットは 0〜31 の範囲である必要があります。現在値: {0},O slot Allen-Bradley deve estar entre 0 e 31. Atual: {0}
+Wpf,Web_St_InovanceSeries,系列,Series,シリーズ,Série
+Wpf,Web_St_InovanceStation,站号,Station,局番,Estação
+Wpf,Web_St_CipSlot,槽位,Slot,スロット,Slot
+Wpf,Web_St_ConnectedCip,有连接 CIP,Connected CIP,コネクション型 CIP,CIP conectado
+Core,InovanceSeriesUnsupported,汇川系列不受支持：{0},Unsupported Inovance series: {0},未対応の inovance シリーズ: {0},Série Inovance sem suporte: {0}
+Core,InovanceStationOutOfRange,汇川站号 {0} 不在合法范围 (1-247),Inovance station {0} is out of range (1-247),inovance 局番 {0} が範囲外です (1-247),Estação Inovance {0} fora da faixa (1-247)
+Core,InovanceDataFormatInvalid,汇川数据格式无效：{0},Invalid Inovance data format: {0},無効な inovance データ形式: {0},Formato de dados Inovance inválido: {0}
+Core,InovanceBatchInt32LimitOutOfRange,汇川批量 Int32 上限 {0} 不在合法范围 (1-62),Inovance Int32 batch limit {0} is out of range (1-62),inovance Int32 バッチ上限 {0} が範囲外です (1-62),Limite de lote Int32 Inovance {0} fora da faixa (1-62)
+Core,AllenBradleySlotOutOfRange,罗克韦尔槽位 {0} 不在合法范围 (0-31),Allen-Bradley slot {0} is out of range (0-31),Allen-Bradley スロット {0} が範囲外です (0-31),Slot Allen-Bradley {0} fora da faixa (0-31)

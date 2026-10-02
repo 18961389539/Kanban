@@ -53,6 +53,7 @@ public sealed class PlcErrorClassifierTests
     [InlineData(PlcBrand.ModbusTcp, 4, PlcErrorKind.ProtocolError)]          // 从站设备故障
     [InlineData(PlcBrand.ModbusTcp, 5, PlcErrorKind.ProtocolError)]          // 确认
     [InlineData(PlcBrand.ModbusTcp, 6, PlcErrorKind.ProtocolError)]          // 从站设备忙
+    [InlineData(PlcBrand.Inovance, 2, PlcErrorKind.InvalidAddress)]
     public void FromResult_ClassifiesModbusExceptionCodes(PlcBrand brand, int errorCode, PlcErrorKind expected)
     {
         // Modbus 异常码（1~7）应按协议规范分类，不再走 message fallback

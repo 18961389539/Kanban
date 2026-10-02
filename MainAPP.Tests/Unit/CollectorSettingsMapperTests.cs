@@ -47,6 +47,11 @@ public class CollectorSettingsMapperTests
 
         Assert.NotNull(dto.Omron);
         Assert.Equal(settings.PlcConfig.Omron.ReadSplits, dto.Omron!.ReadSplits);
+        Assert.Equal((int)settings.PlcConfig.Inovance.Series, dto.Inovance!.Series);
+        Assert.Equal(settings.PlcConfig.Inovance.Station, dto.Inovance.Station);
+        Assert.Equal((int)settings.PlcConfig.Inovance.DataFormat, dto.Inovance.DataFormat);
+        Assert.Equal(settings.PlcConfig.AllenBradley.Slot, dto.AllenBradley!.Slot);
+        Assert.Equal(settings.PlcConfig.AllenBradley.UseConnectedCip, dto.AllenBradley.UseConnectedCip);
         Assert.Equal(2, dto.Shifts!.Count);
         Assert.Equal("早班", dto.Shifts[0].Name);
         Assert.Equal(settings.Shifts[1].StartTime, dto.Shifts[1].StartTime);
@@ -74,6 +79,9 @@ public class CollectorSettingsMapperTests
         Assert.Equal(source.PlcConfig.Siemens.DataFormat, target.PlcConfig.Siemens.DataFormat);
         Assert.Equal(source.PlcConfig.ModbusTcp.RegisterFunction, target.PlcConfig.ModbusTcp.RegisterFunction);
         Assert.Equal(source.PlcConfig.Omron.ReadSplits, target.PlcConfig.Omron.ReadSplits);
+        Assert.Equal(source.PlcConfig.Inovance.Series, target.PlcConfig.Inovance.Series);
+        Assert.Equal(source.PlcConfig.Inovance.BatchInt32Limit, target.PlcConfig.Inovance.BatchInt32Limit);
+        Assert.Equal(source.PlcConfig.AllenBradley.Slot, target.PlcConfig.AllenBradley.Slot);
         Assert.Equal(source.Shifts.Select(shift => shift.Name), target.Shifts.Select(shift => shift.Name));
         Assert.Equal(source.Shifts.Select(shift => shift.StartTime), target.Shifts.Select(shift => shift.StartTime));
     }

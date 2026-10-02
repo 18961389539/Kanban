@@ -74,6 +74,24 @@
                         <div class="diag-item"><span class="kpi-label">@L.T("St_ReadSplits")</span><span class="kpi-value">@omron.ReadSplits</span></div>
                     </div>
                 }
+                @if (s.PlcBrand == 6 && s.Inovance is { } inovance)
+                {
+                    <div class="card-title sub" style="margin-top:12px">Inovance</div>
+                    <div class="diag-grid">
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_InovanceSeries")</span><span class="kpi-value">@InovanceSeriesText(inovance.Series)</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_InovanceStation")</span><span class="kpi-value">@inovance.Station</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_DataFormat")</span><span class="kpi-value">@inovance.DataFormat</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_BatchInt32")</span><span class="kpi-value">@inovance.BatchInt32Limit</span></div>
+                    </div>
+                }
+                @if (s.PlcBrand == 7 && s.AllenBradley is { } allenBradley)
+                {
+                    <div class="card-title sub" style="margin-top:12px">Allen-Bradley</div>
+                    <div class="diag-grid">
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_CipSlot")</span><span class="kpi-value">@allenBradley.Slot</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_ConnectedCip")</span><span class="kpi-value">@L.T((allenBradley.UseConnectedCip ?? false) ? "Val_Yes" : "Val_No")</span></div>
+                    </div>
+                }
             </section>
         </div>
 
@@ -147,6 +165,16 @@
         3 => "Modbus TCP",
         4 => "Omron FINS",
         5 => "Keyence",
+        6 => "Inovance",
+        7 => "Allen-Bradley",
         _ => brand?.ToString() ?? "—",
+    };
+
+    private static string InovanceSeriesText(int? series) => series switch
+    {
+        0 => "H5U",
+        1 => "H3U",
+        2 => "AM",
+        _ => series?.ToString() ?? "—",
     };
 }

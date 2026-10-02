@@ -17,6 +17,8 @@ public sealed class PlcBrandRegistryTests
     [InlineData(PlcBrand.ModbusTcp)]
     [InlineData(PlcBrand.Omron)]
     [InlineData(PlcBrand.Keyence)]
+    [InlineData(PlcBrand.Inovance)]
+    [InlineData(PlcBrand.AllenBradley)]
     public void Resolve_AllBuiltInBrands_ReturnsDescriptor(PlcBrand brand)
     {
         var registry = PlcBrandDescriptors.CreateDefault();
@@ -28,12 +30,12 @@ public sealed class PlcBrandRegistryTests
     }
 
     [Fact]
-    public void Descriptors_ContainsAllFiveBrands()
+    public void Descriptors_ContainsAllBuiltInBrands()
     {
         var registry = PlcBrandDescriptors.CreateDefault();
 
-        Assert.Equal(5, registry.Descriptors.Count);
-        Assert.Equal(5, registry.Descriptors.Select(d => d.Brand).Distinct().Count());
+        Assert.Equal(7, registry.Descriptors.Count);
+        Assert.Equal(7, registry.Descriptors.Select(d => d.Brand).Distinct().Count());
     }
 
     [Fact]
@@ -60,6 +62,8 @@ public sealed class PlcBrandRegistryTests
     [InlineData(PlcBrand.ModbusTcp, "HslModbusTcpDriver")]
     [InlineData(PlcBrand.Omron, "HslOmronFinsDriver")]
     [InlineData(PlcBrand.Keyence, "HslKeyenceMcDriver")]
+    [InlineData(PlcBrand.Inovance, "HslInovanceTcpDriver")]
+    [InlineData(PlcBrand.AllenBradley, "HslAllenBradleyDriver")]
     public void Descriptor_CreateDriver_ReturnsBrandDriver(PlcBrand brand, string expectedTypeName)
     {
         var registry = PlcBrandDescriptors.CreateDefault();
@@ -91,7 +95,8 @@ public sealed class PlcBrandRegistryTests
     [InlineData(PlcBrand.ModbusTcp)]
     [InlineData(PlcBrand.Omron)]
     [InlineData(PlcBrand.Keyence)]
-    public void GetBatchReadCapabilities_AllBrands_ReturnsValid(PlcBrand brand)
+    [InlineData(PlcBrand.Inovance)]
+    public void GetBatchReadCapabilities_AddressedBrands_SupportInt32Batch(PlcBrand brand)
     {
         var registry = PlcBrandDescriptors.CreateDefault();
 
@@ -100,6 +105,19 @@ public sealed class PlcBrandRegistryTests
         Assert.True(caps.SupportsInt32);
         Assert.True(caps.MaxInt32Length > 0);
         Assert.True(caps.Int32AddressStride > 0);
+    }
+
+    [Fact]
+    public void GetBatchReadCapabilities_AllenBradley_ReadsPointByPoint()
+    {
+        var caps = PlcBrandDescriptors.CreateDefault()
+            .Resolve(PlcBrand.AllenBradley)
+            .GetBatchReadCapabilities(new PlcConfig { Brand = PlcBrand.AllenBradley });
+
+        Assert.False(caps.SupportsInt32);
+        Assert.False(caps.SupportsBool);
+        Assert.Equal(1, caps.Int32AddressStride);
+        Assert.True(caps.MaxInt32Length > 0);
     }
 
     [Fact]

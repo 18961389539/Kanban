@@ -11,7 +11,7 @@ internal interface ISettingsMigration
 
 internal sealed class SettingsMigrationRunner
 {
-    public const int CurrentVersion = 9;
+    public const int CurrentVersion = 10;
 
     private readonly IReadOnlyList<ISettingsMigration> _migrations =
     [
@@ -24,6 +24,7 @@ internal sealed class SettingsMigrationRunner
         new Version6To7Migration(),
         new Version7To8Migration(),
         new Version8To9Migration(),
+        new Version9To10Migration(),
     ];
 
     public string Migrate(string json)
@@ -43,7 +44,11 @@ internal sealed class SettingsMigrationRunner
             node["SchemaVersion"] = version;
         }
 
-        return node.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
+        return node.ToJsonString(new JsonSerializerOptions
+        {
+            WriteIndented = false,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        });
     }
 
     private sealed class Version0To1Migration : ISettingsMigration
@@ -225,6 +230,39 @@ internal sealed class SettingsMigrationRunner
             }
 
             return settings;
+        }
+    }
+
+    private sealed class Version9To10Migration : ISettingsMigration
+    {
+        public int FromVersion => 9;
+
+        public JsonObject Migrate(JsonObject settings)
+        {
+            EnsureBrandOptions(settings["PlcConfig"] as JsonObject);
+            if (settings["ConnectionProfiles"] is JsonArray profiles)
+            {
+                foreach (var profile in profiles.OfType<JsonObject>())
+                    EnsureBrandOptions(profile["Config"] as JsonObject);
+            }
+
+            return settings;
+        }
+
+        private static void EnsureBrandOptions(JsonObject? plc)
+        {
+            if (plc is null) return;
+            var inovance = plc["Inovance"] as JsonObject ?? new JsonObject();
+            inovance["Series"] ??= (int)Kanban.Collector.Core.Models.InovancePlcSeries.H5U;
+            inovance["Station"] ??= 1;
+            inovance["DataFormat"] ??= (int)Kanban.Collector.Core.Models.PlcDataFormat.CDAB;
+            inovance["BatchInt32Limit"] ??= 60;
+            plc["Inovance"] = inovance;
+
+            var allenBradley = plc["AllenBradley"] as JsonObject ?? new JsonObject();
+            allenBradley["Slot"] ??= 0;
+            allenBradley["UseConnectedCip"] ??= false;
+            plc["AllenBradley"] = allenBradley;
         }
     }
 }

@@ -58,6 +58,8 @@ public static class KanbanDataServiceCollectionExtensions
         services.AddSingleton<IPlcBrandDescriptor, ModbusTcpPlcBrandDescriptor>();
         services.AddSingleton<IPlcBrandDescriptor, OmronPlcBrandDescriptor>();
         services.AddSingleton<IPlcBrandDescriptor, KeyencePlcBrandDescriptor>();
+        services.AddSingleton<IPlcBrandDescriptor, InovancePlcBrandDescriptor>();
+        services.AddSingleton<IPlcBrandDescriptor, AllenBradleyPlcBrandDescriptor>();
         services.AddSingleton<IPlcBrandRegistry, PlcBrandRegistry>();
         services.AddSingleton<ISharedPlcDriverFactory, HslSharedPlcDriverFactory>();
         services.AddSingleton<IPlcAddressCodecResolver, PlcAddressCodecResolver>();

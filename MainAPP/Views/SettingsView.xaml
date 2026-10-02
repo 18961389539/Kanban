@@ -748,6 +748,69 @@
                                             SelectedItem="{Binding DraftSettings.PlcConfig.ModbusDataFormat, Mode=TwoWay}"
                                             Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
                                             Style="{StaticResource SettingsComboBox}" />
+                                        <hc:ComboBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.Lbl_InovanceSeries}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.Lbl_InovanceSeries}"
+                                            ItemsSource="{Binding InovanceSeriesOptions}"
+                                            SelectedItem="{Binding DraftSettings.PlcConfig.InovanceSeries, Mode=TwoWay}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Inovance}}"
+                                            Style="{StaticResource SettingsComboBox}" />
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.Lbl_InovanceStation}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.Lbl_InovanceStation}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Inovance}}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.InovanceStation" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.Lbl_InovanceStation}" MaxValue="247" MinValue="1" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:ComboBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.Lbl_InovanceDataFormat}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.Lbl_InovanceDataFormat}"
+                                            ItemsSource="{Binding PlcDataFormats}"
+                                            SelectedItem="{Binding DraftSettings.PlcConfig.InovanceDataFormat, Mode=TwoWay}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Inovance}}"
+                                            Style="{StaticResource SettingsComboBox}" />
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.Lbl_InovanceBatchInt32Limit}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.Lbl_InovanceBatchInt32Limit}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Inovance}}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.InovanceBatchInt32Limit" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.Lbl_InovanceBatchInt32Limit}" MaxValue="62" MinValue="1" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.Lbl_AllenBradleySlot}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.Lbl_AllenBradleySlot}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.AllenBradley}}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.AllenBradleySlot" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.Lbl_AllenBradleySlot}" MaxValue="31" MinValue="0" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <CheckBox
+                                            Margin="0,0,0,16"
+                                            Content="{x:Static resources:Strings.Lbl_AllenBradleyConnectedCip}"
+                                            IsChecked="{Binding DraftSettings.PlcConfig.AllenBradleyUseConnectedCip, Mode=TwoWay}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.AllenBradley}}" />
                                             </StackPanel>
                                         </Expander>
 

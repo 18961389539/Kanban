@@ -139,4 +139,20 @@ public sealed class SettingsMigrationTests
         Assert.Contains("\"Name\":\"夜班\"", migrated);
         Assert.Contains($"\"SchemaVersion\":{SettingsMigrationRunner.CurrentVersion}", migrated);
     }
+
+    [Fact]
+    public void Migrate_V9Settings_AddsInovanceAndAllenBradleyDefaults()
+    {
+        var runner = new SettingsMigrationRunner();
+
+        var migrated = runner.Migrate("{\"SchemaVersion\":9,\"PlcConfig\":{\"Brand\":1}}");
+
+        Assert.Contains("\"Inovance\":{", migrated);
+        Assert.Contains("\"Series\":0", migrated);
+        Assert.Contains("\"Station\":1", migrated);
+        Assert.Contains("\"BatchInt32Limit\":60", migrated);
+        Assert.Contains("\"AllenBradley\":{", migrated);
+        Assert.Contains("\"UseConnectedCip\":false", migrated);
+        Assert.Contains($"\"SchemaVersion\":{SettingsMigrationRunner.CurrentVersion}", migrated);
+    }
 }
